@@ -53,36 +53,25 @@ const Index = () => {
           </div>
           
           <div className="flex flex-col items-center gap-4 mt-4 relative z-10 pointer-events-auto">
-            <button 
-              onClick={async () => {
-                try {
-                  const { data, error } = await supabase.functions.invoke('test-mp-token');
-                  if (error) throw error;
-                  alert(JSON.stringify(data, null, 2));
-                } catch (err) {
-                  console.error('Erro:', err);
-                  alert('Erro ao testar token: ' + err);
-                }
-              }}
-              className="block w-full max-w-[360px] mx-auto rounded-lg px-6 py-2 text-sm font-semibold text-white text-center bg-yellow-600 hover:bg-yellow-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 cursor-pointer mb-2"
-            >
-              🧪 TESTAR TOKEN MERCADO PAGO
-            </button>
             
-            <button 
-              onClick={async () => {
-                try {
-                  const { data, error } = await supabase.functions.invoke('create-checkout', {
-                    body: { plan: 'Método Lovable Ilimitado', price: 13.90 }
-                  });
-                  if (error) throw error;
-                  if (data?.checkout_url) window.location.href = data.checkout_url;
-                } catch (err) {
-                  console.error('Erro ao criar checkout:', err);
+            
+            <button onClick={async () => {
+            try {
+              const {
+                data,
+                error
+              } = await supabase.functions.invoke('create-checkout', {
+                body: {
+                  plan: 'Método Lovable Ilimitado',
+                  price: 13.90
                 }
-              }}
-              className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
-            >
+              });
+              if (error) throw error;
+              if (data?.checkout_url) window.location.href = data.checkout_url;
+            } catch (err) {
+              console.error('Erro ao criar checkout:', err);
+            }
+          }} className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer">
               QUERO O MÉTODO LOVABLE ILIMITADO POR R$13,90
             </button>
           </div>
@@ -96,13 +85,10 @@ const Index = () => {
             ASSISTA AO VÍDEO DA OFERTA
           </h2>
           <div className="relative rounded-lg overflow-hidden shadow-[0_0_30px_rgba(164,94,255,0.3)] bg-black/20 z-0">
-            <iframe 
-              src="https://drive.google.com/file/d/1voF-bNsgCmflRSHyovyZ5CJU93FB8Lcs/preview"
-              className="w-full h-auto rounded-lg relative z-0"
-              style={{ aspectRatio: "16/9", minHeight: "350px" }}
-              allow="autoplay"
-              allowFullScreen
-            />
+            <iframe src="https://drive.google.com/file/d/1voF-bNsgCmflRSHyovyZ5CJU93FB8Lcs/preview" className="w-full h-auto rounded-lg relative z-0" style={{
+            aspectRatio: "16/9",
+            minHeight: "350px"
+          }} allow="autoplay" allowFullScreen />
           </div>
         </div>
       </section>
@@ -178,20 +164,23 @@ const Index = () => {
           </div>
 
           <div className="relative z-10 pointer-events-auto">
-            <button
-              onClick={async () => {
-                try {
-                  const { data, error } = await supabase.functions.invoke('create-checkout', {
-                    body: { plan: 'Método + 2 Bônus e Aula Exclusiva', price: 24.90 }
-                  });
-                  if (error) throw error;
-                  if (data?.checkout_url) window.location.href = data.checkout_url;
-                } catch (err) {
-                  console.error('Erro ao criar checkout:', err);
+            <button onClick={async () => {
+            try {
+              const {
+                data,
+                error
+              } = await supabase.functions.invoke('create-checkout', {
+                body: {
+                  plan: 'Método + 2 Bônus e Aula Exclusiva',
+                  price: 24.90
                 }
-              }}
-              className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
-            >
+              });
+              if (error) throw error;
+              if (data?.checkout_url) window.location.href = data.checkout_url;
+            } catch (err) {
+              console.error('Erro ao criar checkout:', err);
+            }
+          }} className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer">
               QUERO O MÉTODO + 2 BÔNUS E AULA EXCLUSIVA POR R$24,90
             </button>
           </div>
