@@ -1,0 +1,188 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// EmailJS configuration
+const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
+const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
+const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
+const EMAILJS_PRIVATE_KEY = Deno.env.get('EMAILJS_PRIVATE_KEY');
+
+async function sendEmailViaEmailJS(toEmail: string, subject: string, message: string) {
+  try {
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          to_email: toEmail,
+          subject: subject,
+          message: message,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('EmailJS error:', errorText);
+      throw new Error(`EmailJS returned ${response.status}: ${errorText}`);
+    }
+
+    console.log('✅ Email enviado com sucesso para:', toEmail);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao enviar email:', error);
+    return false;
+  }
+}
+
+serve(async (req: Request) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const body = await req.json();
+    console.log('📩 Webhook Mercado Pago recebido:', JSON.stringify(body, null, 2));
+
+    // Confirmar status do pagamento
+    if (body?.data?.id) {
+      const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
+      
+      if (!accessToken) {
+        console.error('MERCADO_PAGO_ACCESS_TOKEN not configured');
+        return new Response('ok', { 
+          status: 200,
+          headers: corsHeaders 
+        });
+      }
+
+      const paymentId = body.data.id;
+      console.log('Fetching payment details for ID:', paymentId);
+
+      const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('Error fetching payment:', response.status);
+        return new Response('ok', { 
+          status: 200,
+          headers: corsHeaders 
+        });
+      }
+
+      const payment = await response.json();
+      console.log('💳 Status do pagamento:', payment.status);
+      console.log('💳 Detalhes completos:', JSON.stringify(payment, null, 2));
+
+      // Salvar/atualizar pagamento no Supabase
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      const paymentRecord = {
+        payment_id: String(payment.id),
+        payer_email: payment.payer?.email || 'unknown',
+        status: payment.status,
+        amount: payment.transaction_amount || 0,
+        plan_description: payment.description || 'N/A',
+      };
+
+      const { error: upsertError } = await supabase
+        .from('payments')
+        .upsert(paymentRecord, { onConflict: 'payment_id' });
+
+      if (upsertError) {
+        console.error('❌ Erro ao salvar pagamento:', upsertError);
+      } else {
+        console.log('✅ Pagamento salvo no banco:', paymentRecord);
+      }
+
+      if (payment.status === 'approved') {
+        console.log('✅ Pagamento aprovado!');
+        console.log('Cliente:', payment.payer?.email);
+        console.log('Valor:', payment.transaction_amount);
+        console.log('Plano:', payment.description);
+        
+        // Envio de e-mail via EmailJS (modo compatível com Edge Functions)
+        try {
+          // Captura o e-mail e nome do comprador vindos do Mercado Pago
+          const clientEmail = payment.payer?.email;
+          const clientName =
+            payment.payer?.first_name ||
+            payment.payer?.identification?.name ||
+            "Cliente";
+
+          if (!clientEmail) {
+            console.warn("⚠️ Nenhum e-mail encontrado, cancelando envio do EmailJS.");
+          } else {
+            console.log("📧 Enviando e-mail de entrega para:", clientEmail);
+
+            // Monta o corpo do e-mail com as variáveis do template configurado no EmailJS
+            const emailPayload = {
+              service_id: `${Deno.env.get("EMAILJS_SERVICE_ID")}`,
+              template_id: `${Deno.env.get("EMAILJS_TEMPLATE_ID")}`,
+              user_id: `${Deno.env.get("EMAILJS_PUBLIC_KEY")}`,
+              accessToken: `${Deno.env.get("EMAILJS_PRIVATE_KEY")}`,
+              template_params: {
+                to_name: clientName,
+                to_email: clientEmail, // e-mail digitado no checkout
+              },
+            };
+
+            // Envia o e-mail de confirmação via API do EmailJS
+            const emailResponse = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Origin": "https://lovable-unlimited-deal.lovable.app", // domínio do app
+              },
+              body: JSON.stringify(emailPayload),
+            });
+
+            const responseText = await emailResponse.text();
+            console.log("📧 Resultado EmailJS:", responseText);
+
+            if (!emailResponse.ok) {
+              throw new Error(`Erro ao enviar e-mail: ${emailResponse.status} - ${responseText}`);
+            }
+
+            console.log("✅ E-mail de entrega enviado com sucesso para:", clientEmail);
+          }
+        } catch (error) {
+          console.error("❌ Erro ao enviar o e-mail de entrega:", error);
+        }
+      } else if (payment.status === 'pending') {
+        console.log('⏳ Pagamento pendente');
+      } else if (payment.status === 'rejected') {
+        console.log('❌ Pagamento rejeitado');
+      }
+    }
+
+    return new Response('ok', { 
+      status: 200,
+      headers: corsHeaders 
+    });
+  } catch (error: any) {
+    console.error('Error in mp-webhook function:', error);
+    return new Response('ok', { 
+      status: 200,
+      headers: corsHeaders 
+    });
+  }
+});
