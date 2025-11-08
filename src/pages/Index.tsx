@@ -85,7 +85,7 @@ const Index = () => {
             ASSISTA AO VÍDEO DA OFERTA
           </h2>
           <div className="relative rounded-lg overflow-hidden shadow-[0_0_30px_rgba(164,94,255,0.3)] bg-black/20 z-0">
-            <iframe src="https://drive.google.com/file/d/1voF-bNsgCmflRSHyovyZ5CJU93FB8Lcs/preview" className="w-full h-auto rounded-lg relative z-0" style={{
+            <iframe src="https://drive.google.com/file/d/1voF-bNsgCmflRSHyovyZ5CJU93FB8Lcs/preview?autoplay=1" className="w-full h-auto rounded-lg relative z-0" style={{
             aspectRatio: "16/9",
             minHeight: "350px"
           }} allow="autoplay" allowFullScreen />
