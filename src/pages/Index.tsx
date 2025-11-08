@@ -56,6 +56,22 @@ const Index = () => {
             <button 
               onClick={async () => {
                 try {
+                  const { data, error } = await supabase.functions.invoke('test-mp-token');
+                  if (error) throw error;
+                  alert(JSON.stringify(data, null, 2));
+                } catch (err) {
+                  console.error('Erro:', err);
+                  alert('Erro ao testar token: ' + err);
+                }
+              }}
+              className="block w-full max-w-[360px] mx-auto rounded-lg px-6 py-2 text-sm font-semibold text-white text-center bg-yellow-600 hover:bg-yellow-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 cursor-pointer mb-2"
+            >
+              🧪 TESTAR TOKEN MERCADO PAGO
+            </button>
+            
+            <button 
+              onClick={async () => {
+                try {
                   const { data, error } = await supabase.functions.invoke('create-checkout', {
                     body: { plan: 'Método Lovable Ilimitado', price: 13.90 }
                   });
