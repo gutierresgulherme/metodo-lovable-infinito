@@ -80,23 +80,13 @@ const Index = () => {
             ASSISTA AO VÍDEO DA OFERTA
           </h2>
           <div className="relative rounded-lg overflow-hidden shadow-[0_0_30px_rgba(164,94,255,0.3)] bg-black/20 z-0">
-            <video 
-              autoPlay 
-              loop 
-              muted 
-              playsInline 
-              controls
-              preload="auto"
-              className="w-full h-auto object-cover rounded-lg max-h-[500px] md:max-h-[500px] relative z-0" 
-              style={{ maxHeight: "350px" }}
-              onLoadedMetadata={(e) => {
-                const video = e.currentTarget;
-                video.play().catch(err => console.log('Autoplay prevented:', err));
-              }}
-            >
-              <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-              Seu navegador não suporta a tag de vídeo.
-            </video>
+            <iframe 
+              src="https://drive.google.com/file/d/1TIsIRBbd7YZwclsSYKU-aiuG7lqCiOrV/preview"
+              className="w-full h-auto rounded-lg relative z-0"
+              style={{ aspectRatio: "16/9", minHeight: "350px" }}
+              allow="autoplay"
+              allowFullScreen
+            />
           </div>
         </div>
       </section>
