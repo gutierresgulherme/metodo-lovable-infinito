@@ -125,11 +125,14 @@ const Index = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
             ASSISTA AO VÍDEO DA OFERTA
           </h2>
-          <div className="relative rounded-lg overflow-hidden shadow-[0_0_30px_rgba(164,94,255,0.3)] bg-black/20 z-0">
-            <iframe src="https://drive.google.com/file/d/1voF-bNsgCmflRSHyovyZ5CJU93FB8Lcs/preview?autoplay=1" className="w-full h-auto rounded-lg relative z-0" style={{
-            aspectRatio: "16/9",
-            minHeight: "350px"
-          }} allow="autoplay" allowFullScreen />
+          <div style={{ position: 'relative', width: '100%', maxWidth: '100%', borderRadius: '12px', overflow: 'hidden' }}>
+            <iframe 
+              src="https://drive.google.com/file/d/1xT4qQL0QDvJ6w1CZQtfVzzY8TfsifKMD/preview?autoplay=1&mute=1"
+              width="100%"
+              height="360"
+              allow="autoplay"
+              allowFullScreen>
+            </iframe>
           </div>
         </div>
       </section>
