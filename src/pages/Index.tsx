@@ -127,10 +127,10 @@ const Index = () => {
           </h2>
           <div style={{ position: 'relative', width: '100%', maxWidth: '100%', borderRadius: '12px', overflow: 'hidden' }}>
             <iframe 
-              src="https://drive.google.com/file/d/1xT4qQL0QDvJ6w1CZQtfVzzY8TfsifKMD/preview?autoplay=1&mute=1"
+              src="https://screenapp.io/app/v/UdvXLOJvlx?autoplay=true&muted=true"
               width="100%"
               height="360"
-              allow="autoplay"
+              allow="autoplay; encrypted-media"
               allowFullScreen>
             </iframe>
           </div>
