@@ -118,6 +118,37 @@ serve(async (req: Request) => {
         console.log('Valor:', payment.transaction_amount);
         console.log('Plano:', payment.description);
         
+        const orderId = payment.external_reference || String(payment.id);
+
+        // Enviar evento de purchase para analytics (dedupe server-side)
+        const analyticsUrl = Deno.env.get('INTERNAL_ANALYTICS_URL');
+        const analyticsToken = Deno.env.get('INTERNAL_TOKEN');
+
+        if (analyticsUrl) {
+          try {
+            await fetch(analyticsUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${analyticsToken || ''}`,
+              },
+              body: JSON.stringify({
+                event: 'purchase',
+                source: 'webhook_mp',
+                orderId,
+                paymentId: String(payment.id),
+                value: payment.transaction_amount,
+                currency: payment.currency_id || 'BRL',
+                utms: payment.metadata?.utms ? JSON.parse(payment.metadata.utms) : {},
+                timestamp: Date.now(),
+              }),
+            });
+            console.log('[ANALYTICS] Purchase event sent to analytics');
+          } catch (analyticsError) {
+            console.error('[ANALYTICS] Error sending to analytics:', analyticsError);
+          }
+        }
+        
         // Envio de e-mail via EmailJS (modo compatível com Edge Functions)
         try {
           // Captura o e-mail e nome do comprador vindos do Mercado Pago

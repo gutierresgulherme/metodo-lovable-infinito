@@ -8,6 +8,7 @@ const corsHeaders = {
 interface CheckoutRequest {
   plan: string;
   price: number;
+  utms?: Record<string, string>;
 }
 
 serve(async (req: Request) => {
@@ -17,15 +18,33 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { plan, price }: CheckoutRequest = await req.json();
+    const { plan, price, utms = {} }: CheckoutRequest = await req.json();
     
-    console.log('Creating checkout for:', { plan, price });
+    console.log('Creating checkout for:', { plan, price, utms });
 
     const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
+    const baseUrl = Deno.env.get('PUBLIC_BASE_URL') || 'https://lovable-unlimited-deal-92478.lovable.app';
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://zshzrnkhxqksfaphfqyi.supabase.co';
     
     if (!accessToken) {
       throw new Error('MERCADO_PAGO_ACCESS_TOKEN not configured');
     }
+
+    // Criar URLs com UTMs
+    const successUrl = new URL('/thank-you', baseUrl);
+    const pendingUrl = new URL('/pending', baseUrl);
+    const failureUrl = new URL('/', baseUrl);
+
+    // Adicionar UTMs às URLs
+    Object.entries(utms).forEach(([key, value]) => {
+      if (value) {
+        successUrl.searchParams.set(key, value);
+        pendingUrl.searchParams.set(key, value);
+        failureUrl.searchParams.set(key, value);
+      }
+    });
+
+    const orderId = `ORD-${Date.now()}`;
 
     const preference = {
       items: [
@@ -37,12 +56,17 @@ serve(async (req: Request) => {
         },
       ],
       back_urls: {
-        success: 'https://lovable-unlimited-deal.lovable.app/pending',
-        failure: 'https://lovable-unlimited-deal.lovable.app',
-        pending: 'https://lovable-unlimited-deal.lovable.app/pending',
+        success: successUrl.toString(),
+        failure: failureUrl.toString(),
+        pending: pendingUrl.toString(),
       },
       auto_return: 'approved',
-      notification_url: 'https://rwlztrsvqixonvvdnmrw.supabase.co/functions/v1/mp-webhook',
+      external_reference: orderId,
+      notification_url: `${supabaseUrl}/functions/v1/mp-webhook`,
+      metadata: {
+        utms: JSON.stringify(utms),
+        order_id: orderId,
+      },
     };
 
     console.log('Sending preference to Mercado Pago:', preference);
@@ -65,10 +89,19 @@ serve(async (req: Request) => {
     const data = await response.json();
     console.log('Checkout created successfully:', data.id);
 
+    // Adicionar UTMs ao init_point
+    const initPointUrl = new URL(data.init_point);
+    Object.entries(utms).forEach(([key, value]) => {
+      if (value) {
+        initPointUrl.searchParams.set(key, value);
+      }
+    });
+
     return new Response(
       JSON.stringify({ 
-        checkout_url: data.init_point,
-        preference_id: data.id 
+        checkout_url: initPointUrl.toString(),
+        preference_id: data.id,
+        order_id: orderId,
       }),
       {
         status: 200,

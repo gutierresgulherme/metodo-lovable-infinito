@@ -2,6 +2,7 @@ import { PricingCard } from "@/components/PricingCard";
 import { FAQItem } from "@/components/FAQItem";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import feedback1 from "@/assets/feedback-1.png";
 import feedback2 from "@/assets/feedback-2.png";
@@ -9,7 +10,29 @@ import feedback3 from "@/assets/feedback-3.png";
 import chatgptBonus from "@/assets/chatgpt-bonus.png";
 import canvaBonus from "@/assets/canva-bonus.png";
 import garantia7dias from "@/assets/garantia-7dias.png";
+
 const Index = () => {
+  useEffect(() => {
+    // Track viewContent quando a página carregar
+    const trackViewContent = () => {
+      const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
+      if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
+        (window as any).Utmify.track('viewContent', { utms });
+        console.log('[UTMIFY] viewContent (SDK)', utms);
+      } else {
+        console.log('[UTMIFY] viewContent (fallback)', utms);
+      }
+    };
+
+    // Aguardar o pixel carregar
+    if (document.readyState === 'complete') {
+      trackViewContent();
+    } else {
+      window.addEventListener('load', trackViewContent);
+      return () => window.removeEventListener('load', trackViewContent);
+    }
+  }, []);
+
   const getCurrentDate = () => {
     return new Date().toLocaleDateString('pt-BR', {
       day: 'numeric',
@@ -53,25 +76,43 @@ const Index = () => {
           </div>
           
           <div className="flex flex-col items-center gap-4 mt-4 relative z-10 pointer-events-auto">
-            
-            
-            <button onClick={async () => {
-            try {
-              const {
-                data,
-                error
-              } = await supabase.functions.invoke('create-checkout', {
-                body: {
-                  plan: 'Método Lovable Ilimitado',
-                  price: 13.90
+            <button 
+              id="btn-comprar-13"
+              onClick={async () => {
+                try {
+                  const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
+                  
+                  // Track initiateCheckout
+                  if ((window as any).Utmify?.track) {
+                    (window as any).Utmify.track('initiateCheckout', { 
+                      productName: 'Método Lovable Ilimitado', 
+                      price: 13.90, 
+                      utms 
+                    });
+                  } else {
+                    await supabase.functions.invoke('init-fallback', {
+                      body: { productName: 'Método Lovable Ilimitado', price: 13.90, utms }
+                    });
+                  }
+
+                  const { data, error } = await supabase.functions.invoke('create-checkout', {
+                    body: { 
+                      plan: 'Método Lovable Ilimitado', 
+                      price: 13.90,
+                      utms 
+                    }
+                  });
+                  if (error) throw error;
+                  if (data?.checkout_url) {
+                    const finalUrl = (window as any).__UTMIFY__?.withUTMs(data.checkout_url, utms) || data.checkout_url;
+                    window.location.href = finalUrl;
+                  }
+                } catch (err) {
+                  console.error('Erro ao criar checkout:', err);
                 }
-              });
-              if (error) throw error;
-              if (data?.checkout_url) window.location.href = data.checkout_url;
-            } catch (err) {
-              console.error('Erro ao criar checkout:', err);
-            }
-          }} className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer">
+              }}
+              className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
+            >
               QUERO O MÉTODO LOVABLE ILIMITADO POR R$13,90
             </button>
           </div>
@@ -164,23 +205,43 @@ const Index = () => {
           </div>
 
           <div className="relative z-10 pointer-events-auto">
-            <button onClick={async () => {
-            try {
-              const {
-                data,
-                error
-              } = await supabase.functions.invoke('create-checkout', {
-                body: {
-                  plan: 'Método + 2 Bônus e Aula Exclusiva',
-                  price: 24.90
+            <button 
+              id="btn-comprar-24"
+              onClick={async () => {
+                try {
+                  const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
+                  
+                  // Track initiateCheckout
+                  if ((window as any).Utmify?.track) {
+                    (window as any).Utmify.track('initiateCheckout', { 
+                      productName: 'Método + 2 Bônus e Aula Exclusiva', 
+                      price: 24.90, 
+                      utms 
+                    });
+                  } else {
+                    await supabase.functions.invoke('init-fallback', {
+                      body: { productName: 'Método + 2 Bônus e Aula Exclusiva', price: 24.90, utms }
+                    });
+                  }
+
+                  const { data, error } = await supabase.functions.invoke('create-checkout', {
+                    body: { 
+                      plan: 'Método + 2 Bônus e Aula Exclusiva', 
+                      price: 24.90,
+                      utms 
+                    }
+                  });
+                  if (error) throw error;
+                  if (data?.checkout_url) {
+                    const finalUrl = (window as any).__UTMIFY__?.withUTMs(data.checkout_url, utms) || data.checkout_url;
+                    window.location.href = finalUrl;
+                  }
+                } catch (err) {
+                  console.error('Erro ao criar checkout:', err);
                 }
-              });
-              if (error) throw error;
-              if (data?.checkout_url) window.location.href = data.checkout_url;
-            } catch (err) {
-              console.error('Erro ao criar checkout:', err);
-            }
-          }} className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer">
+              }}
+              className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
+            >
               QUERO O MÉTODO + 2 BÔNUS E AULA EXCLUSIVA POR R$24,90
             </button>
           </div>
