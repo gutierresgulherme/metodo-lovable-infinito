@@ -127,10 +127,12 @@ const Index = () => {
           </h2>
           <div style={{ position: 'relative', width: '100%', maxWidth: '100%', borderRadius: '12px', overflow: 'hidden' }}>
             <iframe 
-              src="https://www.canva.com/design/DAG4L7V4Pjo/D7fgzvrgpXZ3txMm95csJg/watch?utm_content=DAG4L7V4Pjo&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h9f7bea6a3c"
-              width="100%"
-              height="360"
-              allow="autoplay; fullscreen"
+              width="100%" 
+              height="360" 
+              src="https://www.youtube.com/embed/IOheeqsUvW8?autoplay=1&mute=1"
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen>
             </iframe>
           </div>
