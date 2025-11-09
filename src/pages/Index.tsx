@@ -128,11 +128,10 @@ const Index = () => {
           <div style={{ position: 'relative', width: '100%', maxWidth: '100%', borderRadius: '12px', overflow: 'hidden' }}>
             <iframe 
               width="100%" 
-              height="360" 
-              src="https://www.youtube.com/embed/IOheeqsUvW8?autoplay=1&mute=1"
-              title="YouTube video player"
+              height="360"
+              src="https://www.youtube.com/embed/9lW79rbjyjk?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0"
               frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen>
             </iframe>
           </div>
