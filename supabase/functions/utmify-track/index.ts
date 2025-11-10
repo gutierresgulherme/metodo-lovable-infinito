@@ -29,9 +29,9 @@ serve(async (req: Request) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${utmifyToken}`,
       },
-      body: JSON.stringify({
-        pixel_id: "69103176888cf7912654f1a5",
-        event_name: payload.event || 'purchase',
+          body: JSON.stringify({
+            pixel_id: "69115e23ec54d4aceb3e2352",
+            event_name: payload.event || 'purchase',
         event_data: {
           order_id: payload.orderId,
           payment_id: payload.paymentId,

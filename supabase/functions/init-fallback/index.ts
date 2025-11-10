@@ -49,7 +49,7 @@ serve(async (req: Request) => {
             'Authorization': `Bearer ${utmifyToken}`,
           },
           body: JSON.stringify({
-            pixel_id: "69103176888cf7912654f1a5",
+            pixel_id: "69115e23ec54d4aceb3e2352",
             event_name: 'initiateCheckout',
             event_data: {
               plan: payload.plan,

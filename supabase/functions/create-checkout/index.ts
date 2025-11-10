@@ -67,6 +67,14 @@ serve(async (req: Request) => {
         utms: JSON.stringify(utms),
         order_id: orderId,
       },
+      tracks: [
+        {
+          type: "facebook_ad",
+          values: {
+            pixel_id: "1535934207721343"
+          }
+        }
+      ],
     };
 
     console.log('Sending preference to Mercado Pago:', preference);
