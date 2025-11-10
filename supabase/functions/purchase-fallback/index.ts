@@ -13,8 +13,9 @@ serve(async (req: Request) => {
 
   try {
     const payload = await req.json();
-    console.log('[ANALYTICS] purchase (fallback):', payload);
+    console.log('[UTMIFY] 📊 purchase (fallback):', payload);
 
+    // Enviar para analytics interno
     const analyticsUrl = Deno.env.get('INTERNAL_ANALYTICS_URL');
     const analyticsToken = Deno.env.get('INTERNAL_TOKEN');
 
@@ -34,6 +35,42 @@ serve(async (req: Request) => {
       }).catch((err) => {
         console.error('[ANALYTICS] Error sending to analytics:', err);
       });
+    }
+
+    // Enviar para UTMify
+    const utmifyToken = Deno.env.get('UTMIFY_API_KEY');
+    
+    if (utmifyToken) {
+      try {
+        const utmifyResponse = await fetch('https://api.utmify.com.br/api/v1/events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${utmifyToken}`,
+          },
+          body: JSON.stringify({
+            pixel_id: "69103176888cf7912654f1a5",
+            event_name: 'purchase',
+            event_data: {
+              order_id: payload.orderId,
+              payment_id: payload.paymentId,
+              preference_id: payload.prefId,
+              value: payload.value,
+              currency: payload.currency || 'BRL',
+              ...payload.utms,
+            },
+            timestamp: payload.timestamp || Date.now(),
+          }),
+        });
+
+        if (utmifyResponse.ok) {
+          console.log('[UTMIFY] ✅ Evento enviado com sucesso');
+        } else {
+          console.error('[UTMIFY] ❌ Erro ao enviar evento:', await utmifyResponse.text());
+        }
+      } catch (utmifyError) {
+        console.error('[UTMIFY] ❌ Erro na requisição:', utmifyError);
+      }
     }
 
     return new Response(

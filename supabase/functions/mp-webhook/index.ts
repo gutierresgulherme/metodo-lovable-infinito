@@ -119,6 +119,7 @@ serve(async (req: Request) => {
         console.log('Plano:', payment.description);
         
         const orderId = payment.external_reference || String(payment.id);
+        const utmsFromMetadata = payment.metadata?.utms ? JSON.parse(payment.metadata.utms) : {};
 
         // Enviar evento de purchase para analytics (dedupe server-side)
         const analyticsUrl = Deno.env.get('INTERNAL_ANALYTICS_URL');
@@ -139,13 +140,50 @@ serve(async (req: Request) => {
                 paymentId: String(payment.id),
                 value: payment.transaction_amount,
                 currency: payment.currency_id || 'BRL',
-                utms: payment.metadata?.utms ? JSON.parse(payment.metadata.utms) : {},
+                utms: utmsFromMetadata,
                 timestamp: Date.now(),
               }),
             });
             console.log('[ANALYTICS] Purchase event sent to analytics');
           } catch (analyticsError) {
             console.error('[ANALYTICS] Error sending to analytics:', analyticsError);
+          }
+        }
+
+        // Enviar evento para UTMify
+        const utmifyToken = Deno.env.get('UTMIFY_API_KEY');
+        
+        if (utmifyToken) {
+          try {
+            const utmifyResponse = await fetch('https://api.utmify.com.br/api/v1/events', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${utmifyToken}`,
+              },
+              body: JSON.stringify({
+                pixel_id: "69103176888cf7912654f1a5",
+                event_name: 'purchase',
+                event_data: {
+                  order_id: orderId,
+                  payment_id: String(payment.id),
+                  value: payment.transaction_amount,
+                  currency: payment.currency_id || 'BRL',
+                  email: payment.payer?.email,
+                  ...utmsFromMetadata,
+                },
+                timestamp: Date.now(),
+              }),
+            });
+
+            if (utmifyResponse.ok) {
+              console.log('[UTMIFY] ✅ Evento de purchase enviado com sucesso');
+            } else {
+              const errorText = await utmifyResponse.text();
+              console.error('[UTMIFY] ❌ Erro ao enviar evento:', utmifyResponse.status, errorText);
+            }
+          } catch (utmifyError) {
+            console.error('[UTMIFY] ❌ Erro na requisição:', utmifyError);
           }
         }
         
