@@ -12,23 +12,69 @@ import garantia7dias from "@/assets/garantia-7dias.png";
 
 const Index = () => {
   useEffect(() => {
-    // Track viewContent quando a página carregar
-    const trackViewContent = () => {
+    // Track pageView quando a página carregar
+    const trackPageView = () => {
       const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
       if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
-        (window as any).Utmify.track('viewContent', { utms });
-        console.log('[UTMIFY] viewContent (SDK)', utms);
-      } else {
-        console.log('[UTMIFY] viewContent (fallback)', utms);
+        (window as any).Utmify.track('pageView', {
+          page: 'VSL - Método Lovable Infinito',
+          utms
+        });
+        console.log('[UTMIFY] ✅ Evento pageView disparado com sucesso', utms);
       }
     };
 
     // Aguardar o pixel carregar
     if (document.readyState === 'complete') {
-      trackViewContent();
+      trackPageView();
     } else {
-      window.addEventListener('load', trackViewContent);
-      return () => window.removeEventListener('load', trackViewContent);
+      window.addEventListener('load', trackPageView);
+      return () => window.removeEventListener('load', trackPageView);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Track initiateCheckout nos botões
+    const setupCheckoutTracking = () => {
+      const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
+      
+      // Botão 13,90
+      const btn13 = document.getElementById('btn-comprar-13');
+      if (btn13) {
+        btn13.addEventListener('click', () => {
+          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
+            (window as any).Utmify.track('initiateCheckout', {
+              productName: 'Método Lovable Infinito - 13,90',
+              price: 13.90,
+              utms
+            });
+            console.log('[UTMIFY] 🟢 Evento initiateCheckout (13,90) enviado');
+          }
+        });
+      }
+
+      // Botão 24,90
+      const btn24 = document.getElementById('btn-comprar-24');
+      if (btn24) {
+        btn24.addEventListener('click', () => {
+          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
+            (window as any).Utmify.track('initiateCheckout', {
+              productName: 'Método Lovable Infinito - 24,90',
+              price: 24.90,
+              utms
+            });
+            console.log('[UTMIFY] 🟢 Evento initiateCheckout (24,90) enviado');
+          }
+        });
+      }
+    };
+
+    // Aguardar o DOM estar pronto
+    if (document.readyState === 'complete') {
+      setupCheckoutTracking();
+    } else {
+      window.addEventListener('load', setupCheckoutTracking);
+      return () => window.removeEventListener('load', setupCheckoutTracking);
     }
   }, []);
 
