@@ -77,7 +77,7 @@ const Index = () => {
           <div className="flex flex-col items-center gap-4 mt-4 relative z-10 pointer-events-auto">
             <a 
               id="btn-comprar-13"
-              href="https://metodo-lovable-infinito.pay.yampi.com.br/r/MY5AI6OHIC"
+              href="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
@@ -180,7 +180,7 @@ const Index = () => {
           <div className="relative z-10 pointer-events-auto">
             <a 
               id="btn-comprar-24"
-              href="https://metodo-lovable-infinito.pay.yampi.com.br/r/OGTK0EM3PQ"
+              href="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
@@ -259,8 +259,8 @@ const Index = () => {
             ESCOLHA SEU PLANO
           </h2>
           <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-            <PricingCard title="🟡 PLANO GOLD" price="R$24,90" features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "🎁 Aula: Como remover a marca d'água do Lovable", "Suporte premium"]} variant="gold" buttonText="QUERO PLANO GOLD" checkoutLink="https://metodo-lovable-infinito.pay.yampi.com.br/r/OGTK0EM3PQ" />
-            <PricingCard title="⚙️ PLANO PRATA" price="R$13,90" features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Suporte básico"]} variant="silver" buttonText="QUERO PLANO PRATA" checkoutLink="https://metodo-lovable-infinito.pay.yampi.com.br/r/MY5AI6OHIC" />
+            <PricingCard title="🟡 PLANO GOLD" price="R$24,90" features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "🎁 Aula: Como remover a marca d'água do Lovable", "Suporte premium"]} variant="gold" buttonText="QUERO PLANO GOLD" checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG" />
+            <PricingCard title="⚙️ PLANO PRATA" price="R$13,90" features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Suporte básico"]} variant="silver" buttonText="QUERO PLANO PRATA" checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z" />
           </div>
         </div>
       </section>
