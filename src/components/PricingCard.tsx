@@ -1,5 +1,4 @@
 import { Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface PricingCardProps {
   title: string;
@@ -42,38 +41,10 @@ export const PricingCard = ({ title, price, features, variant, buttonText, check
             </li>
           ))}
         </ul>
-        <button
-          onClick={async () => {
-            try {
-              const planName = title.includes("GOLD") ? "Plano Gold" : "Plano Prata";
-              const planPrice = title.includes("GOLD") ? 24.90 : 13.90;
-              const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
-              
-              // Track initiateCheckout
-              if ((window as any).Utmify?.track) {
-                (window as any).Utmify.track('initiateCheckout', { 
-                  productName: planName, 
-                  price: planPrice, 
-                  utms 
-                });
-              } else {
-                await supabase.functions.invoke('init-fallback', {
-                  body: { productName: planName, price: planPrice, utms }
-                });
-              }
-
-              const { data, error } = await supabase.functions.invoke('create-checkout', {
-                body: { plan: planName, price: planPrice, utms }
-              });
-              if (error) throw error;
-              if (data?.checkout_url) {
-                const finalUrl = (window as any).__UTMIFY__?.withUTMs(data.checkout_url, utms) || data.checkout_url;
-                window.location.href = finalUrl;
-              }
-            } catch (err) {
-              console.error('Erro ao criar checkout:', err);
-            }
-          }}
+        <a
+          href={checkoutLink}
+          target="_blank"
+          rel="noopener noreferrer"
           className={`block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${
             variant === "gold" 
               ? "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-400" 
@@ -81,7 +52,7 @@ export const PricingCard = ({ title, price, features, variant, buttonText, check
           }`}
         >
           {buttonText}
-        </button>
+        </a>
       </div>
     </div>
   );
