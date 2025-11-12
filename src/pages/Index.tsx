@@ -108,6 +108,76 @@ const Index = () => {
           }
         });
       }
+
+      // Botão 24,90 (segundo)
+      const btn24_2 = document.getElementById('btn-comprar-24-2');
+      if (btn24_2) {
+        btn24_2.addEventListener('click', async () => {
+          // SDK (caso esteja disponível no front)
+          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
+            (window as any).Utmify.track('initiateCheckout', {
+              productName: 'Método Lovable Infinito - 24,90',
+              price: 24.90,
+              utms
+            });
+            console.log('[UTMIFY] ✅ initiateCheckout enviado via SDK (24,90 - botão 2)');
+          }
+
+          // Fallback via Edge Function (Server Side)
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                event: 'initiateCheckout',
+                plan: 'Método Lovable Infinito - 24,90',
+                value: 24.90,
+                currency: 'BRL',
+                utms,
+                timestamp: Date.now(),
+              }),
+            });
+            console.log('[UTMIFY] ✅ initiateCheckout enviado via fallback (24,90 - botão 2)');
+          } catch (error) {
+            console.error('[UTMIFY] ❌ Erro ao enviar fallback (24,90 - botão 2):', error);
+          }
+        });
+      }
+
+      // Botão 13,90 (segundo)
+      const btn13_2 = document.getElementById('btn-comprar-13-2');
+      if (btn13_2) {
+        btn13_2.addEventListener('click', async () => {
+          // SDK (caso esteja disponível no front)
+          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
+            (window as any).Utmify.track('initiateCheckout', {
+              productName: 'Método Lovable Infinito - 13,90',
+              price: 13.90,
+              utms
+            });
+            console.log('[UTMIFY] ✅ initiateCheckout enviado via SDK (13,90 - botão 2)');
+          }
+
+          // Fallback via Edge Function (Server Side)
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                event: 'initiateCheckout',
+                plan: 'Método Lovable Infinito - 13,90',
+                value: 13.90,
+                currency: 'BRL',
+                utms,
+                timestamp: Date.now(),
+              }),
+            });
+            console.log('[UTMIFY] ✅ initiateCheckout enviado via fallback (13,90 - botão 2)');
+          } catch (error) {
+            console.error('[UTMIFY] ❌ Erro ao enviar fallback (13,90 - botão 2):', error);
+          }
+        });
+      }
     };
 
     // Aguardar o DOM estar pronto
