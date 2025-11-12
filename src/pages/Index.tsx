@@ -42,7 +42,10 @@ const Index = () => {
       // Botão 13,90
       const btn13 = document.getElementById('btn-comprar-13');
       if (btn13) {
-        btn13.addEventListener('click', async () => {
+        btn13.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const href = btn13.getAttribute('href');
+          
           // SDK (caso esteja disponível no front)
           if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
             (window as any).Utmify.track('initiateCheckout', {
@@ -71,13 +74,20 @@ const Index = () => {
           } catch (error) {
             console.error('[UTMIFY] ❌ Erro ao enviar fallback (13,90):', error);
           }
+
+          // Aguardar 400ms e abrir link
+          await new Promise(r => setTimeout(r, 400));
+          if (href) window.open(href, '_blank');
         });
       }
 
       // Botão 24,90
       const btn24 = document.getElementById('btn-comprar-24');
       if (btn24) {
-        btn24.addEventListener('click', async () => {
+        btn24.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const href = btn24.getAttribute('href');
+          
           // SDK (caso esteja disponível no front)
           if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
             (window as any).Utmify.track('initiateCheckout', {
@@ -106,13 +116,20 @@ const Index = () => {
           } catch (error) {
             console.error('[UTMIFY] ❌ Erro ao enviar fallback (24,90):', error);
           }
+
+          // Aguardar 400ms e abrir link
+          await new Promise(r => setTimeout(r, 400));
+          if (href) window.open(href, '_blank');
         });
       }
 
       // Botão 24,90 (segundo)
       const btn24_2 = document.getElementById('btn-comprar-24-2');
       if (btn24_2) {
-        btn24_2.addEventListener('click', async () => {
+        btn24_2.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const href = btn24_2.getAttribute('href');
+          
           // SDK (caso esteja disponível no front)
           if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
             (window as any).Utmify.track('initiateCheckout', {
@@ -141,13 +158,20 @@ const Index = () => {
           } catch (error) {
             console.error('[UTMIFY] ❌ Erro ao enviar fallback (24,90 - botão 2):', error);
           }
+
+          // Aguardar 400ms e abrir link
+          await new Promise(r => setTimeout(r, 400));
+          if (href) window.open(href, '_blank');
         });
       }
 
       // Botão 13,90 (segundo)
       const btn13_2 = document.getElementById('btn-comprar-13-2');
       if (btn13_2) {
-        btn13_2.addEventListener('click', async () => {
+        btn13_2.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const href = btn13_2.getAttribute('href');
+          
           // SDK (caso esteja disponível no front)
           if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
             (window as any).Utmify.track('initiateCheckout', {
@@ -176,6 +200,10 @@ const Index = () => {
           } catch (error) {
             console.error('[UTMIFY] ❌ Erro ao enviar fallback (13,90 - botão 2):', error);
           }
+
+          // Aguardar 400ms e abrir link
+          await new Promise(r => setTimeout(r, 400));
+          if (href) window.open(href, '_blank');
         });
       }
     };
