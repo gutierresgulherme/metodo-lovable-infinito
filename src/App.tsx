@@ -14,6 +14,10 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
+  useEffect(() => {
+    console.log("[APP] App.tsx carregado — Pixel deve iniciar no index.html");
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
