@@ -1,35 +1,6 @@
-import { useEffect } from "react";
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 
 export default function ThankYou() {
-  useEffect(() => {
-    const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-    // SDK
-    if ((window as any).Utmify?.track) {
-      (window as any).Utmify.track("purchase", { utms });
-      console.log("[UTMIFY] PURCHASE via SDK");
-    }
-
-    // Fallback server-side
-    fetch(`${supabaseUrl}/functions/v1/purchase-fallback`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Fallback-Secret": import.meta.env.VITE_FALLBACK_SECRET || ""
-      },
-      body: JSON.stringify({
-        event_name: "purchase",
-        event_data: { ...utms },
-        timestamp: Date.now(),
-        value: 13.90
-      })
-    })
-      .then(() => console.log("[UTMIFY] PURCHASE fallback enviado"))
-      .catch((err) => console.error("[UTMIFY] PURCHASE fallback ERROR:", err));
-  }, []);
-
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 bg-[#0A0A0F] text-white">
       {/* IMAGEM DO PRODUTO */}
