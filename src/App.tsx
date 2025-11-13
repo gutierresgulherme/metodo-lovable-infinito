@@ -53,7 +53,6 @@ const App = () => {
             <Route path="/thankyou" element={<ThankYou />} />
             <Route path="/pending" element={<Pending />} />
             <Route path="/utmify-debug" element={<TestUtmify />} />
-            {/* CATCH-ALL */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
