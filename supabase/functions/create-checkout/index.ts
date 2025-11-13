@@ -1,9 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const CheckoutSchema = z.object({
+  plan: z.string().min(1).max(200),
+  price: z.number().positive().max(10000),
+  utms: z.record(z.string()).optional(),
+});
 
 interface CheckoutRequest {
   plan: string;
@@ -18,9 +25,24 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { plan, price, utms = {} }: CheckoutRequest = await req.json();
+    const rawBody = await req.json();
     
-    console.log('Creating checkout for:', { plan, price, utms });
+    // Validate input
+    const validationResult = CheckoutSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      console.error('Invalid checkout request:', validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ error: 'Invalid input data' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    const { plan, price, utms = {} } = validationResult.data;
+    
+    console.log('Creating checkout for plan:', plan);
 
     const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
     const baseUrl = Deno.env.get('PUBLIC_BASE_URL') || 'https://lovable-unlimited-deal-92478.lovable.app';

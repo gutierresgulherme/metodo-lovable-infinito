@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const customerEmail = data?.data?.customer?.email || '';
     const utms = data?.data?.metadata?.utms || {};
 
-    console.log('[YAMPI] 💰 Purchase data:', { product, price, orderId, customerEmail });
+    console.log('[YAMPI] 💰 Purchase processed:', { product, orderId });
 
     // Send purchase event to UTMify
     const UTMIFY_API_KEY = Deno.env.get('UTMIFY_API_KEY');

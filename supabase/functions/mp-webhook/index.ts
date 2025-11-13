@@ -1,10 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const WebhookBodySchema = z.object({
+  data: z.object({
+    id: z.string().or(z.number()),
+  }).optional(),
+}).passthrough();
 
 // EmailJS configuration
 const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
@@ -82,8 +89,22 @@ serve(async (req: Request) => {
       });
     }
 
-    const body = await req.json();
-    console.log('📩 Webhook Mercado Pago recebido:', JSON.stringify(body, null, 2));
+    let body;
+    try {
+      body = await req.json();
+    } catch (error) {
+      console.error('❌ Invalid JSON in webhook body');
+      return new Response('ok', { status: 200, headers: corsHeaders });
+    }
+    
+    // Validate webhook body structure
+    const validationResult = WebhookBodySchema.safeParse(body);
+    if (!validationResult.success) {
+      console.error('❌ Invalid webhook body structure');
+      return new Response('ok', { status: 200, headers: corsHeaders });
+    }
+    
+    console.log('📩 Webhook Mercado Pago received');
 
     // Verify webhook authenticity by fetching payment from Mercado Pago API
     // This ensures the payment data is legitimate even if signature validation is bypassed
@@ -119,8 +140,7 @@ serve(async (req: Request) => {
       }
 
       const payment = await response.json();
-      console.log('💳 Status do pagamento:', payment.status);
-      console.log('💳 Detalhes completos:', JSON.stringify(payment, null, 2));
+      console.log('💳 Payment status:', payment.status);
 
       // Salvar/atualizar pagamento no Supabase
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -146,10 +166,7 @@ serve(async (req: Request) => {
       }
 
       if (payment.status === 'approved') {
-        console.log('✅ Pagamento aprovado!');
-        console.log('Cliente:', payment.payer?.email);
-        console.log('Valor:', payment.transaction_amount);
-        console.log('Plano:', payment.description);
+        console.log('✅ Payment approved');
         
         const orderId = payment.external_reference || String(payment.id);
         const utmsFromMetadata = payment.metadata?.utms ? JSON.parse(payment.metadata.utms) : {};

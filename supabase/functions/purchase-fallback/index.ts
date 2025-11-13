@@ -1,9 +1,16 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const PurchaseEventSchema = z.object({
+  utms: z.record(z.string()).optional(),
+  timestamp: z.number().optional(),
+  value: z.number().optional(),
+});
 
 serve(async (req: Request) => {
   // Handle CORS preflight requests
@@ -30,8 +37,25 @@ serve(async (req: Request) => {
       );
     }
 
-    const body = await req.json();
+    const rawBody = await req.json();
+    
+    // Validate input
+    const validationResult = PurchaseEventSchema.safeParse(rawBody);
+    if (!validationResult.success) {
+      console.error("[UTMIFY] Invalid request:", validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ ok: false, error: "Invalid input" }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+    }
 
+    const body = validationResult.data;
     const API_TOKEN = Deno.env.get('UTMIFY_API_KEY') || "";
 
     // Garantia de payload completo
@@ -44,7 +68,7 @@ serve(async (req: Request) => {
       source: "lovable-fallback",
     };
 
-    console.log("[UTMIFY] 🔄 Enviando evento PURCHASE via fallback:", payload);
+    console.log("[UTMIFY] 🔄 Sending purchase event via fallback");
 
     // Envia para a API OFICIAL da UTMIFY
     const response = await fetch("https://api.utmify.com.br/v1/events", {
@@ -57,7 +81,7 @@ serve(async (req: Request) => {
     });
 
     const data = await response.text();
-    console.log("[UTMIFY] 🔍 Resposta UTMIFY:", data);
+    console.log("[UTMIFY] 🔍 UTMIFY response status:", response.status);
 
     return new Response(
       JSON.stringify({ ok: true }),
