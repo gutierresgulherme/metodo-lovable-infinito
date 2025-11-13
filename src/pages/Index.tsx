@@ -36,14 +36,14 @@ const Index = () => {
     }
 
     /* 3) INITIATE CHECKOUT — 4 BOTÕES */
-    const buttons = [
-      { id: "btn-comprar-13-1", plan: "13,90" },
-      { id: "btn-comprar-24-1", plan: "24,90" },
-      { id: "btn-comprar-24-2", plan: "24,90" },
-      { id: "btn-comprar-13-2", plan: "13,90" },
+    const map = [
+      { id: "btn-comprar-13-1", name: "Método 13,90", price: 13.90 },
+      { id: "btn-comprar-24-1", name: "Método 24,90", price: 24.90 },
+      { id: "btn-comprar-24-2", name: "Método 24,90", price: 24.90 },
+      { id: "btn-comprar-13-2", name: "Método 13,90", price: 13.90 },
     ];
 
-    buttons.forEach(btn => {
+    map.forEach(btn => {
       const el = document.getElementById(btn.id);
       if (!el) return;
 
@@ -51,35 +51,44 @@ const Index = () => {
         e.preventDefault();
         const href = el.getAttribute("href");
 
-        // --- FRONT-END (SDK)
+        console.log("[UTMIFY] Clique detectado no botão:", btn);
+
+        // SDK
         if ((window as any).Utmify?.track) {
           (window as any).Utmify.track("initiateCheckout", {
-            offer: btn.plan,
-            utms,
+            offer_name: btn.name,
+            price: btn.price,
+            utms
           });
-          console.log("[UTMIFY] initiateCheckout SDK", btn.plan);
+          console.log("[UTMIFY] initiateCheckout via SDK");
         }
 
-        // --- SERVER (Fallback)
+        // Fallback
         try {
           await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              event: "initiateCheckout",
-              offer: btn.plan,
-              utms,
-              timestamp: Date.now(),
-            }),
+              event_name: "initiateCheckout",
+              event_data: {
+                offer_name: btn.name,
+                price: btn.price,
+                ...utms
+              },
+              pixel_id: "69115e23ec54d4aceb3e2352",
+              timestamp: Date.now()
+            })
           });
-          console.log("[UTMIFY] initiateCheckout fallback", btn.plan);
+
+          console.log("[UTMIFY] initiateCheckout via fallback OK");
+
         } catch (err) {
           console.error("[UTMIFY] fallback ERROR", err);
         }
 
-        // Aguardar 400ms e abrir link
-        await new Promise(r => setTimeout(r, 400));
-        if (href) window.open(href, '_blank');
+        // Aguardar envio e abrir checkout
+        await new Promise(r => setTimeout(r, 800));
+        if (href) window.open(href, "_blank");
       });
     });
   }, []);
