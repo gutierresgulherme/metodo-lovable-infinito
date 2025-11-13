@@ -14,30 +14,10 @@ export default function TestUtmify() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Ler UTMs
-      const capturedUtms = (window as any).__UTMIFY__?.readPersistedUTMs?.() || {};
-      setUtms(capturedUtms);
-
-      // PixelID
-      const currentPixelId = (window as any).pixelId || "Não detectado";
-      setPixelId(currentPixelId);
-
-      // Script carregado?
-      const loaded = !!(window as any).__UTMIFY__ || !!(window as any).Utmify;
-      setScriptLoaded(loaded);
-
-      // Detectar botões Yampi
-      const checkoutSelector =
-        "a[href*='pay.yampi'], a[href*='yampi.com'], a[href*='checkout'], a[href^='https://limitada-developers']";
-      const links = document.querySelectorAll(checkoutSelector);
-      setYampiButtons(links.length);
-
-      // Logs no console
-      console.log("[UTMIFY DEBUG] UTMs:", capturedUtms);
-      console.log("[UTMIFY DEBUG] PixelID:", currentPixelId);
-      console.log("[UTMIFY DEBUG] Script carregado:", loaded);
-      console.log("[UTMIFY DEBUG] Botões Yampi:", links.length);
-    }, 1000);
+      console.log("[DEBUG] window.pixelId =", (window as any).pixelId);
+      console.log("[DEBUG] UTMIFY SDK =", (window as any).Utmify);
+      console.log("[DEBUG] UTMIFY Internal =", (window as any).__UTMIFY__);
+    }, 1500);
 
     return () => clearInterval(interval);
   }, []);
