@@ -7,9 +7,10 @@ interface PricingCardProps {
   variant: "gold" | "silver";
   buttonText: string;
   checkoutLink: string;
+  buttonId?: string;
 }
 
-export const PricingCard = ({ title, price, features, variant, buttonText, checkoutLink }: PricingCardProps) => {
+export const PricingCard = ({ title, price, features, variant, buttonText, checkoutLink, buttonId }: PricingCardProps) => {
   const bgClass = variant === "gold" 
     ? "bg-[hsl(45,100%,60%,0.05)]"
     : "bg-[hsl(190,100%,50%,0.05)]";
@@ -42,6 +43,7 @@ export const PricingCard = ({ title, price, features, variant, buttonText, check
           ))}
         </ul>
         <a
+          id={buttonId}
           href={checkoutLink}
           target="_blank"
           rel="noopener noreferrer"

@@ -19,96 +19,27 @@
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
-    <!-- UTMify Pixel -->
-    <script>
-      window.pixelId = "69115e23ec54d4aceb3e2352";
-      var a = document.createElement("script");
-      a.setAttribute("async", "");
-      a.setAttribute("defer", "");
-      a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
-      a.onload = function() {
-        console.log("[UTMIFY] ✅ Pixel carregado com sucesso");
-        document.dispatchEvent(new CustomEvent("utmify:ready"));
-      };
-      a.onerror = function() {
-        console.error("[UTMIFY] ❌ Erro ao carregar pixel");
-      };
-      document.head.appendChild(a);
-    </script>
-
-    <!-- Script Oficial de UTMs -->
+    <!-- UTMify UTMs -->
     <script
       src="https://cdn.utmify.com.br/scripts/utms/latest.js"
       data-utmify-prevent-xcod-sck
       data-utmify-prevent-subids
-      async
-      defer
-      onload="console.log('[UTMIFY] ✅ Script de UTMs carregado')"
-      onerror="console.error('[UTMIFY] ❌ Erro ao carregar script de UTMs')"
-    ></script>
+      async defer>
+    </script>
 
-    <!-- Persistência de UTM (first/last click) e helpers -->
+    <!-- UTMify Pixel -->
     <script>
-      (function(){
-        console.log("[UTMIFY] 🔧 Inicializando persistência de UTMs...");
-        
-        function getUTMs() {
-          const p = new URLSearchParams(location.search);
-          const keys = ["utm_source","utm_medium","utm_campaign","utm_term","utm_content","utm_id","fbclid","gclid"];
-          const out = {}; 
-          keys.forEach(k => { 
-            const v = p.get(k); 
-            if (v) out[k] = v; 
-          });
-          return out;
-        }
-        
-        function saveFirstClick(utms){
-          if (!utms || Object.keys(utms).length===0) {
-            console.log("[UTMIFY] ℹ️ Nenhuma UTM detectada na URL");
-            return;
-          }
-          
-          if (!localStorage.getItem("__utms_first_click")){
-            localStorage.setItem("__utms_first_click", JSON.stringify({utms, ts: Date.now()}));
-            console.log("[UTMIFY] ✅ First click salvo:", utms);
-          }
-          
-          localStorage.setItem("__utms_last_click", JSON.stringify({utms, ts: Date.now()}));
-          console.log("[UTMIFY] ✅ Last click salvo:", utms);
-        }
-        
-        function readPersistedUTMs(){
-          try {
-            const first = JSON.parse(localStorage.getItem("__utms_first_click")||"null");
-            const last  = JSON.parse(localStorage.getItem("__utms_last_click")||"null");
-            const utms = (first && first.utms) || (last && last.utms) || {};
-            console.log("[UTMIFY] 📖 UTMs persistidas:", utms);
-            return utms;
-          } catch(e){ 
-            console.error("[UTMIFY] ❌ Erro ao ler UTMs:", e);
-            return {}; 
-          }
-        }
-        
-        function withUTMs(url, utms){
-          const u = new URL(url, location.origin);
-          Object.entries(utms||{}).forEach(([k,v]) => { 
-            if (v) u.searchParams.set(k, v); 
-          });
-          console.log("[UTMIFY] 🔗 URL com UTMs:", u.toString());
-          return u.toString();
-        }
-        
-        const incoming = getUTMs();
-        if (Object.keys(incoming).length > 0) {
-          console.log("[UTMIFY] 📥 UTMs recebidas:", incoming);
-        }
-        saveFirstClick(incoming);
-        
-        window.__UTMIFY__ = { getUTMs, readPersistedUTMs, withUTMs };
-        console.log("[UTMIFY] ✅ Helpers instalados no window.__UTMIFY__");
-      })();
+      window.pixelId = "69115e23ec54d4aceb3e2352";
+
+      var a = document.createElement("script");
+      a.async = true;
+      a.defer = true;
+      a.src = "https://cdn.utmify.com.br/scripts/pixel/pixel.js";
+
+      a.onload = () => console.log("[UTMIFY] Pixel OK");
+      a.onerror = () => console.error("[UTMIFY] Pixel ERROR");
+
+      document.head.appendChild(a);
     </script>
   </head>
 

@@ -11,210 +11,77 @@ import canvaBonus from "@/assets/canva-bonus.png";
 import garantia7dias from "@/assets/garantia-7dias.png";
 
 const Index = () => {
+  // -------------------------
+  // UTMIFY FULL FUNIL — VSL
+  // -------------------------
   useEffect(() => {
-    // Track pageView quando a página carregar
-    const trackPageView = () => {
-      const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
-      if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
-        (window as any).Utmify.track('pageView', {
-          page: 'VSL - Método Lovable Infinito',
-          utms
-        });
-        console.log('[UTMIFY] ✅ Evento pageView disparado com sucesso', utms);
-      }
-    };
+    const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-    // Aguardar o pixel carregar
-    if (document.readyState === 'complete') {
-      trackPageView();
-    } else {
-      window.addEventListener('load', trackPageView);
-      return () => window.removeEventListener('load', trackPageView);
+    /* 1) PAGE VIEW */
+    if ((window as any).Utmify?.track) {
+      (window as any).Utmify.track("page_view", { utms });
+      console.log("[UTMIFY] page_view");
     }
-  }, []);
 
-  useEffect(() => {
-    // Track initiateCheckout nos botões
-    const setupCheckoutTracking = () => {
-      const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      
-      // Botão 13,90
-      const btn13 = document.getElementById('btn-comprar-13');
-      if (btn13) {
-        btn13.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const href = btn13.getAttribute('href');
-          
-          // SDK (caso esteja disponível no front)
-          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
-            (window as any).Utmify.track('initiateCheckout', {
-              productName: 'Método Lovable Infinito - 13,90',
-              price: 13.90,
-              utms
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via SDK (13,90)');
-          }
-
-          // Fallback via Edge Function (Server Side)
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                event: 'initiateCheckout',
-                plan: 'Método Lovable Infinito - 13,90',
-                value: 13.90,
-                currency: 'BRL',
-                utms,
-                timestamp: Date.now(),
-              }),
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via fallback (13,90)');
-          } catch (error) {
-            console.error('[UTMIFY] ❌ Erro ao enviar fallback (13,90):', error);
-          }
-
-          // Aguardar 400ms e abrir link
-          await new Promise(r => setTimeout(r, 400));
-          if (href) window.open(href, '_blank');
-        });
-      }
-
-      // Botão 24,90
-      const btn24 = document.getElementById('btn-comprar-24');
-      if (btn24) {
-        btn24.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const href = btn24.getAttribute('href');
-          
-          // SDK (caso esteja disponível no front)
-          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
-            (window as any).Utmify.track('initiateCheckout', {
-              productName: 'Método Lovable Infinito - 24,90',
-              price: 24.90,
-              utms
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via SDK (24,90)');
-          }
-
-          // Fallback via Edge Function (Server Side)
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                event: 'initiateCheckout',
-                plan: 'Método Lovable Infinito - 24,90',
-                value: 24.90,
-                currency: 'BRL',
-                utms,
-                timestamp: Date.now(),
-              }),
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via fallback (24,90)');
-          } catch (error) {
-            console.error('[UTMIFY] ❌ Erro ao enviar fallback (24,90):', error);
-          }
-
-          // Aguardar 400ms e abrir link
-          await new Promise(r => setTimeout(r, 400));
-          if (href) window.open(href, '_blank');
-        });
-      }
-
-      // Botão 24,90 (segundo)
-      const btn24_2 = document.getElementById('btn-comprar-24-2');
-      if (btn24_2) {
-        btn24_2.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const href = btn24_2.getAttribute('href');
-          
-          // SDK (caso esteja disponível no front)
-          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
-            (window as any).Utmify.track('initiateCheckout', {
-              productName: 'Método Lovable Infinito - 24,90',
-              price: 24.90,
-              utms
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via SDK (24,90 - botão 2)');
-          }
-
-          // Fallback via Edge Function (Server Side)
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                event: 'initiateCheckout',
-                plan: 'Método Lovable Infinito - 24,90',
-                value: 24.90,
-                currency: 'BRL',
-                utms,
-                timestamp: Date.now(),
-              }),
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via fallback (24,90 - botão 2)');
-          } catch (error) {
-            console.error('[UTMIFY] ❌ Erro ao enviar fallback (24,90 - botão 2):', error);
-          }
-
-          // Aguardar 400ms e abrir link
-          await new Promise(r => setTimeout(r, 400));
-          if (href) window.open(href, '_blank');
-        });
-      }
-
-      // Botão 13,90 (segundo)
-      const btn13_2 = document.getElementById('btn-comprar-13-2');
-      if (btn13_2) {
-        btn13_2.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const href = btn13_2.getAttribute('href');
-          
-          // SDK (caso esteja disponível no front)
-          if ((window as any).Utmify && typeof (window as any).Utmify.track === 'function') {
-            (window as any).Utmify.track('initiateCheckout', {
-              productName: 'Método Lovable Infinito - 13,90',
-              price: 13.90,
-              utms
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via SDK (13,90 - botão 2)');
-          }
-
-          // Fallback via Edge Function (Server Side)
-          try {
-            await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                event: 'initiateCheckout',
-                plan: 'Método Lovable Infinito - 13,90',
-                value: 13.90,
-                currency: 'BRL',
-                utms,
-                timestamp: Date.now(),
-              }),
-            });
-            console.log('[UTMIFY] ✅ initiateCheckout enviado via fallback (13,90 - botão 2)');
-          } catch (error) {
-            console.error('[UTMIFY] ❌ Erro ao enviar fallback (13,90 - botão 2):', error);
-          }
-
-          // Aguardar 400ms e abrir link
-          await new Promise(r => setTimeout(r, 400));
-          if (href) window.open(href, '_blank');
-        });
-      }
-    };
-
-    // Aguardar o DOM estar pronto
-    if (document.readyState === 'complete') {
-      setupCheckoutTracking();
-    } else {
-      window.addEventListener('load', setupCheckoutTracking);
-      return () => window.removeEventListener('load', setupCheckoutTracking);
+    /* 2) VIEW CONTENT — quando o vídeo inicia */
+    const video = document.getElementById("my-vsl-video");
+    if (video) {
+      video.addEventListener("play", () => {
+        if ((window as any).Utmify?.track) {
+          (window as any).Utmify.track("viewContent", { utms });
+          console.log("[UTMIFY] viewContent");
+        }
+      });
     }
+
+    /* 3) INITIATE CHECKOUT — 4 BOTÕES */
+    const buttons = [
+      { id: "btn-comprar-13-1", plan: "13,90" },
+      { id: "btn-comprar-24-1", plan: "24,90" },
+      { id: "btn-comprar-24-2", plan: "24,90" },
+      { id: "btn-comprar-13-2", plan: "13,90" },
+    ];
+
+    buttons.forEach(btn => {
+      const el = document.getElementById(btn.id);
+      if (!el) return;
+
+      el.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const href = el.getAttribute("href");
+
+        // --- FRONT-END (SDK)
+        if ((window as any).Utmify?.track) {
+          (window as any).Utmify.track("initiateCheckout", {
+            offer: btn.plan,
+            utms,
+          });
+          console.log("[UTMIFY] initiateCheckout SDK", btn.plan);
+        }
+
+        // --- SERVER (Fallback)
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "initiateCheckout",
+              offer: btn.plan,
+              utms,
+              timestamp: Date.now(),
+            }),
+          });
+          console.log("[UTMIFY] initiateCheckout fallback", btn.plan);
+        } catch (err) {
+          console.error("[UTMIFY] fallback ERROR", err);
+        }
+
+        // Aguardar 400ms e abrir link
+        await new Promise(r => setTimeout(r, 400));
+        if (href) window.open(href, '_blank');
+      });
+    });
   }, []);
 
   const getCurrentDate = () => {
@@ -261,7 +128,7 @@ const Index = () => {
           
           <div className="flex flex-col items-center gap-4 mt-4 relative z-10 pointer-events-auto">
             <a 
-              id="btn-comprar-13"
+              id="btn-comprar-13-1"
               href="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
               target="_blank"
               rel="noopener noreferrer"
@@ -283,7 +150,8 @@ const Index = () => {
             <iframe 
               width="100%" 
               height="360"
-              src="https://www.youtube.com/embed/9lW79rbjyjk?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0"
+            id="my-vsl-video"
+            src="https://www.youtube.com/embed/9lW79rbjyjk?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&enablejsapi=1"
               frameBorder="0"
               allow="autoplay; encrypted-media; fullscreen"
               allowFullScreen>
@@ -364,7 +232,7 @@ const Index = () => {
 
           <div className="relative z-10 pointer-events-auto">
             <a 
-              id="btn-comprar-24"
+              id="btn-comprar-24-1"
               href="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
               target="_blank"
               rel="noopener noreferrer"
@@ -444,8 +312,24 @@ const Index = () => {
             ESCOLHA SEU PLANO
           </h2>
           <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-            <PricingCard title="🟡 PLANO GOLD" price="R$24,90" features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "🎁 Aula: Como remover a marca d'água do Lovable", "Suporte premium"]} variant="gold" buttonText="QUERO PLANO GOLD" checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG" />
-            <PricingCard title="⚙️ PLANO PRATA" price="R$13,90" features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Suporte básico"]} variant="silver" buttonText="QUERO PLANO PRATA" checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z" />
+            <PricingCard 
+              title="🟡 PLANO GOLD" 
+              price="R$24,90" 
+              features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "🎁 Aula: Como remover a marca d'água do Lovable", "Suporte premium"]} 
+              variant="gold" 
+              buttonText="QUERO PLANO GOLD" 
+              checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
+              buttonId="btn-comprar-24-2"
+            />
+            <PricingCard 
+              title="⚙️ PLANO PRATA" 
+              price="R$13,90" 
+              features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Suporte básico"]} 
+              variant="silver" 
+              buttonText="QUERO PLANO PRATA" 
+              checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
+              buttonId="btn-comprar-13-2"
+            />
           </div>
         </div>
       </section>
