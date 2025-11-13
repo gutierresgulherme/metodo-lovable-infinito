@@ -2,3 +2,9 @@ project_id = "zshzrnkhxqksfaphfqyi"
 
 [functions.yampi-webhook]
 verify_jwt = false
+
+[functions.init-fallback]
+verify_jwt = false
+
+[functions.purchase-fallback]
+verify_jwt = false
