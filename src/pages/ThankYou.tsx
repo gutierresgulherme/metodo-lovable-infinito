@@ -1,9 +1,7 @@
 import { useEffect } from "react";
+import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 
 export default function ThankYou() {
-  // ------------------------------------------------
-  // UTMIFY — purchase tracking (SDK + fallback)
-  // ------------------------------------------------
   useEffect(() => {
     const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -11,10 +9,10 @@ export default function ThankYou() {
     // SDK
     if ((window as any).Utmify?.track) {
       (window as any).Utmify.track("purchase", { utms });
-      console.log("[UTMIFY] purchase SDK");
+      console.log("[UTMIFY] purchase (SDK)");
     }
 
-    // Fallback
+    // FALLBACK
     fetch(`${supabaseUrl}/functions/v1/purchase-fallback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -24,55 +22,57 @@ export default function ThankYou() {
         timestamp: Date.now(),
       }),
     })
-      .then(() => console.log("[UTMIFY] purchase fallback"))
+      .then(() => {
+        console.log("[UTMIFY] purchase fallback enviado");
+      })
       .catch((err) => console.error("[UTMIFY] purchase fallback ERROR", err));
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] flex flex-col items-center justify-center text-white p-6">
-      <div className="max-w-md mx-auto text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0A0F24] px-6 text-white text-center">
+      <img 
+        src={lovableInfinitoTitle}
+        alt="Método Lovable Infinito" 
+        className="w-[320px] max-w-full mb-8 drop-shadow-xl"
+      />
 
-        {/* IMAGEM DO PRODUTO */}
-        <img
-          src="/lovable-infinito-title.png"
-          alt="Método Lovable Infinito"
-          className="w-full mb-6 drop-shadow-xl"
-        />
+      <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-[#FF2EB8] to-[#00E5FF] bg-clip-text text-transparent">
+        🎉 Acesso Liberado: Método Lovable Infinito
+      </h1>
 
-        {/* TÍTULO */}
-        <h1 className="text-3xl font-bold mb-4 text-gradient">
-          🎉 Acesso Liberado: Método Lovable Infinito
-        </h1>
+      <div className="max-w-xl text-lg leading-relaxed opacity-90">
+        <p>Olá! Seu acesso ao Método Lovable Infinito já está pronto.</p>
+        <br />
 
-        {/* MENSAGEM */}
-        <p className="text-lg opacity-90 mb-6">
-          Seu entregável do Método Lovable Infinito já está liberado para acesso imediato.
+        <p>Para entrar na área de membros, siga o passo a passo abaixo:</p>
+        <br />
+
+        <p><strong>1.</strong> Acesse o link:</p>
+        <p className="break-all text-[#FF2EB8] font-semibold mt-2">
+          👉 https://lovable-infinity-learn.lovable.app/login
         </p>
 
-        {/* PASSO A PASSO */}
-        <div className="bg-[#11111A] p-5 rounded-xl shadow-lg border border-white/10">
-          <p className="text-left leading-relaxed">
-            Basta seguir o passo abaixo:
-            <br /><br />
-            <strong>1. Clique no link para acessar o arquivo:</strong>
-            <br />
-            <a
-              href="https://drive.google.com/file/d/1TIsIRBbd7YZwclsSYKU-aiuG7lqCiOrV/view?usp=drivesdk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#FF2EB8] underline font-semibold"
-            >
-              👉 Abrir Entregável
-            </a>
-            <br /><br />
-            Salve no seu dispositivo e use sempre que precisar — esse material faz parte do seu acesso vitalício ao método.
-            <br /><br />
-            Se tiver qualquer dúvida, pode nos chamar no suporte via WhatsApp.
-            <br />
-            Tamo junto pra escalar ainda mais! 🚀🔥
-          </p>
-        </div>
+        <p className="mt-3"><strong>2.</strong> Crie seu cadastro com seu e-mail e senha.</p>
+        <p><strong>3.</strong> Acesse todo o conteúdo do Método Lovable Infinito.</p>
+
+        <br />
+        <p className="text-yellow-400 font-semibold">
+          ⚠ IMPORTANTE: Salve esse link — ele é seu acesso permanente.
+        </p>
+
+        <br />
+        <p>Se tiver qualquer dúvida, pode acionar nosso suporte.</p>
+        <p>Bem-vindo(a) à sua nova jornada. Vamos escalar juntos. 🚀🔥</p>
       </div>
+
+      <a
+        href="https://lovable-infinity-learn.lovable.app/login"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-8 px-8 py-4 rounded-full bg-gradient-to-r from-[#FF2EB8] to-[#00E5FF] text-white font-bold text-lg shadow-lg hover:scale-[1.03] transition-transform"
+      >
+        Acessar Área de Membros
+      </a>
     </div>
   );
 }
