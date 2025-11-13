@@ -12,116 +12,95 @@ import garantia7dias from "@/assets/garantia-7dias.png";
 
 const Index = () => {
   // -------------------------
-  // UTMIFY FULL FUNIL — VSL
+  // UTMIFY TRACKING — CLEAN VERSION
   // -------------------------
   useEffect(() => {
+    // 1. Ler UTMs
     const utms =
       (window as any).__UTMIFY__?.readPersistedUTMs?.() ||
       (window as any).Utmify?.getUTMs?.() ||
       {};
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-    /* 1) PAGE VIEW — ao carregar a página */
+    console.log("[UTMIFY] UTMs capturadas:", utms);
+
+    // 2. PAGE VIEW
     if ((window as any).Utmify?.track) {
-      (window as any).Utmify.track("pageView", { utms });
-      console.log("[UTMIFY] pageView", utms);
-    } else {
-      console.warn("[UTMIFY] SDK não encontrado para pageView");
+      (window as any).Utmify.track("pageView", utms);
+      console.log("[UTMIFY] pageView enviado");
     }
 
-    /* 2) VIEW CONTENT — quando o vídeo inicia */
-    const video = document.getElementById("my-vsl-video") as
-      | HTMLIFrameElement
-      | HTMLVideoElement
-      | null;
-
+    // 3. VIEW CONTENT (quando o vídeo inicia)
+    const video = document.getElementById("my-vsl-video");
     if (video) {
       const onPlay = () => {
         if ((window as any).Utmify?.track) {
-          (window as any).Utmify.track("viewContent", { utms });
-          console.log("[UTMIFY] viewContent", utms);
-        } else {
-          console.warn("[UTMIFY] SDK não encontrado para viewContent");
+          (window as any).Utmify.track("viewContent", utms);
+          console.log("[UTMIFY] viewContent enviado");
         }
       };
-
-      // para <video>, evento play funciona direto
-      // para <iframe> YouTube, o pixel da UTMify já costuma tratar scroll/tempo;
-      // aqui é um extra caso tenha integração futura.
       video.addEventListener("play", onPlay as any);
-
-      // cleanup
-      return () => {
-        video.removeEventListener("play", onPlay as any);
-      };
     }
 
-    /* 3) INITIATE CHECKOUT — AUTO-DETECT YAMPI LINKS */
+    // 4. INITIATE CHECKOUT (detecção automática de links Yampi)
+    const checkoutSelector =
+      "a[href*='pay.yampi'], a[href*='yampi.com'], a[href*='checkout'], a[href^='https://limitada-developers']";
 
-    // Seleciona QUALQUER link de checkout Yampi / checkout final
+    const utmifyProxyUrl =
+      "https://zshzrnkhxqksfaphfqyi.supabase.co/functions/v1/utmify-proxy";
+
     const links = Array.from(
-      document.querySelectorAll<HTMLAnchorElement>(
-        "a[href*='pay.yampi'], a[href*='yampi.com'], a[href*='checkout'], a[href^='https://limitada-developers']"
-      )
+      document.querySelectorAll<HTMLAnchorElement>(checkoutSelector)
     );
 
-    console.log("[INITIATE CHECKOUT] Links encontrados:", links);
-
-    const fallbackSecret = import.meta.env.VITE_FALLBACK_SECRET || "";
+    console.log("[UTMIFY] Links de checkout detectados:", links.length);
 
     const handleClickFactory = (link: HTMLAnchorElement) => {
       return async (e: MouseEvent) => {
         e.preventDefault();
         const href = link.getAttribute("href");
 
-        console.log("[INITIATE CHECKOUT] Clique detectado em:", href);
+        console.log("[UTMIFY] Clique no checkout detectado:", href);
 
-        // 3.1 – SDK (frontend)
+        // 4.1 – SDK (frontend)
         if ((window as any).Utmify?.track) {
           (window as any).Utmify.track("initiateCheckout", {
-            offer_name: "VSL Lovable Infinito",
+            offer_name: "Lovable Infinito",
             ...utms,
           });
-          console.log("[UTMIFY] initiateCheckout via SDK", utms);
-        } else {
-          console.warn("[UTMIFY] SDK não encontrado para initiateCheckout");
+          console.log("[UTMIFY] initiateCheckout via SDK");
         }
 
-        // 3.2 – Fallback (server-side via Edge Function)
+        // 4.2 – Fallback (utmify-proxy)
         try {
-          await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
+          await fetch(utmifyProxyUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-Fallback-Secret": fallbackSecret,
             },
             body: JSON.stringify({
               event_name: "initiateCheckout",
               event_data: {
-                offer_name: "VSL Lovable Infinito",
+                offer_name: "Lovable Infinito",
                 ...utms,
               },
               timestamp: Date.now(),
             }),
           });
-          console.log("[UTMIFY] initiateCheckout via fallback enviado");
+          console.log("[UTMIFY] initiateCheckout via fallback (utmify-proxy)");
         } catch (err) {
-          console.error(
-            "[UTMIFY] initiateCheckout fallback ERROR",
-            err
-          );
+          console.error("[UTMIFY] Erro no fallback:", err);
         }
 
-        // 3.3 – Aguardar envio e abrir o checkout
+        // 4.3 – Abrir checkout após delay
         setTimeout(() => {
           if (href) {
             window.open(href, "_blank");
           }
-        }, 600);
+        }, 500);
       };
     };
 
-    // Adiciona listeners em todos os links de checkout
+    // Adiciona listeners
     const listeners: Array<{
       el: HTMLAnchorElement;
       fn: (e: MouseEvent) => void;
@@ -133,7 +112,7 @@ const Index = () => {
       listeners.push({ el: link, fn });
     });
 
-    // cleanup dos listeners
+    // Cleanup
     return () => {
       listeners.forEach(({ el, fn }) => {
         el.removeEventListener("click", fn);
