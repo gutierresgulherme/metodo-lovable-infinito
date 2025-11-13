@@ -13,45 +13,6 @@ const WebhookBodySchema = z.object({
   }).optional(),
 }).passthrough();
 
-// EmailJS configuration
-const EMAILJS_SERVICE_ID = Deno.env.get('EMAILJS_SERVICE_ID');
-const EMAILJS_TEMPLATE_ID = Deno.env.get('EMAILJS_TEMPLATE_ID');
-const EMAILJS_PUBLIC_KEY = Deno.env.get('EMAILJS_PUBLIC_KEY');
-const EMAILJS_PRIVATE_KEY = Deno.env.get('EMAILJS_PRIVATE_KEY');
-
-async function sendEmailViaEmailJS(toEmail: string, subject: string, message: string) {
-  try {
-    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        service_id: EMAILJS_SERVICE_ID,
-        template_id: EMAILJS_TEMPLATE_ID,
-        user_id: EMAILJS_PUBLIC_KEY,
-        template_params: {
-          to_email: toEmail,
-          subject: subject,
-          message: message,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('EmailJS error:', errorText);
-      throw new Error(`EmailJS returned ${response.status}: ${errorText}`);
-    }
-
-    console.log('✅ Email enviado com sucesso para:', toEmail);
-    return true;
-  } catch (error) {
-    console.error('❌ Erro ao enviar email:', error);
-    return false;
-  }
-}
-
 serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
