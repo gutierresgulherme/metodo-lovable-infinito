@@ -12,6 +12,24 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Validate shared secret
+    const secret = req.headers.get("X-Fallback-Secret");
+    const expectedSecret = Deno.env.get("INTERNAL_TOKEN");
+    
+    if (!secret || secret !== expectedSecret) {
+      console.error("[UTMIFY] Unauthorized request - invalid secret");
+      return new Response(
+        JSON.stringify({ ok: false, error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
     const body = await req.json();
 
     const API_TOKEN = Deno.env.get('UTMIFY_API_KEY') || "";

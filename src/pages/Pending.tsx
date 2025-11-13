@@ -7,6 +7,13 @@ export default function Pending() {
   useEffect(() => {
     const checkPayment = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("⏳ Aguardando autenticação...");
+          return;
+        }
+
         const { data, error } = await supabase.functions.invoke('check-payment');
         
         if (error) {

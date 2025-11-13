@@ -17,7 +17,10 @@ export default function ThankYou() {
     // 2) FALLBACK (server-side)
     fetch(`${supabaseUrl}/functions/v1/purchase-fallback`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Fallback-Secret": import.meta.env.VITE_INTERNAL_TOKEN || ""
+      },
       body: JSON.stringify({
         event: "purchase",
         utms,

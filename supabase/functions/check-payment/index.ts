@@ -12,14 +12,42 @@ serve(async (req: Request) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Verify user is authenticated
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ status: 'error', message: 'Unauthorized' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    // Buscar o último pagamento no banco de dados
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ status: 'error', message: 'Unauthorized' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Buscar o último pagamento do usuário autenticado
     const { data: payments, error } = await supabase
       .from('payments')
       .select('*')
+      .eq('payer_email', user.email)
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -45,7 +73,7 @@ serve(async (req: Request) => {
     }
 
     const lastPayment = payments[0];
-    console.log('🔍 Último pagamento:', lastPayment.status, lastPayment.payer_email);
+    console.log('🔍 Último pagamento:', lastPayment.status);
 
     return new Response(
       JSON.stringify({ status: lastPayment.status }),

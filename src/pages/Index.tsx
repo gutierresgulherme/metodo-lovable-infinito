@@ -63,22 +63,25 @@ const Index = () => {
           console.log("[UTMIFY] initiateCheckout via SDK");
         }
 
-        // Fallback
-        try {
-          await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              event_name: "initiateCheckout",
-              event_data: {
-                offer_name: btn.name,
-                price: btn.price,
-                ...utms
-              },
-              pixel_id: "69115e23ec54d4aceb3e2352",
-              timestamp: Date.now()
-            })
-          });
+      // Fallback
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "X-Fallback-Secret": import.meta.env.VITE_INTERNAL_TOKEN || ""
+          },
+          body: JSON.stringify({
+            event_name: "initiateCheckout",
+            event_data: {
+              offer_name: btn.name,
+              price: btn.price,
+              ...utms
+            },
+            pixel_id: "69115e23ec54d4aceb3e2352",
+            timestamp: Date.now()
+          })
+        });
 
           console.log("[UTMIFY] initiateCheckout via fallback OK");
 
