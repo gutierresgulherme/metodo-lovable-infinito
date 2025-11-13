@@ -20,7 +20,7 @@ const App = () => {
   useEffect(() => {
     const script = document.createElement("script");
     script.innerHTML = `
-      window.pixelId = "6915ff46aafbea3d9f52e4b4";
+      window.pixelId = "691640157bdf7ab356c68277";
       var a = document.createElement("script");
       a.setAttribute("async", "");
       a.setAttribute("defer", "");
