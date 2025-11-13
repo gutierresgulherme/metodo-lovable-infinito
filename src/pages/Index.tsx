@@ -18,13 +18,13 @@ const Index = () => {
     const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-    /* 1) PAGE VIEW */
+    /* PAGE VIEW */
     if ((window as any).Utmify?.track) {
-      (window as any).Utmify.track("page_view", { utms });
-      console.log("[UTMIFY] page_view");
+      (window as any).Utmify.track("pageView", { utms });
+      console.log("[UTMIFY] pageView");
     }
 
-    /* 2) VIEW CONTENT — quando o vídeo inicia */
+    /* VIEW CONTENT — quando o vídeo inicia */
     const video = document.getElementById("my-vsl-video");
     if (video) {
       video.addEventListener("play", () => {
@@ -35,11 +35,11 @@ const Index = () => {
       });
     }
 
-    /* 3) INITIATE CHECKOUT — AUTODETECT YAMPI LINKS */
-    const links = Array.from(document.querySelectorAll('a[target="_blank"]'))
-      .filter(a => a.getAttribute('href')?.includes("yampi"));
+    /* INITIATE CHECKOUT — AUTO-DETECT YAMPI LINKS */
+    // Detecta todos os links com checkout Yampi
+    const links = Array.from(document.querySelectorAll("a[href*='yampi']"));
 
-    console.log("[INITIATE CHECKOUT] Botões encontrados:", links);
+    console.log("[INITIATE CHECKOUT] Links encontrados:", links);
 
     links.forEach(link => {
       link.addEventListener("click", async (e) => {
@@ -47,16 +47,16 @@ const Index = () => {
 
         const href = link.getAttribute("href");
 
-        // FRONT-END SDK
+        // SDK (frontend)
         if ((window as any).Utmify?.track) {
           (window as any).Utmify.track("initiateCheckout", {
             offer_name: "VSL Lovable Infinito",
-            utms
+            ...utms,
           });
           console.log("[UTMIFY] initiateCheckout via SDK");
         }
 
-        // FALLBACK SERVER-SIDE
+        // Fallback server-side
         try {
           await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
             method: "POST",
@@ -70,17 +70,15 @@ const Index = () => {
                 offer_name: "VSL Lovable Infinito",
                 ...utms
               },
-              timestamp: Date.now(),
+              timestamp: Date.now()
             })
           });
-
-          console.log("[UTMIFY] initiateCheckout via fallback enviado");
-
+          console.log("[UTMIFY] initiateCheckout via fallback");
         } catch (err) {
-          console.error("[UTMIFY] fallback ERROR", err);
+          console.error("[UTMIFY] initiateCheckout fallback ERROR", err);
         }
 
-        // AGUARDAR 600ms ANTES DE ABRIR O CHECKOUT
+        // Aguardar envio e abrir o checkout
         setTimeout(() => {
           if (href) window.open(href, "_blank");
         }, 600);

@@ -6,30 +6,28 @@ export default function ThankYou() {
     const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-    // 1) SDK UTMify
+    // SDK
     if ((window as any).Utmify?.track) {
       (window as any).Utmify.track("purchase", { utms });
-      console.log("[UTMIFY] PURCHASE enviado via SDK");
-    } else {
-      console.warn("[UTMIFY] SDK não disponível — usando fallback.");
+      console.log("[UTMIFY] PURCHASE via SDK");
     }
 
-    // 2) FALLBACK (server-side)
+    // Fallback server-side
     fetch(`${supabaseUrl}/functions/v1/purchase-fallback`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "X-Fallback-Secret": import.meta.env.VITE_INTERNAL_TOKEN || ""
+        "X-Fallback-Secret": import.meta.env.VITE_FALLBACK_SECRET || ""
       },
       body: JSON.stringify({
-        event: "purchase",
-        utms,
+        event_name: "purchase",
+        event_data: { ...utms },
         timestamp: Date.now(),
-        value: 13.90,
-      }),
+        value: 13.90
+      })
     })
       .then(() => console.log("[UTMIFY] PURCHASE fallback enviado"))
-      .catch((err) => console.error("[UTMIFY] Erro fallback PURCHASE:", err));
+      .catch((err) => console.error("[UTMIFY] PURCHASE fallback ERROR:", err));
   }, []);
 
   return (
