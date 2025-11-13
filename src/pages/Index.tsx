@@ -15,85 +15,142 @@ const Index = () => {
   // UTMIFY FULL FUNIL — VSL
   // -------------------------
   useEffect(() => {
-    const utms = (window as any).__UTMIFY__?.readPersistedUTMs() || {};
+    const utms =
+      (window as any).__UTMIFY__?.readPersistedUTMs?.() ||
+      (window as any).Utmify?.getUTMs?.() ||
+      {};
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
-    /* PAGE VIEW */
+    /* 1) PAGE VIEW — ao carregar a página */
     if ((window as any).Utmify?.track) {
       (window as any).Utmify.track("pageView", { utms });
-      console.log("[UTMIFY] pageView");
+      console.log("[UTMIFY] pageView", utms);
+    } else {
+      console.warn("[UTMIFY] SDK não encontrado para pageView");
     }
 
-    /* VIEW CONTENT — quando o vídeo inicia */
-    const video = document.getElementById("my-vsl-video");
+    /* 2) VIEW CONTENT — quando o vídeo inicia */
+    const video = document.getElementById("my-vsl-video") as
+      | HTMLIFrameElement
+      | HTMLVideoElement
+      | null;
+
     if (video) {
-      video.addEventListener("play", () => {
+      const onPlay = () => {
         if ((window as any).Utmify?.track) {
           (window as any).Utmify.track("viewContent", { utms });
-          console.log("[UTMIFY] viewContent");
+          console.log("[UTMIFY] viewContent", utms);
+        } else {
+          console.warn("[UTMIFY] SDK não encontrado para viewContent");
         }
-      });
+      };
+
+      // para <video>, evento play funciona direto
+      // para <iframe> YouTube, o pixel da UTMify já costuma tratar scroll/tempo;
+      // aqui é um extra caso tenha integração futura.
+      video.addEventListener("play", onPlay as any);
+
+      // cleanup
+      return () => {
+        video.removeEventListener("play", onPlay as any);
+      };
     }
 
-    /* INITIATE CHECKOUT — AUTO-DETECT YAMPI LINKS */
-    // Detecta todos os links com checkout Yampi
-    const links = Array.from(document.querySelectorAll("a[href*='yampi']"));
+    /* 3) INITIATE CHECKOUT — AUTO-DETECT YAMPI LINKS */
+
+    // Seleciona QUALQUER link de checkout Yampi / checkout final
+    const links = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>(
+        "a[href*='pay.yampi'], a[href*='yampi.com'], a[href*='checkout'], a[href^='https://limitada-developers']"
+      )
+    );
 
     console.log("[INITIATE CHECKOUT] Links encontrados:", links);
 
-    links.forEach(link => {
-      link.addEventListener("click", async (e) => {
-        e.preventDefault();
+    const fallbackSecret = import.meta.env.VITE_FALLBACK_SECRET || "";
 
+    const handleClickFactory = (link: HTMLAnchorElement) => {
+      return async (e: MouseEvent) => {
+        e.preventDefault();
         const href = link.getAttribute("href");
 
-        // SDK (frontend)
+        console.log("[INITIATE CHECKOUT] Clique detectado em:", href);
+
+        // 3.1 – SDK (frontend)
         if ((window as any).Utmify?.track) {
           (window as any).Utmify.track("initiateCheckout", {
             offer_name: "VSL Lovable Infinito",
             ...utms,
           });
-          console.log("[UTMIFY] initiateCheckout via SDK");
+          console.log("[UTMIFY] initiateCheckout via SDK", utms);
+        } else {
+          console.warn("[UTMIFY] SDK não encontrado para initiateCheckout");
         }
 
-        // Fallback server-side
+        // 3.2 – Fallback (server-side via Edge Function)
         try {
           await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-Fallback-Secret": import.meta.env.VITE_FALLBACK_SECRET || ""
+              "X-Fallback-Secret": fallbackSecret,
             },
             body: JSON.stringify({
               event_name: "initiateCheckout",
               event_data: {
                 offer_name: "VSL Lovable Infinito",
-                ...utms
+                ...utms,
               },
-              timestamp: Date.now()
-            })
+              timestamp: Date.now(),
+            }),
           });
-          console.log("[UTMIFY] initiateCheckout via fallback");
+          console.log("[UTMIFY] initiateCheckout via fallback enviado");
         } catch (err) {
-          console.error("[UTMIFY] initiateCheckout fallback ERROR", err);
+          console.error(
+            "[UTMIFY] initiateCheckout fallback ERROR",
+            err
+          );
         }
 
-        // Aguardar envio e abrir o checkout
+        // 3.3 – Aguardar envio e abrir o checkout
         setTimeout(() => {
-          if (href) window.open(href, "_blank");
+          if (href) {
+            window.open(href, "_blank");
+          }
         }, 600);
-      });
+      };
+    };
+
+    // Adiciona listeners em todos os links de checkout
+    const listeners: Array<{
+      el: HTMLAnchorElement;
+      fn: (e: MouseEvent) => void;
+    }> = [];
+
+    links.forEach((link) => {
+      const fn = handleClickFactory(link);
+      link.addEventListener("click", fn);
+      listeners.push({ el: link, fn });
     });
+
+    // cleanup dos listeners
+    return () => {
+      listeners.forEach(({ el, fn }) => {
+        el.removeEventListener("click", fn);
+      });
+    };
   }, []);
 
   const getCurrentDate = () => {
-    return new Date().toLocaleDateString('pt-BR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
+    return new Date().toLocaleDateString("pt-BR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
   };
-  return <div className="min-h-screen bg-gradient-to-br from-[hsl(240,10%,3.9%)] via-[hsl(267,50%,10%)] to-[hsl(190,50%,10%)] text-foreground relative">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(240,10%,3.9%)] via-[hsl(267,50%,10%)] to-[hsl(190,50%,10%)] text-foreground relative">
       {/* Top Banner */}
       <div className="bg-[hsl(0,100%,50%)] py-2 text-center sticky top-0 z-50 shadow-[0_8px_30px_rgba(255,0,0,0.5)] animate-pulse-glow">
         <p className="text-white font-bold text-xs md:text-sm">
@@ -104,9 +161,14 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative py-8 md:py-12 px-6 md:px-4 overflow-hidden z-0">
         <div className="max-w-4xl mx-auto text-center relative z-10 space-y-4 mb-8">
-          <img src={lovableInfinitoTitle} alt="Lovable Infinito" className="w-[60%] md:w-[75%] max-w-[340px] md:max-w-[450px] mx-auto rounded-xl shadow-[0_0_18px_rgba(255,255,255,0.15)] animate-pulse-glow" style={{
-          filter: 'contrast(1.05) saturate(1.1)'
-        }} />
+          <img
+            src={lovableInfinitoTitle}
+            alt="Lovable Infinito"
+            className="w-[60%] md:w-[75%] max-w-[340px] md:max-w-[450px] mx-auto rounded-xl shadow-[0_0_18px_rgba(255,255,255,0.15)] animate-pulse-glow"
+            style={{
+              filter: "contrast(1.05) saturate(1.1)",
+            }}
+          />
           <h2 className="text-2xl md:text-4xl font-bold text-[hsl(267,100%,65%)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             VOCÊ AINDA PAGA PRA USAR O LOVABLE?
           </h2>
@@ -127,9 +189,9 @@ const Index = () => {
               Por apenas <span className="text-[#00ff73]">R$13,90</span>
             </p>
           </div>
-          
+
           <div className="flex flex-col items-center gap-4 mt-4 relative z-10 pointer-events-auto">
-            <a 
+            <a
               id="btn-comprar-13-1"
               href="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
               target="_blank"
@@ -148,16 +210,24 @@ const Index = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
             ASSISTA AO VÍDEO DA OFERTA
           </h2>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '100%', borderRadius: '12px', overflow: 'hidden' }}>
-            <iframe 
-              width="100%" 
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: "100%",
+              borderRadius: "12px",
+              overflow: "hidden",
+            }}
+          >
+            <iframe
+              width="100%"
               height="360"
-            id="my-vsl-video"
-            src="https://www.youtube.com/embed/9lW79rbjyjk?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&enablejsapi=1"
+              id="my-vsl-video"
+              src="https://www.youtube.com/embed/9lW79rbjyjk?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&enablejsapi=1"
               frameBorder="0"
               allow="autoplay; encrypted-media; fullscreen"
-              allowFullScreen>
-            </iframe>
+              allowFullScreen
+            ></iframe>
           </div>
         </div>
       </section>
@@ -169,30 +239,51 @@ const Index = () => {
             O QUE VOU RECEBER:
           </h2>
           <div className="grid md:grid-cols-2 gap-4 md:gap-6 mb-8">
-            {["Acesso ILIMITADO ao Lovable", "Criar SITES E APLICATIVOS ilimitadas com IA", "Sem bloqueio, sem limite, sem trava", "Método testado e aprovado pelos GRINGOS", "Suporte se tiver qualquer dúvida", "Chegou o fim da palhaçada"].map((feature, index) => <div key={index} className="flex items-start gap-3 bg-black/40 p-4 md:p-5 rounded-lg border border-[hsl(267,100%,65%,0.3)] hover:border-[hsl(267,100%,65%)] transition-colors">
+            {[
+              "Acesso ILIMITADO ao Lovable",
+              "Criar SITES E APLICATIVOS ilimitadas com IA",
+              "Sem bloqueio, sem limite, sem trava",
+              "Método testado e aprovado pelos GRINGOS",
+              "Suporte se tiver qualquer dúvida",
+              "Chegou o fim da palhaçada",
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-3 bg-black/40 p-4 md:p-5 rounded-lg border border-[hsl(267,100%,65%,0.3)] hover:border-[hsl(267,100%,65%)] transition-colors"
+              >
                 <Check className="w-5 md:w-6 h-5 md:h-6 text-[hsl(94,100%,73%)] shrink-0 mt-1" />
-                <span className="text-base md:text-lg text-foreground font-medium">{feature}</span>
-              </div>)}
+                <span className="text-base md:text-lg text-foreground font-medium">
+                  {feature}
+                </span>
+              </div>
+            ))}
           </div>
-          
+
           <div className="bg-gradient-to-br from-[hsl(267,100%,65%,0.1)] to-[hsl(190,100%,50%,0.1)] p-6 md:p-8 rounded-xl border border-[hsl(267,100%,65%,0.3)] mb-8">
             <p className="text-base md:text-lg mb-4 text-foreground">
               A gente descobriu uma brecha limpa no sistema do Lovable.
             </p>
             <p className="text-base md:text-lg text-foreground">
-              E agora você pode ter acesso completo, vitalício, sem limite de páginas, sem pagar NADA todo mês.
+              E agora você pode ter acesso completo, vitalício, sem limite de
+              páginas, sem pagar NADA todo mês.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 text-center mb-8">
             <div className="bg-black/40 p-4 md:p-6 rounded-lg border border-[hsl(190,100%,50%)] shadow-[0_0_20px_hsl(190,100%,50%/0.3)]">
-              <p className="text-base md:text-lg font-bold text-[hsl(190,100%,50%)]">📌 Não precisa cartão internacional</p>
+              <p className="text-base md:text-lg font-bold text-[hsl(190,100%,50%)]">
+                📌 Não precisa cartão internacional
+              </p>
             </div>
             <div className="bg-black/40 p-4 md:p-6 rounded-lg border border-[hsl(190,100%,50%)] shadow-[0_0_20px_hsl(190,100%,50%/0.3)]">
-              <p className="text-base md:text-lg font-bold text-[hsl(190,100%,50%)]">📌 Não é pirataria</p>
+              <p className="text-base md:text-lg font-bold text-[hsl(190,100%,50%)]">
+                📌 Não é pirataria
+              </p>
             </div>
             <div className="bg-black/40 p-4 md:p-6 rounded-lg border border-[hsl(190,100%,50%)] shadow-[0_0_20px_hsl(190,100%,50%/0.3)]">
-              <p className="text-base md:text-lg font-bold text-[hsl(190,100%,50%)]">📌 Funciona AGORA</p>
+              <p className="text-base md:text-lg font-bold text-[hsl(190,100%,50%)]">
+                📌 Funciona AGORA
+              </p>
             </div>
           </div>
         </div>
@@ -202,21 +293,37 @@ const Index = () => {
       <section className="py-8 md:py-12 px-6 md:px-4 bg-black/30">
         <div className="max-w-5xl mx-auto text-center space-y-4">
           <h2 className="text-2xl md:text-4xl font-bold text-foreground drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-            Por apenas <span className="text-[#00ff73] font-black">R$24,90</span> receba o Método Lovable Infinito<br className="hidden md:block" />e de BRINDE VÃO MAIS 2 BÔNUS EXCLUSIVOS…
+            Por apenas{" "}
+            <span className="text-[#00ff73] font-black">R$24,90</span> receba o
+            Método Lovable Infinito
+            <br className="hidden md:block" />
+            e de BRINDE VÃO MAIS 2 BÔNUS EXCLUSIVOS…
           </h2>
-          
+
           <div className="grid md:grid-cols-2 gap-6 md:gap-8 mb-12">
             <div className="bg-black/50 p-6 md:p-8 rounded-xl border-2 border-[hsl(267,100%,65%)] hover:border-[hsl(267,100%,75%)] transition-colors shadow-[0_0_30px_hsl(267,100%,65%/0.3)]">
               <div className="w-24 md:w-32 h-24 md:h-32 mx-auto mb-4 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(255,255,255,0.08)]">
-                <img src={chatgptBonus} alt="ChatGPT 5 Plus" className="w-full h-full object-contain" />
+                <img
+                  src={chatgptBonus}
+                  alt="ChatGPT 5 Plus"
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <h3 className="text-xl md:text-2xl font-bold text-foreground">ChatGPT 5 Plus</h3>
+              <h3 className="text-xl md:text-2xl font-bold text-foreground">
+                ChatGPT 5 Plus
+              </h3>
             </div>
             <div className="bg-black/50 p-6 md:p-8 rounded-xl border-2 border-[hsl(190,100%,50%)] hover:border-[hsl(190,100%,60%)] transition-colors shadow-[0_0_30px_hsl(190,100%,50%/0.3)]">
               <div className="w-24 md:w-32 h-24 md:h-32 mx-auto mb-4 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(255,255,255,0.08)]">
-                <img src={canvaBonus} alt="Canva PRO" className="w-full h-full object-contain" />
+                <img
+                  src={canvaBonus}
+                  alt="Canva PRO"
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <h3 className="text-xl md:text-2xl font-bold text-foreground">Canva PRO</h3>
+              <h3 className="text-xl md:text-2xl font-bold text-foreground">
+                Canva PRO
+              </h3>
             </div>
           </div>
 
@@ -226,14 +333,14 @@ const Index = () => {
                 🎁 BÔNUS EXCLUSIVO
               </div>
               <h3 className="text-xl md:text-2xl font-bold text-foreground mb-2">
-                Aula Bônus: Como remover a marca d'água do Lovable
+                Aula Bônus: Como remover a marca d&apos;água do Lovable
               </h3>
               <p className="text-muted-foreground">(Grátis)</p>
             </div>
           </div>
 
           <div className="relative z-10 pointer-events-auto">
-            <a 
+            <a
               id="btn-comprar-24-1"
               href="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
               target="_blank"
@@ -252,13 +359,24 @@ const Index = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             FEEDBACK DA GALERA QUE COMPROU:
           </h2>
-          
+
           <div className="grid md:grid-cols-3 gap-4">
-            {[feedback1, feedback2, feedback3].map((imageUrl, index) => <div key={index} className="overflow-hidden rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.25)] transition-transform duration-300 hover:scale-105">
-                <img src={imageUrl} alt={`Feedback ${index + 1}`} className="w-full h-full object-cover max-h-[360px] md:max-h-[360px]" style={{
-              maxHeight: "280px"
-            }} loading="eager" />
-              </div>)}
+            {[feedback1, feedback2, feedback3].map((imageUrl, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.25)] transition-transform duration-300 hover:scale-105"
+              >
+                <img
+                  src={imageUrl}
+                  alt={`Feedback ${index + 1}`}
+                  className="w-full h-full object-cover max-h-[360px] md:max-h-[360px]"
+                  style={{
+                    maxHeight: "280px",
+                  }}
+                  loading="eager"
+                />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -272,12 +390,14 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-4 md:gap-6 mb-12">
             <div className="bg-gradient-to-br from-[hsl(190,100%,50%,0.2)] to-[hsl(267,100%,65%,0.2)] p-4 md:p-6 rounded-xl border-2 border-[hsl(190,100%,50%)]">
               <p className="text-base md:text-lg text-foreground">
-                ✅ As que pegam agora esse método e desbloqueiam o Lovable de forma ilimitada
+                ✅ As que pegam agora esse método e desbloqueiam o Lovable de
+                forma ilimitada
               </p>
             </div>
             <div className="bg-muted/10 p-4 md:p-6 rounded-xl border-2 border-muted">
               <p className="text-base md:text-lg text-muted-foreground">
-                ❌ As que vão continuar presas no plano gratuito, empacadas nos projetos sem poder testar logo
+                ❌ As que vão continuar presas no plano gratuito, empacadas nos
+                projetos sem poder testar logo
               </p>
             </div>
           </div>
@@ -287,21 +407,47 @@ const Index = () => {
               SE FOSSE PAGAR O PREÇO REAL POR TUDO ISSO…
             </h3>
             <div className="space-y-3 mb-6">
-              <p className="text-base md:text-lg text-foreground">💰 <span className="text-[hsl(0,100%,59%)]">US$20</span> por mês só pra ter acesso ao Lovable</p>
-              <p className="text-base md:text-lg text-foreground">💰 <span className="text-[hsl(0,100%,59%)]">US$15</span> mensais pra usar o Gamma PRO sem limitações</p>
-              <p className="text-base md:text-lg text-foreground">💰 <span className="text-[hsl(0,100%,59%)]">US$20</span> mensais pra liberar o verdadeiro poder do ChatGPT PRO</p>
-              <p className="text-base md:text-lg text-foreground">💰 <span className="text-[hsl(0,100%,59%)]">US$58</span> mensais pra liberar todos os recursos do Canva PRO ANUAL</p>
+              <p className="text-base md:text-lg text-foreground">
+                💰{" "}
+                <span className="text-[hsl(0,100%,59%)]">US$20</span> por mês só
+                pra ter acesso ao Lovable
+              </p>
+              <p className="text-base md:text-lg text-foreground">
+                💰{" "}
+                <span className="text-[hsl(0,100%,59%)]">US$15</span> mensais
+                pra usar o Gamma PRO sem limitações
+              </p>
+              <p className="text-base md:text-lg text-foreground">
+                💰{" "}
+                <span className="text-[hsl(0,100%,59%)]">US$20</span> mensais
+                pra liberar o verdadeiro poder do ChatGPT PRO
+              </p>
+              <p className="text-base md:text-lg text-foreground">
+                💰{" "}
+                <span className="text-[hsl(0,100%,59%)]">US$58</span> mensais
+                pra liberar todos os recursos do Canva PRO ANUAL
+              </p>
             </div>
             <div className="border-t border-[hsl(267,100%,65%,0.3)] pt-6 mb-6">
-              <p className="text-xl md:text-2xl font-bold text-center text-foreground mb-2">Soma total? <span className="text-[hsl(0,100%,59%)]">US$103/mês</span></p>
-              <p className="text-lg md:text-xl text-center text-muted-foreground drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">(+ de <span className="text-[#00ff73] font-bold">R$570</span> por mês, fácil.)</p>
+              <p className="text-xl md:text-2xl font-bold text-center text-foreground mb-2">
+                Soma total?{" "}
+                <span className="text-[hsl(0,100%,59%)]">US$103/mês</span>
+              </p>
+              <p className="text-lg md:text-xl text-center text-muted-foreground drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                (+ de <span className="text-[#00ff73] font-bold">R$570</span>{" "}
+                por mês, fácil.)
+              </p>
             </div>
             <div className="text-center">
-              <p className="text-lg md:text-xl mb-2 text-foreground drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">E o que você vai pagar aqui?</p>
+              <p className="text-lg md:text-xl mb-2 text-foreground drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                E o que você vai pagar aqui?
+              </p>
               <p className="text-4xl md:text-5xl font-black drop-shadow-[0_0_20px_rgba(0,255,115,0.6)]">
                 Apenas <span className="text-[#00ff73]">R$13,90</span>
               </p>
-              <p className="text-xl md:text-2xl font-bold text-[hsl(45,100%,60%)] mt-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Uma Única Vez.</p>
+              <p className="text-xl md:text-2xl font-bold text-[hsl(45,100%,60%)] mt-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                Uma Única Vez.
+              </p>
             </div>
           </div>
         </div>
@@ -314,21 +460,32 @@ const Index = () => {
             ESCOLHA SEU PLANO
           </h2>
           <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-            <PricingCard 
-              title="🟡 PLANO GOLD" 
-              price="R$24,90" 
-              features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "🎁 Aula: Como remover a marca d'água do Lovable", "Suporte premium"]} 
-              variant="gold" 
-              buttonText="QUERO PLANO GOLD" 
+            <PricingCard
+              title="🟡 PLANO GOLD"
+              price="R$24,90"
+              features={[
+                "Método Lovable Infinito",
+                "Acesso ilimitado Lovable",
+                "Bônus ChatGPT 5 Plus",
+                "Bônus Canva PRO",
+                "🎁 Aula: Como remover a marca d'água do Lovable",
+                "Suporte premium",
+              ]}
+              variant="gold"
+              buttonText="QUERO PLANO GOLD"
               checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
               buttonId="btn-comprar-24-2"
             />
-            <PricingCard 
-              title="⚙️ PLANO PRATA" 
-              price="R$13,90" 
-              features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Suporte básico"]} 
-              variant="silver" 
-              buttonText="QUERO PLANO PRATA" 
+            <PricingCard
+              title="⚙️ PLANO PRATA"
+              price="R$13,90"
+              features={[
+                "Método Lovable Infinito",
+                "Acesso ilimitado Lovable",
+                "Suporte básico",
+              ]}
+              variant="silver"
+              buttonText="QUERO PLANO PRATA"
               checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
               buttonId="btn-comprar-13-2"
             />
@@ -340,7 +497,11 @@ const Index = () => {
       <section className="py-8 md:py-12 px-6 md:px-4 bg-black/30">
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <div className="inline-block mb-6">
-            <img src={garantia7dias} alt="Garantia 7 dias" className="w-auto max-w-[200px] md:max-w-[200px] mx-auto rounded-lg shadow-[0_0_10px_rgba(255,255,255,0.1)]" />
+            <img
+              src={garantia7dias}
+              alt="Garantia 7 dias"
+              className="w-auto max-w-[200px] md:max-w-[200px] mx-auto rounded-lg shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+            />
           </div>
           <h2 className="text-2xl md:text-4xl font-bold mb-6 text-foreground">
             Garantia de 7 dias ou seu dinheiro de volta
@@ -349,7 +510,8 @@ const Index = () => {
             Se não funcionar pra você, devolvemos seu dinheiro.
           </p>
           <p className="text-base md:text-lg text-foreground">
-            Sem desculpa, sem enrolação.<br />
+            Sem desculpa, sem enrolação.
+            <br />
             Ou funciona, ou o dinheiro volta. Simples assim.
           </p>
         </div>
@@ -362,10 +524,22 @@ const Index = () => {
             PERGUNTAS FREQUENTES
           </h2>
           <div className="space-y-4">
-            <FAQItem question="Isso é golpe?" answer="Não. O método é legítimo e validado por diversos usuários reais." />
-            <FAQItem question="Precisa baixar algo?" answer="Não, tudo é feito online, direto no Lovable." />
-            <FAQItem question="Posso tomar ban?" answer="Não. O método é uma brecha limpa, 100% segura." />
-            <FAQItem question="E se não funcionar?" answer="Funciona. Mas se não funcionar com você, devolvemos seu dinheiro. Simples." />
+            <FAQItem
+              question="Isso é golpe?"
+              answer="Não. O método é legítimo e validado por diversos usuários reais."
+            />
+            <FAQItem
+              question="Precisa baixar algo?"
+              answer="Não, tudo é feito online, direto no Lovable."
+            />
+            <FAQItem
+              question="Posso tomar ban?"
+              answer="Não. O método é uma brecha limpa, 100% segura."
+            />
+            <FAQItem
+              question="E se não funcionar?"
+              answer="Funciona. Mas se não funcionar com você, devolvemos seu dinheiro. Simples."
+            />
           </div>
         </div>
       </section>
@@ -378,6 +552,8 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
