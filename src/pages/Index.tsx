@@ -35,63 +35,55 @@ const Index = () => {
       });
     }
 
-    /* 3) INITIATE CHECKOUT — 4 BOTÕES */
-    const map = [
-      { id: "btn-comprar-13-1", name: "Método 13,90", price: 13.90 },
-      { id: "btn-comprar-24-1", name: "Método 24,90", price: 24.90 },
-      { id: "btn-comprar-24-2", name: "Método 24,90", price: 24.90 },
-      { id: "btn-comprar-13-2", name: "Método 13,90", price: 13.90 },
-    ];
+    /* 3) INITIATE CHECKOUT — AUTODETECT YAMPI LINKS */
+    const links = Array.from(document.querySelectorAll('a[target="_blank"]'))
+      .filter(a => a.getAttribute('href')?.includes("yampi"));
 
-    map.forEach(btn => {
-      const el = document.getElementById(btn.id);
-      if (!el) return;
+    console.log("[INITIATE CHECKOUT] Botões encontrados:", links);
 
-      el.addEventListener("click", async (e) => {
+    links.forEach(link => {
+      link.addEventListener("click", async (e) => {
         e.preventDefault();
-        const href = el.getAttribute("href");
 
-        console.log("[UTMIFY] Clique detectado no botão:", btn);
+        const href = link.getAttribute("href");
 
-        // SDK
+        // FRONT-END SDK
         if ((window as any).Utmify?.track) {
           (window as any).Utmify.track("initiateCheckout", {
-            offer_name: btn.name,
-            price: btn.price,
+            offer_name: "VSL Lovable Infinito",
             utms
           });
           console.log("[UTMIFY] initiateCheckout via SDK");
         }
 
-      // Fallback
-      try {
-        await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "X-Fallback-Secret": import.meta.env.VITE_INTERNAL_TOKEN || ""
-          },
-          body: JSON.stringify({
-            event_name: "initiateCheckout",
-            event_data: {
-              offer_name: btn.name,
-              price: btn.price,
-              ...utms
+        // FALLBACK SERVER-SIDE
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/init-fallback`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Fallback-Secret": import.meta.env.VITE_FALLBACK_SECRET || ""
             },
-            pixel_id: "69115e23ec54d4aceb3e2352",
-            timestamp: Date.now()
-          })
-        });
+            body: JSON.stringify({
+              event_name: "initiateCheckout",
+              event_data: {
+                offer_name: "VSL Lovable Infinito",
+                ...utms
+              },
+              timestamp: Date.now(),
+            })
+          });
 
-          console.log("[UTMIFY] initiateCheckout via fallback OK");
+          console.log("[UTMIFY] initiateCheckout via fallback enviado");
 
         } catch (err) {
           console.error("[UTMIFY] fallback ERROR", err);
         }
 
-        // Aguardar envio e abrir checkout
-        await new Promise(r => setTimeout(r, 800));
-        if (href) window.open(href, "_blank");
+        // AGUARDAR 600ms ANTES DE ABRIR O CHECKOUT
+        setTimeout(() => {
+          if (href) window.open(href, "_blank");
+        }, 600);
       });
     });
   }, []);
