@@ -39,3 +39,5 @@ const App = () => {
 };
 
 export default App;
+
+// atualização mínima para publicar
