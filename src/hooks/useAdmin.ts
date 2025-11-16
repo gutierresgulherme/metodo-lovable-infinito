@@ -7,6 +7,18 @@ export const useAdmin = () => {
 
   useEffect(() => {
     checkAdminStatus();
+
+    // Revalidar admin status quando o auth state mudar
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      // Pequeno delay para garantir que a role foi atribuída
+      setTimeout(() => {
+        checkAdminStatus();
+      }, 1000);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkAdminStatus = async () => {
