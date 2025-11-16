@@ -10,6 +10,7 @@ import ThankYou from "./pages/ThankYou";
 import Pending from "./pages/Pending";
 import TestUtmify from "./pages/TestUtmify";
 import NotFound from "./pages/NotFound";
+import AdminVideos from "./pages/AdminVideos";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => {
             <Route path="/thankyou" element={<ThankYou />} />
             <Route path="/pending" element={<Pending />} />
             <Route path="/utmify-debug" element={<TestUtmify />} />
+            <Route path="/admin/videos" element={<AdminVideos />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
