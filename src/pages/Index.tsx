@@ -1,6 +1,7 @@
 import { PricingCard } from "@/components/PricingCard";
 import { FAQItem } from "@/components/FAQItem";
 import { Check } from "lucide-react";
+import { VSLPlayer } from "@/components/VSLPlayer";
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import feedback1 from "@/assets/feedback-1.png";
 import feedback2 from "@/assets/feedback-2.png";
@@ -74,32 +75,7 @@ const Index = () => {
       </section>
 
       {/* Video Section */}
-      <section className="py-8 md:py-12 px-6 md:px-4 bg-black/30 mt-6 relative z-0">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
-            ASSISTA AO VÍDEO DA OFERTA
-          </h2>
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-              maxWidth: "100%",
-              borderRadius: "12px",
-              overflow: "hidden",
-            }}
-          >
-            <iframe
-              width="100%"
-              height="360"
-              id="my-vsl-video"
-              src="https://www.youtube.com/embed/9lW79rbjyjk?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&enablejsapi=1"
-              frameBorder="0"
-              allow="autoplay; encrypted-media; fullscreen"
-              allowFullScreen
-            ></iframe>
-          </div>
-        </div>
-      </section>
+      <VSLPlayer />
 
       {/* What You'll Receive Section */}
       <section className="py-8 md:py-12 px-6 md:px-4">
