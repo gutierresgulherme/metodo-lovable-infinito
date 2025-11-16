@@ -20,13 +20,18 @@ export const VideoUpload = ({ currentVideo, onVideoUpdated }: VideoUploadProps) 
   const { toast } = useToast();
 
   const validateFile = (file: File): boolean => {
-    const validTypes = ['video/mp4', 'video/quicktime', 'video/x-matroska'];
-    const maxSize = 1024 * 1024 * 1024; // 1GB
+    const validTypes = ['video/mp4', 'video/quicktime', 'video/x-matroska', 'video/x-msvideo', 'video/mpeg'];
+    const validExtensions = ['.mp4', '.mov', '.mkv', '.avi', '.mpeg', '.mpg'];
+    const maxSize = 200 * 1024 * 1024; // 200MB
+    
+    // Check both MIME type and extension for better compatibility
+    const hasValidType = validTypes.includes(file.type);
+    const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
 
-    if (!validTypes.includes(file.type)) {
+    if (!hasValidType && !hasValidExtension) {
       toast({
         title: 'Formato inválido',
-        description: 'Envie apenas MP4, MOV ou MKV.',
+        description: 'Envie apenas MP4, MOV, MKV, AVI ou MPEG.',
         variant: 'destructive',
       });
       return false;
@@ -35,7 +40,7 @@ export const VideoUpload = ({ currentVideo, onVideoUpdated }: VideoUploadProps) 
     if (file.size > maxSize) {
       toast({
         title: 'Arquivo muito grande',
-        description: 'Reduza o tamanho e tente novamente.',
+        description: `O arquivo tem ${(file.size / (1024 * 1024)).toFixed(2)}MB. Máximo permitido: 200MB.`,
         variant: 'destructive',
       });
       return false;
@@ -58,27 +63,48 @@ export const VideoUpload = ({ currentVideo, onVideoUpdated }: VideoUploadProps) 
     setProgress(0);
 
     try {
-      // Delete existing video if any
-      if (currentVideo) {
+      // Ensure vsl folder exists by uploading a dummy file
+      try {
         await supabase.storage
           .from('videos')
-          .remove(['vsl/vsl.mp4']);
+          .upload('vsl/.init', new Blob([]), { upsert: true });
+      } catch (error) {
+        console.log('Folder initialization (expected if already exists):', error);
       }
 
-      // Upload new video
+      // Delete existing video if any
+      if (currentVideo) {
+        try {
+          await supabase.storage
+            .from('videos')
+            .remove(['vsl/vsl.mp4']);
+        } catch (error) {
+          console.log('No existing video to delete:', error);
+        }
+      }
+
+      // Always upload as vsl.mp4 regardless of original format
+      const uploadPath = 'vsl/vsl.mp4';
+      
+      // Upload new video with proper content type
       const { error: uploadError } = await supabase.storage
         .from('videos')
-        .upload('vsl/vsl.mp4', file, {
+        .upload(uploadPath, file, {
           upsert: true,
           contentType: 'video/mp4',
+          cacheControl: '3600',
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        throw uploadError;
+      }
 
-      // Get public URL
+      // Get public URL with cache busting
+      const timestamp = Date.now();
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
-        .getPublicUrl('vsl/vsl.mp4');
+        .getPublicUrl(`${uploadPath}?t=${timestamp}`);
 
       // Delete old database entry
       if (currentVideo) {
@@ -121,10 +147,16 @@ export const VideoUpload = ({ currentVideo, onVideoUpdated }: VideoUploadProps) 
     if (!confirm('Deseja excluir o vídeo atual?')) return;
 
     try {
-      await supabase.storage
-        .from('videos')
-        .remove(['vsl/vsl.mp4']);
+      // Delete from storage
+      try {
+        await supabase.storage
+          .from('videos')
+          .remove(['vsl/vsl.mp4']);
+      } catch (error) {
+        console.log('Storage delete (may not exist):', error);
+      }
 
+      // Delete from database
       await supabase
         .from('vsl_video')
         .delete()
@@ -184,7 +216,7 @@ export const VideoUpload = ({ currentVideo, onVideoUpdated }: VideoUploadProps) 
           <div>
             <input
               type="file"
-              accept="video/mp4,video/quicktime,video/x-matroska"
+              accept="video/mp4,video/quicktime,video/x-matroska,video/x-msvideo,video/mpeg,.mp4,.mov,.mkv,.avi,.mpeg,.mpg"
               onChange={handleFileSelect}
               className="hidden"
               id="video-upload"
@@ -199,7 +231,7 @@ export const VideoUpload = ({ currentVideo, onVideoUpdated }: VideoUploadProps) 
               >
                 <span className="cursor-pointer">
                   <Upload className="h-4 w-4 mr-2" />
-                  Selecionar arquivo (MP4, MOV ou MKV)
+                  Selecionar arquivo (MP4, MOV, MKV, AVI ou MPEG)
                 </span>
               </Button>
             </label>
