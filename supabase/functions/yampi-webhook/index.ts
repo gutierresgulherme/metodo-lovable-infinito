@@ -59,7 +59,45 @@ Deno.serve(async (req) => {
 
     console.log('[YAMPI] 💰 Purchase processed:', { product, orderId });
 
-    // Send purchase event to UTMify
+    // ===== INTEGRAÇÃO UTMIFY API =====
+    try {
+      // Tentar obter sessionId do cookie ou metadata
+      const sessionId = utms?.session_id || 
+                        data?.data?.metadata?.utmify_session_id || 
+                        data?.data?.utmify_session_id || 
+                        '';
+
+      if (sessionId) {
+        const utmifyResponse = await fetch('https://tracking.utmify.com.br/tracking/v1/events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'jixdUoi65hXkbigTfHu14ykY0wcRqTX3K9CF'
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            event: 'purchase',
+            value: price,
+            currency: 'BRL',
+            order_id: orderId
+          })
+        });
+
+        if (utmifyResponse.ok) {
+          console.log('[UTMIFY API] ✅ Purchase event sent successfully');
+        } else {
+          const errorText = await utmifyResponse.text();
+          console.error('[UTMIFY API] ❌ Error:', errorText);
+        }
+      } else {
+        console.warn('[UTMIFY API] ⚠️ Session ID not found, skipping UTMify API call');
+      }
+    } catch (error) {
+      console.error('[UTMIFY API] ❌ Exception:', error);
+    }
+    // ===== FIM DA INTEGRAÇÃO UTMIFY API =====
+
+    // Send purchase event to UTMify (legacy)
     const UTMIFY_API_KEY = Deno.env.get('UTMIFY_API_KEY');
     if (UTMIFY_API_KEY) {
       try {

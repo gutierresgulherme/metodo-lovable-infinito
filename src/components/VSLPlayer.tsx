@@ -57,28 +57,40 @@ export const VSLPlayer = () => {
 
         await player.load(videoUrl);
 
-        // Autoplay muted (required by browsers)
+        // Autoplay muted (required by browsers) with multiple retries
         if (videoRef.current) {
           videoRef.current.muted = true;
-          videoRef.current.play().catch(e => {
-            console.log('Autoplay prevented:', e);
-          });
+          
+          const tryPlay = async () => {
+            try {
+              await videoRef.current?.play();
+            } catch (e) {
+              console.log('[VSL] Autoplay attempt prevented:', e);
+            }
+          };
+
+          // Multiple retry attempts to ensure autoplay
+          tryPlay();
+          setTimeout(tryPlay, 300);
+          setTimeout(tryPlay, 800);
         }
 
         // Unmute on first interaction
         if (!unmuteListenersAdded.current) {
-          const unmuteVideo = () => {
+          const tryPlayWithSound = () => {
             if (videoRef.current) {
               videoRef.current.muted = false;
-              document.removeEventListener('click', unmuteVideo);
-              document.removeEventListener('touchstart', unmuteVideo);
-              document.removeEventListener('scroll', unmuteVideo);
+              videoRef.current.play().catch(() => {});
             }
+            // Remove listeners after activation
+            document.removeEventListener('click', tryPlayWithSound);
+            document.removeEventListener('touchstart', tryPlayWithSound);
+            document.removeEventListener('scroll', tryPlayWithSound);
           };
 
-          document.addEventListener('click', unmuteVideo, { once: true });
-          document.addEventListener('touchstart', unmuteVideo, { once: true });
-          document.addEventListener('scroll', unmuteVideo, { once: true });
+          document.addEventListener('click', tryPlayWithSound);
+          document.addEventListener('touchstart', tryPlayWithSound);
+          document.addEventListener('scroll', tryPlayWithSound);
           unmuteListenersAdded.current = true;
         }
 
@@ -120,7 +132,10 @@ export const VSLPlayer = () => {
           ref={videoRef}
           className="w-full max-w-4xl mx-auto rounded-lg"
           controls
+          autoPlay
+          muted
           playsInline
+          preload="auto"
         />
       </div>
     </section>
