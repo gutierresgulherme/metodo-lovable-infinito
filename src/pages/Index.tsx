@@ -1,7 +1,9 @@
+import { useEffect, useRef } from "react";
 import { PricingCard } from "@/components/PricingCard";
 import { FAQItem } from "@/components/FAQItem";
 import { Check } from "lucide-react";
-import { VSLPlayer } from "@/components/VSLPlayer";
+import { supabase } from "@/integrations/supabase/client";
+import shaka from 'shaka-player/dist/shaka-player.ui.js';
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import feedback1 from "@/assets/feedback-1.png";
 import feedback2 from "@/assets/feedback-2.png";
@@ -11,6 +13,9 @@ import canvaBonus from "@/assets/canva-bonus.png";
 import garantia7dias from "@/assets/garantia-7dias.png";
 
 const Index = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const unmuteListenersAdded = useRef(false);
+
   const getCurrentDate = () => {
     return new Date().toLocaleDateString("pt-BR", {
       day: "numeric",
@@ -18,6 +23,101 @@ const Index = () => {
       year: "numeric",
     });
   };
+
+  useEffect(() => {
+    const initVSLPlayer = async () => {
+      if (!videoRef.current) return;
+
+      try {
+        // 1. Buscar vídeo do Supabase
+        const { data: videoData, error } = await supabase
+          .from('vsl_video')
+          .select('video_url')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error || !videoData?.video_url) {
+          console.warn('[VSL] No video found in database');
+          return;
+        }
+
+        const videoUrl = videoData.video_url;
+        const videoElement = videoRef.current;
+
+        // 2. Verificar suporte do Shaka Player
+        if (!shaka.Player.isBrowserSupported()) {
+          console.error('[VSL] Shaka Player not supported');
+          return;
+        }
+
+        // 3. Inicializar Shaka Player
+        const player = new shaka.Player(videoElement);
+        
+        // Configurar player
+        player.configure({
+          streaming: {
+            bufferingGoal: 30,
+            rebufferingGoal: 2
+          }
+        });
+
+        // 4. Carregar vídeo
+        await player.load(videoUrl);
+
+        // 5. Forçar autoplay com múltiplas tentativas
+        if (videoElement) {
+          videoElement.muted = true;
+          
+          const tryPlay = async () => {
+            try {
+              await videoElement.play();
+            } catch (e) {
+              console.log('[VSL] Autoplay attempt prevented:', e);
+            }
+          };
+
+          // Múltiplas tentativas para garantir autoplay
+          tryPlay();
+          setTimeout(tryPlay, 300);
+          setTimeout(tryPlay, 800);
+        }
+
+        // 6. Ativar áudio na primeira interação
+        if (!unmuteListenersAdded.current) {
+          const tryPlayWithSound = () => {
+            if (videoElement) {
+              videoElement.muted = false;
+              videoElement.play().catch(() => {});
+            }
+            // Remover listeners após ativação
+            document.removeEventListener('click', tryPlayWithSound);
+            document.removeEventListener('touchstart', tryPlayWithSound);
+            document.removeEventListener('scroll', tryPlayWithSound);
+          };
+
+          document.addEventListener('click', tryPlayWithSound);
+          document.addEventListener('touchstart', tryPlayWithSound);
+          document.addEventListener('scroll', tryPlayWithSound);
+          unmuteListenersAdded.current = true;
+        }
+
+        // Cleanup ao desmontar
+        return () => {
+          try {
+            player.destroy();
+          } catch (e) {
+            console.error('[VSL] Error destroying player:', e);
+          }
+        };
+
+      } catch (error) {
+        console.error('[VSL] Error initializing player:', error);
+      }
+    };
+
+    initVSLPlayer();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[hsl(240,10%,3.9%)] via-[hsl(267,50%,10%)] to-[hsl(190,50%,10%)] text-foreground relative">
@@ -75,7 +175,38 @@ const Index = () => {
       </section>
 
       {/* Video Section */}
-      <VSLPlayer />
+      <section className="py-8 md:py-12 px-6 md:px-4 bg-black/30 mt-6 relative z-0">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
+            ASSISTA AO VÍDEO DA OFERTA
+          </h2>
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: "100%",
+              borderRadius: "12px",
+              overflow: "hidden",
+            }}
+          >
+            <video
+              ref={videoRef}
+              id="vsl-player"
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              controls
+              style={{
+                width: "100%",
+                height: "auto",
+                maxHeight: "360px",
+                borderRadius: "12px"
+              }}
+            ></video>
+          </div>
+        </div>
+      </section>
 
       {/* What You'll Receive Section */}
       <section className="py-8 md:py-12 px-6 md:px-4">
