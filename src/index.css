@@ -87,25 +87,10 @@ All colors MUST be HSL.
   
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
-    will-change: opacity, filter;
   }
   
   .animate-pulse-scale {
     animation: pulse-scale 2s ease-in-out infinite;
-    will-change: transform;
-  }
-  
-  /* GPU acceleration for smooth animations */
-  .hover\:scale-105:hover {
-    will-change: transform;
-  }
-  
-  .transition-transform {
-    will-change: transform;
-  }
-  
-  .transition-colors {
-    will-change: background-color, border-color, color;
   }
 }
 
