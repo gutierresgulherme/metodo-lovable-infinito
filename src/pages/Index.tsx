@@ -1,9 +1,6 @@
-import { useEffect, useRef } from "react";
-import { PricingCard } from "@/components/PricingCard";
-import { FAQItem } from "@/components/FAQItem";
+import { useEffect, useRef, lazy, Suspense } from "react";
 import { Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import shaka from 'shaka-player/dist/shaka-player.ui.js';
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import feedback1 from "@/assets/feedback-1.png";
 import feedback2 from "@/assets/feedback-2.png";
@@ -11,6 +8,10 @@ import feedback3 from "@/assets/feedback-3.png";
 import chatgptBonus from "@/assets/chatgpt-bonus.png";
 import canvaBonus from "@/assets/canva-bonus.png";
 import garantia7dias from "@/assets/garantia-7dias.png";
+
+// Lazy load components for better initial load performance
+const PricingCard = lazy(() => import("@/components/PricingCard").then(m => ({ default: m.PricingCard })));
+const FAQItem = lazy(() => import("@/components/FAQItem").then(m => ({ default: m.FAQItem })));
 
 const Index = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -45,13 +46,16 @@ const Index = () => {
         const videoUrl = videoData.video_url;
         const videoElement = videoRef.current;
 
-        // 2. Verificar suporte do Shaka Player
+        // 2. Lazy load Shaka Player apenas quando necessário
+        const shaka = await import('shaka-player/dist/shaka-player.ui.js').then(m => m.default);
+
+        // 3. Verificar suporte do Shaka Player
         if (!shaka.Player.isBrowserSupported()) {
           console.error('[VSL] Shaka Player not supported');
           return;
         }
 
-        // 3. Inicializar Shaka Player
+        // 4. Inicializar Shaka Player
         const player = new shaka.Player(videoElement);
         
         // Configurar player
@@ -62,10 +66,10 @@ const Index = () => {
           }
         });
 
-        // 4. Carregar vídeo
+        // 5. Carregar vídeo
         await player.load(videoUrl);
 
-        // 5. Forçar autoplay com múltiplas tentativas
+        // 6. Forçar autoplay com múltiplas tentativas
         if (videoElement) {
           videoElement.muted = true;
           
@@ -83,7 +87,7 @@ const Index = () => {
           setTimeout(tryPlay, 800);
         }
 
-        // 6. Ativar áudio na primeira interação
+        // 7. Ativar áudio na primeira interação
         if (!unmuteListenersAdded.current) {
           const tryPlayWithSound = () => {
             if (videoElement) {
@@ -134,6 +138,8 @@ const Index = () => {
           <img
             src={lovableInfinitoTitle}
             alt="Lovable Infinito"
+            loading="eager"
+            fetchPriority="high"
             className="w-[60%] md:w-[75%] max-w-[340px] md:max-w-[450px] mx-auto rounded-xl shadow-[0_0_18px_rgba(255,255,255,0.15)] animate-pulse-glow"
             style={{
               filter: "contrast(1.05) saturate(1.1)",
@@ -282,6 +288,7 @@ const Index = () => {
                 <img
                   src={chatgptBonus}
                   alt="ChatGPT 5 Plus"
+                  loading="lazy"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -294,6 +301,7 @@ const Index = () => {
                 <img
                   src={canvaBonus}
                   alt="Canva PRO"
+                  loading="lazy"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -349,7 +357,7 @@ const Index = () => {
                   style={{
                     maxHeight: "280px",
                   }}
-                  loading="eager"
+                  loading="lazy"
                 />
               </div>
             ))}
@@ -435,37 +443,39 @@ const Index = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
             ESCOLHA SEU PLANO
           </h2>
-          <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-            <PricingCard
-              title="🟡 PLANO GOLD"
-              price="R$24,90"
-              features={[
-                "Método Lovable Infinito",
-                "Acesso ilimitado Lovable",
-                "Bônus ChatGPT 5 Plus",
-                "Bônus Canva PRO",
-                "🎁 Aula: Como remover a marca d'água do Lovable",
-                "Suporte premium",
-              ]}
-              variant="gold"
-              buttonText="QUERO PLANO GOLD"
-              checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
-              buttonId="btn-comprar-24-2"
-            />
-            <PricingCard
-              title="⚙️ PLANO PRATA"
-              price="R$13,90"
-              features={[
-                "Método Lovable Infinito",
-                "Acesso ilimitado Lovable",
-                "Suporte básico",
-              ]}
-              variant="silver"
-              buttonText="QUERO PLANO PRATA"
-              checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
-              buttonId="btn-comprar-13-2"
-            />
-          </div>
+          <Suspense fallback={<div className="grid md:grid-cols-2 gap-6 md:gap-8"><div className="h-96 animate-pulse bg-black/20 rounded-xl" /><div className="h-96 animate-pulse bg-black/20 rounded-xl" /></div>}>
+            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+              <PricingCard
+                title="🟡 PLANO GOLD"
+                price="R$24,90"
+                features={[
+                  "Método Lovable Infinito",
+                  "Acesso ilimitado Lovable",
+                  "Bônus ChatGPT 5 Plus",
+                  "Bônus Canva PRO",
+                  "🎁 Aula: Como remover a marca d'água do Lovable",
+                  "Suporte premium",
+                ]}
+                variant="gold"
+                buttonText="QUERO PLANO GOLD"
+                checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
+                buttonId="btn-comprar-24-2"
+              />
+              <PricingCard
+                title="⚙️ PLANO PRATA"
+                price="R$13,90"
+                features={[
+                  "Método Lovable Infinito",
+                  "Acesso ilimitado Lovable",
+                  "Suporte básico",
+                ]}
+                variant="silver"
+                buttonText="QUERO PLANO PRATA"
+                checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
+                buttonId="btn-comprar-13-2"
+              />
+            </div>
+          </Suspense>
         </div>
       </section>
 
@@ -476,6 +486,7 @@ const Index = () => {
             <img
               src={garantia7dias}
               alt="Garantia 7 dias"
+              loading="lazy"
               className="w-auto max-w-[200px] md:max-w-[200px] mx-auto rounded-lg shadow-[0_0_10px_rgba(255,255,255,0.1)]"
             />
           </div>
@@ -499,24 +510,26 @@ const Index = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
             PERGUNTAS FREQUENTES
           </h2>
-          <div className="space-y-4">
-            <FAQItem
-              question="Isso é golpe?"
-              answer="Não. O método é legítimo e validado por diversos usuários reais."
-            />
-            <FAQItem
-              question="Precisa baixar algo?"
-              answer="Não, tudo é feito online, direto no Lovable."
-            />
-            <FAQItem
-              question="Posso tomar ban?"
-              answer="Não. O método é uma brecha limpa, 100% segura."
-            />
-            <FAQItem
-              question="E se não funcionar?"
-              answer="Funciona. Mas se não funcionar com você, devolvemos seu dinheiro. Simples."
-            />
-          </div>
+          <Suspense fallback={<div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 animate-pulse bg-black/20 rounded-lg" />)}</div>}>
+            <div className="space-y-4">
+              <FAQItem
+                question="Isso é golpe?"
+                answer="Não. O método é legítimo e validado por diversos usuários reais."
+              />
+              <FAQItem
+                question="Precisa baixar algo?"
+                answer="Não, tudo é feito online, direto no Lovable."
+              />
+              <FAQItem
+                question="Posso tomar ban?"
+                answer="Não. O método é uma brecha limpa, 100% segura."
+              />
+              <FAQItem
+                question="E se não funcionar?"
+                answer="Funciona. Mas se não funcionar com você, devolvemos seu dinheiro. Simples."
+              />
+            </div>
+          </Suspense>
         </div>
       </section>
 
