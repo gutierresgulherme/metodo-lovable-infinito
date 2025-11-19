@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
-import { PricingCard } from "@/components/PricingCard";
-import { FAQItem } from "@/components/FAQItem";
-import { Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import shaka from 'shaka-player/dist/shaka-player.ui.js';
+import { useState, lazy, Suspense } from "react";
+import { Check, Play } from "lucide-react";
+
+// Lazy load heavy components
+const PricingCard = lazy(() => import("@/components/PricingCard").then(m => ({ default: m.PricingCard })));
+const FAQItem = lazy(() => import("@/components/FAQItem").then(m => ({ default: m.FAQItem })));
+const VideoModal = lazy(() => import("@/components/VideoModal").then(m => ({ default: m.VideoModal })));
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import feedback1 from "@/assets/feedback-1.png";
 import feedback2 from "@/assets/feedback-2.png";
@@ -13,8 +14,7 @@ import canvaBonus from "@/assets/canva-bonus.png";
 import garantia7dias from "@/assets/garantia-7dias.png";
 
 const Index = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const unmuteListenersAdded = useRef(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   const getCurrentDate = () => {
     return new Date().toLocaleDateString("pt-BR", {
@@ -24,100 +24,6 @@ const Index = () => {
     });
   };
 
-  useEffect(() => {
-    const initVSLPlayer = async () => {
-      if (!videoRef.current) return;
-
-      try {
-        // 1. Buscar vídeo do Supabase
-        const { data: videoData, error } = await supabase
-          .from('vsl_video')
-          .select('video_url')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error || !videoData?.video_url) {
-          console.warn('[VSL] No video found in database');
-          return;
-        }
-
-        const videoUrl = videoData.video_url;
-        const videoElement = videoRef.current;
-
-        // 2. Verificar suporte do Shaka Player
-        if (!shaka.Player.isBrowserSupported()) {
-          console.error('[VSL] Shaka Player not supported');
-          return;
-        }
-
-        // 3. Inicializar Shaka Player
-        const player = new shaka.Player(videoElement);
-        
-        // Configurar player
-        player.configure({
-          streaming: {
-            bufferingGoal: 30,
-            rebufferingGoal: 2
-          }
-        });
-
-        // 4. Carregar vídeo
-        await player.load(videoUrl);
-
-        // 5. Forçar autoplay com múltiplas tentativas
-        if (videoElement) {
-          videoElement.muted = true;
-          
-          const tryPlay = async () => {
-            try {
-              await videoElement.play();
-            } catch (e) {
-              console.log('[VSL] Autoplay attempt prevented:', e);
-            }
-          };
-
-          // Múltiplas tentativas para garantir autoplay
-          tryPlay();
-          setTimeout(tryPlay, 300);
-          setTimeout(tryPlay, 800);
-        }
-
-        // 6. Ativar áudio na primeira interação
-        if (!unmuteListenersAdded.current) {
-          const tryPlayWithSound = () => {
-            if (videoElement) {
-              videoElement.muted = false;
-              videoElement.play().catch(() => {});
-            }
-            // Remover listeners após ativação
-            document.removeEventListener('click', tryPlayWithSound);
-            document.removeEventListener('touchstart', tryPlayWithSound);
-            document.removeEventListener('scroll', tryPlayWithSound);
-          };
-
-          document.addEventListener('click', tryPlayWithSound);
-          document.addEventListener('touchstart', tryPlayWithSound);
-          document.addEventListener('scroll', tryPlayWithSound);
-          unmuteListenersAdded.current = true;
-        }
-
-        // Cleanup ao desmontar
-        return () => {
-          try {
-            player.destroy();
-          } catch (e) {
-            console.error('[VSL] Error destroying player:', e);
-          }
-        };
-
-      } catch (error) {
-        console.error('[VSL] Error initializing player:', error);
-      }
-    };
-
-    initVSLPlayer();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[hsl(240,10%,3.9%)] via-[hsl(267,50%,10%)] to-[hsl(190,50%,10%)] text-foreground relative">
@@ -138,6 +44,8 @@ const Index = () => {
             style={{
               filter: "contrast(1.05) saturate(1.1)",
             }}
+            loading="eager"
+            fetchPriority="high"
           />
           <h2 className="text-2xl md:text-4xl font-bold text-[hsl(267,100%,65%)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             VOCÊ AINDA PAGA PRA USAR O LOVABLE?
@@ -174,39 +82,36 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Video Section */}
+      {/* Video Section - Lazy Load with Thumbnail */}
       <section className="py-8 md:py-12 px-6 md:px-4 bg-black/30 mt-6 relative z-0">
         <div className="max-w-4xl mx-auto space-y-4">
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
             ASSISTA AO VÍDEO DA OFERTA
           </h2>
           <div
-            style={{
-              position: "relative",
-              width: "100%",
-              maxWidth: "100%",
-              borderRadius: "12px",
-              overflow: "hidden",
-            }}
+            className="relative w-full max-w-full rounded-xl overflow-hidden cursor-pointer group"
+            onClick={() => setIsVideoModalOpen(true)}
           >
-            <video
-              ref={videoRef}
-              id="vsl-player"
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              controls
-              style={{
-                width: "100%",
-                height: "auto",
-                maxHeight: "360px",
-                borderRadius: "12px"
-              }}
-            ></video>
+            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+              <img
+                src="/vsl-thumbnail.jpg"
+                alt="Assista ao vídeo"
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Play className="w-10 h-10 text-white ml-1" fill="white" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      <Suspense fallback={<div />}>
+        <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} />
+      </Suspense>
 
       {/* What You'll Receive Section */}
       <section className="py-8 md:py-12 px-6 md:px-4">
@@ -283,6 +188,7 @@ const Index = () => {
                   src={chatgptBonus}
                   alt="ChatGPT 5 Plus"
                   className="w-full h-full object-contain"
+                  loading="lazy"
                 />
               </div>
               <h3 className="text-xl md:text-2xl font-bold text-foreground">
@@ -295,6 +201,7 @@ const Index = () => {
                   src={canvaBonus}
                   alt="Canva PRO"
                   className="w-full h-full object-contain"
+                  loading="lazy"
                 />
               </div>
               <h3 className="text-xl md:text-2xl font-bold text-foreground">
@@ -349,7 +256,7 @@ const Index = () => {
                   style={{
                     maxHeight: "280px",
                   }}
-                  loading="eager"
+                  loading="lazy"
                 />
               </div>
             ))}
@@ -435,8 +342,9 @@ const Index = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
             ESCOLHA SEU PLANO
           </h2>
-          <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-            <PricingCard
+          <Suspense fallback={<div className="h-96 animate-pulse bg-muted/20 rounded-xl" />}>
+            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+              <PricingCard
               title="🟡 PLANO GOLD"
               price="R$24,90"
               features={[
@@ -465,7 +373,8 @@ const Index = () => {
               checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
               buttonId="btn-comprar-13-2"
             />
-          </div>
+            </div>
+          </Suspense>
         </div>
       </section>
 
@@ -477,6 +386,7 @@ const Index = () => {
               src={garantia7dias}
               alt="Garantia 7 dias"
               className="w-auto max-w-[200px] md:max-w-[200px] mx-auto rounded-lg shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+              loading="lazy"
             />
           </div>
           <h2 className="text-2xl md:text-4xl font-bold mb-6 text-foreground">
@@ -499,8 +409,9 @@ const Index = () => {
           <h2 className="text-2xl md:text-4xl font-bold text-center text-foreground">
             PERGUNTAS FREQUENTES
           </h2>
-          <div className="space-y-4">
-            <FAQItem
+          <Suspense fallback={<div className="space-y-4">{[1,2,3,4].map(i => <div key={i} className="h-16 animate-pulse bg-muted/20 rounded-lg" />)}</div>}>
+            <div className="space-y-4">
+              <FAQItem
               question="Isso é golpe?"
               answer="Não. O método é legítimo e validado por diversos usuários reais."
             />
@@ -516,7 +427,8 @@ const Index = () => {
               question="E se não funcionar?"
               answer="Funciona. Mas se não funcionar com você, devolvemos seu dinheiro. Simples."
             />
-          </div>
+            </div>
+          </Suspense>
         </div>
       </section>
 
