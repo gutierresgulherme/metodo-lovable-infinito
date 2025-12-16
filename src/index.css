@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* Font loaded via index.html with preload for better performance */
 
 @tailwind base;
 @tailwind components;
@@ -161,20 +161,34 @@ div[class*="watermark"] {
 
 /* Otimizações de performance para mobile */
 @media (max-width: 768px) {
-  * {
-    /* Reduzir blur/shadows em mobile para melhor performance */
-    will-change: transform;
+  /* Otimizar layout e paint */
+  section {
+    contain: layout style;
   }
   
-  /* Otimizar animações para mobile */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
+  /* Reduzir complexidade de sombras e blur */
+  .shadow-lg, .shadow-xl, .shadow-2xl {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Simplificar animações em mobile */
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+}
+
+/* Otimizar animações para usuários com preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

@@ -85,10 +85,12 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: 'es2015',
     minify: 'terser',
+    cssMinify: true,
     terserOptions: {
       compress: {
         drop_console: true,
-        drop_debugger: true
+        drop_debugger: true,
+        passes: 2
       }
     },
     rollupOptions: {
@@ -96,8 +98,11 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'ui-vendor': ['lucide-react', '@radix-ui/react-accordion'],
+          'player': ['shaka-player']
         }
       }
-    }
+    },
+    // Improve chunking for mobile
+    chunkSizeWarningLimit: 500
   }
 }));
