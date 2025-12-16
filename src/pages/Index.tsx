@@ -172,7 +172,7 @@ const Index = () => {
               href="https://limitada-developers.pay.yampi.com.br/r/NZAGTN1W1Z"
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
+              className="btn-checkout-yampi block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
             >
               QUERO O MÉTODO LOVABLE ILIMITADO POR R$13,90
             </a>
@@ -329,7 +329,7 @@ const Index = () => {
               href="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
+              className="btn-checkout-yampi block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
             >
               QUERO O MÉTODO + 2 BÔNUS E AULA EXCLUSIVA POR R$24,90
             </a>
