@@ -47,7 +47,7 @@ export const PricingCard = ({ title, price, features, variant, buttonText, check
           href={checkoutLink}
           target="_blank"
           rel="noopener noreferrer"
-          className={`block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${
+          className={`btn-checkout-yampi block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${
             variant === "gold" 
               ? "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-400" 
               : "bg-red-600 hover:bg-red-700 focus:ring-red-400"
