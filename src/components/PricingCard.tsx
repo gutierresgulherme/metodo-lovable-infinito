@@ -24,7 +24,7 @@ export const PricingCard = ({ title, price, features, variant, buttonText, check
     : "shadow-[0_0_30px_hsl(190,100%,50%/0.3)]";
 
   return (
-    <div className={`relative ${bgClass} border-2 ${borderClass} rounded-xl p-6 md:p-8 ${shadowClass} hover:scale-105 transition-transform duration-300`}>
+    <div className={`relative ${bgClass} border-2 ${borderClass} rounded-xl p-6 md:p-8 ${shadowClass} md:hover:scale-105 md:transition-transform md:duration-300`}>
       <div className="relative z-10">
         <h3 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
           {title}

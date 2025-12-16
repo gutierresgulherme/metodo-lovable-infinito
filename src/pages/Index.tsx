@@ -201,13 +201,14 @@ const Index = () => {
               autoPlay
               muted
               playsInline
-              preload="auto"
+              preload="metadata"
               controls
               style={{
                 width: "100%",
                 height: "auto",
                 maxHeight: "360px",
-                borderRadius: "12px"
+                borderRadius: "12px",
+                contentVisibility: "auto"
               }}
             ></video>
           </div>
@@ -289,6 +290,7 @@ const Index = () => {
                   src={chatgptBonus}
                   alt="ChatGPT 5 Plus"
                   loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -302,6 +304,7 @@ const Index = () => {
                   src={canvaBonus}
                   alt="Canva PRO"
                   loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -348,7 +351,7 @@ const Index = () => {
             {[feedback1, feedback2, feedback3].map((imageUrl, index) => (
               <div
                 key={index}
-                className="overflow-hidden rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.25)] transition-transform duration-300 hover:scale-105"
+                className="overflow-hidden rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.25)] md:transition-transform md:duration-300 md:hover:scale-105"
               >
                 <img
                   src={imageUrl}
@@ -356,8 +359,10 @@ const Index = () => {
                   className="w-full h-full object-cover max-h-[360px] md:max-h-[360px]"
                   style={{
                     maxHeight: "280px",
+                    contentVisibility: "auto"
                   }}
                   loading="lazy"
+                  decoding="async"
                 />
               </div>
             ))}
@@ -487,6 +492,7 @@ const Index = () => {
               src={garantia7dias}
               alt="Garantia 7 dias"
               loading="lazy"
+              decoding="async"
               className="w-auto max-w-[200px] md:max-w-[200px] mx-auto rounded-lg shadow-[0_0_10px_rgba(255,255,255,0.1)]"
             />
           </div>
