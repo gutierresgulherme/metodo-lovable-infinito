@@ -329,7 +329,7 @@ const Index = () => {
           <div className="relative z-10 pointer-events-auto">
             <a
               id="btn-comprar-24-1"
-              href="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
+              href="https://go.pepperpay.com.br/it5e0"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-checkout-yampi block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
@@ -463,7 +463,7 @@ const Index = () => {
                 ]}
                 variant="gold"
                 buttonText="QUERO PLANO GOLD"
-                checkoutLink="https://limitada-developers.pay.yampi.com.br/r/NGGNC2AFDG"
+                checkoutLink="https://go.pepperpay.com.br/it5e0"
                 buttonId="btn-comprar-24-2"
               />
               <PricingCard
