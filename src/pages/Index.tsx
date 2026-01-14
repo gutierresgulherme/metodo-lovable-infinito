@@ -169,7 +169,7 @@ const Index = () => {
           <div className="flex flex-col items-center gap-4 mt-4 relative z-10 pointer-events-auto">
             <a
               id="btn-comprar-13-1"
-              href="https://go.pepperpay.com.br/ngxsp"
+              href="https://go.pepperpay.com.br/lonsw"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-checkout-yampi block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
@@ -476,7 +476,7 @@ const Index = () => {
                 ]}
                 variant="silver"
                 buttonText="QUERO PLANO PRATA"
-                checkoutLink="https://go.pepperpay.com.br/ngxsp"
+                checkoutLink="https://go.pepperpay.com.br/lonsw"
                 buttonId="btn-comprar-13-2"
               />
             </div>
