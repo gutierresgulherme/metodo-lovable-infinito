@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(), 
+    react(),
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -96,8 +96,6 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['lucide-react', '@radix-ui/react-accordion'],
           'player': ['shaka-player']
         }
       }
