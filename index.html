@@ -1,57 +1,74 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="format-detection" content="telephone=no" />
-    <title>Lovable Infinito - Acesso Ilimitado por R$13,90</title>
-    <meta name="description" content="Tenha acesso ilimitado ao Lovable com o Método Lovable Infinito. Crie sites e aplicativos sem limites por apenas R$13,90." />
-    <meta name="author" content="Lovable Infinito" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://eidcxqxjmraargwhrdai.supabase.co">
-    <link rel="preconnect" href="https://cdn.utmify.com.br">
-    <link rel="dns-prefetch" href="https://tracking.utmify.com.br">
-    <link rel="dns-prefetch" href="https://cdn.utmify.com.br">
-    <!-- Preload critical font with swap -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
-    <!-- Reduced font weights for faster load -->
 
-    <meta property="og:title" content="Lovable Infinito - Acesso Ilimitado por R$13,90" />
-    <meta property="og:description" content="Tenha acesso ilimitado ao Lovable com o Método Lovable Infinito. Crie sites e aplicativos sem limites." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Lovable Infinito - Acesso Ilimitado por R$13,90</title>
+  <meta name="description"
+    content="Tenha acesso ilimitado ao Lovable com o Método Lovable Infinito. Crie sites e aplicativos sem limites por apenas R$13,90." />
+  <meta name="author" content="Lovable Infinito" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://eidcxqxjmraargwhrdai.supabase.co">
+  <link rel="preconnect" href="https://cdn.utmify.com.br">
+  <link rel="dns-prefetch" href="https://tracking.utmify.com.br">
+  <link rel="dns-prefetch" href="https://cdn.utmify.com.br">
+  <!-- Preload critical font with swap -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  </noscript>
+  <!-- Reduced font weights for faster load -->
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    
-    <script
-      src="https://cdn.utmify.com.br/scripts/utms/latest.js"
-      data-utmify-prevent-xcod-sck
-      data-utmify-prevent-subids
-      async
-      defer
-    ></script>
-    
-    <!-- UTMIFY PIXEL -->
-    <script>
-      window.pixelId = "694193c8edf1b9da77b48e2b";
+  <meta property="og:title" content="Lovable Infinito - Acesso Ilimitado por R$13,90" />
+  <meta property="og:description"
+    content="Tenha acesso ilimitado ao Lovable com o Método Lovable Infinito. Crie sites e aplicativos sem limites." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@lovable_dev" />
+  <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+  <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" data-utmify-prevent-xcod-sck data-utmify-prevent-subids
+    async defer></script>
+
+  <!-- UTMIFY PIXEL DINÂMICO -->
+  <script>
+    (function () {
+      const hostname = window.location.hostname;
+
+      // Mapeamento Robusto (Funciona com ou sem www)
+      let selectedPixel = '694193c8edf1b9da77b48e2b'; // Default (BR)
+
+      if (hostname.includes('lovable-app.vip')) {
+        selectedPixel = 'SEU_PIXEL_ESTADOS_UNIDOS_AQUI'; // BM USA
+      } else if (hostname.includes('metodo-lovable-infinito.vip')) {
+        selectedPixel = '694193c8edf1b9da77b48e2b'; // BM BR
+      }
+
+      window.pixelId = selectedPixel;
+
       var a = document.createElement("script");
       a.setAttribute("async", "");
       a.setAttribute("defer", "");
       a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
       document.head.appendChild(a);
-    </script>
-  </head>
+    })();
+  </script>
+</head>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

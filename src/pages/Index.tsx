@@ -14,6 +14,28 @@ import { initPageSession, setupButtonTracking, trackVideoEvent, trackButtonClick
 const PricingCard = lazy(() => import("@/components/PricingCard").then(m => ({ default: m.PricingCard })));
 const FAQItem = lazy(() => import("@/components/FAQItem").then(m => ({ default: m.FAQItem })));
 
+// Configuração Multi-BM / Domínios
+const CONFIG = {
+  BR: {
+    domain: 'metodo-lovable-infinito.vip',
+    prata: 'https://go.pepperpay.com.br/lonsw',
+    gold: 'https://go.pepperpay.com.br/ukrg2',
+  },
+  USA: {
+    domain: 'lovable-app.vip',
+    // Fallbacks para BR enquanto os novos links não são gerados
+    prata: 'https://go.pepperpay.com.br/lonsw',
+    gold: 'https://go.pepperpay.com.br/ukrg2',
+  }
+};
+
+const getCheckoutLink = (plan: 'prata' | 'gold') => {
+  const hostname = window.location.hostname;
+  const isUSA = hostname.includes('lovable-app.vip');
+  const target = isUSA ? CONFIG.USA : CONFIG.BR;
+  return target[plan];
+};
+
 const Index = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const unmuteListenersAdded = useRef(false);
@@ -267,7 +289,7 @@ const Index = () => {
           <div className="flex flex-col items-center gap-4 mt-6 relative z-10 pointer-events-auto">
             <a
               id="btn-comprar-13-1"
-              href="https://go.pepperpay.com.br/lonsw"
+              href={getCheckoutLink('prata')}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-checkout-yampi block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-red-600 hover:bg-red-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 cursor-pointer"
@@ -392,7 +414,7 @@ const Index = () => {
           <div className="relative z-10 pointer-events-auto">
             <a
               id="btn-comprar-24-1"
-              href="https://go.pepperpay.com.br/ukrg2"
+              href={getCheckoutLink('gold')}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-checkout-yampi block w-full max-w-[360px] mx-auto rounded-full px-6 py-3 text-base sm:text-lg font-semibold text-white text-center leading-snug whitespace-normal break-words bg-emerald-600 hover:bg-emerald-700 shadow-md active:scale-[0.99] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
@@ -526,7 +548,7 @@ const Index = () => {
                 ]}
                 variant="gold"
                 buttonText="QUERO PLANO GOLD"
-                checkoutLink="https://go.pepperpay.com.br/ukrg2"
+                checkoutLink={getCheckoutLink('gold')}
                 buttonId="btn-comprar-24-2"
               />
               <PricingCard
@@ -539,7 +561,7 @@ const Index = () => {
                 ]}
                 variant="silver"
                 buttonText="QUERO PLANO PRATA"
-                checkoutLink="https://go.pepperpay.com.br/lonsw"
+                checkoutLink={getCheckoutLink('prata')}
                 buttonId="btn-comprar-13-2"
               />
             </div>
