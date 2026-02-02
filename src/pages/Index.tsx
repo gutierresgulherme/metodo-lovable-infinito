@@ -550,7 +550,7 @@ const Index = () => {
 
                     {/* AULA BÔNUS */}
                     <div className="bg-[#0f0f0f] border-2 border-yellow-500/80 rounded-2xl p-8 relative mt-8">
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-black font-bold px-4 py-1 rounded-full text-sm uppercase flex items-center gap-2">
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-black font-bold px-6 py-2 rounded-full text-xs sm:text-sm uppercase flex items-center justify-center gap-2 text-center whitespace-nowrap z-20 shadow-lg">
                             🎁 Bônus Exclusivo
                         </div>
                         <div className="text-center space-y-2 mt-2">
