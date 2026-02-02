@@ -481,4 +481,61 @@ VALUES (
   'VOCÊ AINDA PAGA PRA USAR O LOVABLE?',
   'active',
   true
-) ON CONFLICT (slug) DO NOTHING;
+-- ===========================================
+-- MIGRATION: 20260201223000_analytics_and_config.sql
+-- ===========================================
+
+-- 1. Checkout Configs Table
+CREATE TABLE IF NOT EXISTS public.checkout_configs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  key TEXT UNIQUE NOT NULL,
+  url TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 2. Ensure RLS on all tables
+ALTER TABLE public.checkout_configs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view configs" ON public.checkout_configs FOR SELECT USING (true);
+CREATE POLICY "Anyone can manage configs" ON public.checkout_configs FOR ALL USING (true);
+
+-- 3. VSL Variant Enhancements
+ALTER TABLE public.vsl_variants ADD COLUMN IF NOT EXISTS video_url TEXT;
+
+-- 4. VSL Settings for Domain Mapping
+CREATE TABLE IF NOT EXISTS public.vsl_settings (
+  region TEXT PRIMARY KEY, -- 'BR' or 'USA'
+  vsl_slug TEXT REFERENCES public.vsl_variants(slug) ON DELETE SET NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 5. RLS for VSL Settings
+ALTER TABLE public.vsl_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can view vsl_settings" ON public.vsl_settings FOR SELECT USING (true);
+CREATE POLICY "Anyone can update vsl_settings" ON public.vsl_settings FOR ALL USING (true);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_checkout_configs_key ON public.checkout_configs(key);
+
+-- Pre-fill default links
+INSERT INTO public.checkout_configs (key, url)
+VALUES 
+  ('br_prata', 'https://go.pepperpay.com.br/lonsw'),
+  ('br_gold', 'https://go.pepperpay.com.br/ukrg2'),
+  ('usa_prata', 'https://go.pepperpay.com.br/lonsw'),
+  ('usa_gold', 'https://go.pepperpay.com.br/ukrg2')
+ON CONFLICT (key) DO UPDATE SET url = EXCLUDED.url;
+
+-- Pre-fill VSL settings
+INSERT INTO public.vsl_settings (region, vsl_slug)
+VALUES 
+  ('BR', 'default'),
+  ('USA', 'default')
+ON CONFLICT (region) DO NOTHING;
+
+-- 6. Performance Indexes (Supabase Recommendations)
+-- Optimized for analytics and regional filtering
+CREATE INDEX IF NOT EXISTS idx_button_clicks_vsl_id_created_at ON public.button_clicks (vsl_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_button_clicks_composite_metrics ON public.button_clicks (button_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_page_sessions_vsl_id_started_at ON public.page_sessions (vsl_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_vsl_settings_region ON public.vsl_settings (region);
+

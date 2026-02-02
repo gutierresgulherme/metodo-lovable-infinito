@@ -1,17 +1,21 @@
-import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
-    listVSLsWithMetrics,
+    listVSLs,
     createVSL,
     updateVSL,
     deleteVSL,
     generateSlug,
-    BOOK_REFERENCES,
-    VSLVariantWithMetrics,
+    VSLVariant,
     CreateVSLInput,
+    listTestCenters,
+    createTestCenter,
+    updateTestCenter,
+    deleteTestCenter,
+    VSLTestCenter,
+    getVSLMetrics
 } from "@/lib/vslService";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,998 +34,682 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-} from "recharts";
-import {
-    Plus,
-    ArrowLeft,
-    FlaskConical,
-    Users,
-    MousePointerClick,
-    TrendingUp,
-    Trophy,
-    Pause,
-    Play,
-    Trash2,
-    BookOpen,
-    RefreshCw,
-    Copy,
-    ExternalLink,
-    Upload,
-    FileText,
-    ChevronLeft,
-    ChevronRight,
-    GripHorizontal,
-    Video,
-    Star,
-    Hash,
-    Globe,
-    Check,
-    Rocket,
-    Pencil,
-    Eye,
-    ClipboardCopy,
-    Lock,
-    X,
+    Plus, FlaskConical, Globe, Trash2,
+    RefreshCw, Eye, Rocket, Check, Pause, Play,
+    DollarSign, BarChart2, MousePointerClick, Users, Coins,
+    Link as LinkIcon,
+    Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
-// Interface estendida
-interface VSLVariantExtended extends VSLVariantWithMetrics {
-    screenshot_url?: string | null;
-    copy_text?: string | null;
-    buttonClicks?: Array<{ button_id: string; button_label: string; count: number }>;
-    index?: number;
-}
+// --- Components ---
 
-// Chave do localStorage para VSL Principal
-const PRIMARY_VSL_KEY = "primary_vsl_slug";
+// 1. Metric Box
+const MetricBox = ({ label, value, icon: Icon, color }: { label: string; value: string | number; icon: any; color: string }) => (
+    <div className={cn("p-3 rounded-lg border bg-[#050508]", `border-${color}-500/20`)}>
+        <div className="flex items-center gap-2 mb-1">
+            <Icon className={cn("w-3 h-3", `text-${color}-400`)} />
+            <span className={cn("text-[10px] uppercase font-mono font-bold", `text-${color}-400`)}>{label}</span>
+        </div>
+        <p className="text-lg font-orbitron text-white">{value}</p>
+    </div>
+);
 
-const getPrimaryVSLSlug = (): string => {
-    if (typeof window === "undefined") return "default";
-    return localStorage.getItem(PRIMARY_VSL_KEY) || "default";
-};
+// 2. VSL Selection Card (for Modal)
+const VSLSelectionCard = ({ vsl, isActive, isSelected, onClick }: { vsl: VSLVariant; isActive: boolean; isSelected: boolean; onClick: () => void }) => (
+    <div
+        onClick={onClick}
+        className={cn(
+            "cursor-pointer p-4 rounded-xl border transition-all relative group",
+            isSelected ? "bg-blue-500/10 border-blue-500" : "bg-white/5 border-white/10 hover:border-white/30",
+            isActive && !isSelected && "border-green-500/50 bg-green-500/5"
+        )}
+    >
+        <div className="flex items-start justify-between">
+            <div className="space-y-1">
+                <h4 className={cn("font-bold font-orbitron text-sm", isSelected ? "text-blue-400" : "text-gray-200")}>
+                    {vsl.name}
+                </h4>
+                <p className="text-xs text-gray-500 font-mono">Slug: /{vsl.slug}</p>
+                {vsl.book_reference && (
+                    <Badge variant="outline" className="text-[10px] border-white/10 text-gray-400 mt-2">
+                        📚 {vsl.book_reference}
+                    </Badge>
+                )}
+            </div>
+            <div className="flex flex-col items-end gap-2">
+                {isActive && <Badge className="bg-green-500/20 text-green-400 hover:bg-green-500/30 border-0">EM USO</Badge>}
+                {isSelected && <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
+            </div>
+        </div>
+    </div>
+);
 
-const setPrimaryVSLSlug = (slug: string): void => {
-    localStorage.setItem(PRIMARY_VSL_KEY, slug);
-};
-
-// Copy da VSL Original (Controle) - NÃO EDITÁVEL
-const ORIGINAL_VSL_COPY = `VOCÊ AINDA PAGA PRA USAR O LOVABLE?
-
-Peraí... você tá me dizendo que ainda paga a partir de 20 dólares por mês pra usar a ferramenta que mais está revolucionando o mercado de criação de apps com IA?
-
-Olha, se você não sabe do que eu tô falando, deixa eu te explicar rapidinho:
-
-O Lovable é uma plataforma que permite criar aplicativos, sites e sistemas completos usando apenas comandos de texto. Você descreve o que quer, e a IA constrói pra você.
-
-Mas até agora, você precisava pagar uma mensalidade em dólar pra usar isso...
-
-Até agora.
-
-Porque eu descobri um método que me dá acesso ILIMITADO ao Lovable.
-
-Sem pagar 20 dólares por mês.
-Sem limite de uso.
-Sem precisar de cartão internacional.
-
-E o melhor: por um valor único de apenas R$13,90.
-
-É isso mesmo. Por menos de 15 reais, você nunca mais vai precisar se preocupar com limite de créditos, assinaturas em dólar, ou qualquer coisa do tipo.
-
-O QUE VOCÊ RECEBE:
-
-✅ Método completo e atualizado
-✅ Passo a passo em vídeo
-✅ Acesso vitalício
-✅ Suporte via comunidade
-✅ Atualizações gratuitas
-
-BÔNUS EXCLUSIVOS (Plano Gold):
-
-🎁 Comunidade VIP no Discord
-🎁 Templates prontos para usar
-🎁 Suporte prioritário
-🎁 Lives exclusivas
-
-GARANTIA DE 7 DIAS
-
-Se por qualquer motivo você não gostar, é só pedir seu dinheiro de volta. Simples assim.
-
-Clique no botão abaixo e libere seu acesso agora!`;
-
-// MOCK DATA para demonstração
-const MOCK_VSLS: VSLVariantExtended[] = [
-    {
-        id: "mock-1",
-        name: "VSL Original (Controle)",
-        slug: "default",
-        book_reference: "Original",
-        description: ORIGINAL_VSL_COPY,
-        headline: "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
-        status: "active",
-        is_control: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        sessions: 1245,
-        clicks: 56,
-        ctr: 4.5,
-        index: 1,
-        buttonClicks: [
-            { button_id: "btn-comprar-13-1", button_label: "Plano Prata - Abaixo do Vídeo", count: 23 },
-            { button_id: "btn-comprar-24-1", button_label: "Plano Gold - Seção Bônus", count: 18 },
-            { button_id: "btn-comprar-24-2", button_label: "Plano Gold - Tabela de Preços", count: 9 },
-            { button_id: "btn-comprar-13-2", button_label: "Plano Prata - Tabela de Preços", count: 6 },
-        ],
-    },
-    {
-        id: "mock-2",
-        name: "VSL Expert Secrets v1",
-        slug: "expert-secrets-v1",
-        book_reference: "Expert Secrets - Russell Brunson",
-        description: "",
-        headline: "DESCUBRA O SEGREDO QUE OS GRINGOS USAM",
-        status: "active",
-        is_control: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        sessions: 1180,
-        clicks: 72,
-        ctr: 6.1,
-        index: 2,
-        buttonClicks: [
-            { button_id: "btn-comprar-13-1", button_label: "Plano Prata - Abaixo do Vídeo", count: 31 },
-            { button_id: "btn-comprar-24-1", button_label: "Plano Gold - Seção Bônus", count: 25 },
-            { button_id: "btn-comprar-24-2", button_label: "Plano Gold - Tabela de Preços", count: 10 },
-            { button_id: "btn-comprar-13-2", button_label: "Plano Prata - Tabela de Preços", count: 6 },
-        ],
-    },
-    {
-        id: "mock-3",
-        name: "VSL Cashvertising v1",
-        slug: "cashvertising-v1",
-        book_reference: "Cashvertising - Drew Eric Whitman",
-        description: "",
-        headline: "PARE DE PERDER DINHEIRO COM ASSINATURAS",
-        status: "paused",
-        is_control: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        sessions: 980,
-        clicks: 41,
-        ctr: 4.2,
-        index: 3,
-        buttonClicks: [
-            { button_id: "btn-comprar-13-1", button_label: "Plano Prata - Abaixo do Vídeo", count: 18 },
-            { button_id: "btn-comprar-24-1", button_label: "Plano Gold - Seção Bônus", count: 12 },
-            { button_id: "btn-comprar-24-2", button_label: "Plano Gold - Tabela de Preços", count: 7 },
-            { button_id: "btn-comprar-13-2", button_label: "Plano Prata - Tabela de Preços", count: 4 },
-        ],
-    },
-];
+// --- Main Page Component ---
 
 export default function AdminVSLTester() {
-    const navigate = useNavigate();
     const { toast } = useToast();
-    const [vsls, setVsls] = useState<VSLVariantExtended[]>(MOCK_VSLS);
     const [loading, setLoading] = useState(false);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [viewDialogOpen, setViewDialogOpen] = useState(false);
-    const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
-    const [selectedVSL, setSelectedVSL] = useState<VSLVariantExtended | null>(null);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [copyText, setCopyText] = useState("");
-    const [customBookName, setCustomBookName] = useState("");
-    const [useCustomBook, setUseCustomBook] = useState(false);
-    const [primaryVSL, setPrimaryVSL] = useState<string>(getPrimaryVSLSlug());
-    const [formData, setFormData] = useState<CreateVSLInput>({
-        name: "",
-        slug: "",
-        book_reference: "",
-        headline: "",
-        description: "",
-        status: "draft",
+    const [testCenters, setTestCenters] = useState<VSLTestCenter[]>([]);
+    const [allVSLs, setAllVSLs] = useState<VSLVariant[]>([]);
+
+    // Metrics Cache
+    const [metricsCache, setMetricsCache] = useState<Record<string, { sessions: number; clicks: number; ctr: number; revenue: number }>>({});
+
+    // Modals State
+    const [createVSLOpen, setCreateVSLOpen] = useState(false);
+    const [changeVSLOpen, setChangeVSLOpen] = useState(false);
+    const [createDomainOpen, setCreateDomainOpen] = useState(false);
+
+    // Selected items for Modals
+    const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
+    const [selectedVSLForChange, setSelectedVSLForChange] = useState<string | null>(null);
+
+    // Forms
+    const [vslForm, setVslForm] = useState<CreateVSLInput>({
+        name: "", slug: "", status: "draft", description: "", is_template: false,
+        headline: "", video_url: "", benefits_copy: "", method_explanation_copy: "", pricing_copy: "", guarantee_copy: ""
     });
+    const [domainForm, setDomainForm] = useState({ name: "", domain: "", currency: "BRL" });
+    const [setupDialogOpen, setSetupDialogOpen] = useState(false);
 
-    // Carousel state
-    const carouselRef = useRef<HTMLDivElement>(null);
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStartX, setDragStartX] = useState(0);
-    const [scrollStartX, setScrollStartX] = useState(0);
+    // SQL Migration Script for User Copy-Paste
+    const MIGRATION_SQL = `
+-- 1. Create vsl_variants table
+CREATE TABLE IF NOT EXISTS vsl_variants (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  description TEXT,
+  book_reference TEXT,
+  headline TEXT,
+  hero_subheadline TEXT,
+  video_url TEXT,
+  benefits_copy TEXT,
+  method_explanation_copy TEXT,
+  pricing_copy TEXT,
+  guarantee_copy TEXT,
+  faq_copy JSONB,
+  status TEXT DEFAULT 'draft',
+  is_control BOOLEAN DEFAULT false,
+  is_template BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
 
-    const loadVSLs = async () => {
-        setLoading(true);
-        try {
-            const data = await listVSLsWithMetrics();
-            if (data.length === 0) {
-                setVsls(MOCK_VSLS);
-            } else {
-                const vslsWithClicks = await Promise.all(
-                    data.map(async (vsl, idx) => {
-                        const buttonClicks = await fetchButtonClicksForVSL(vsl.id);
-                        return { ...vsl, buttonClicks, index: idx + 1 };
-                    })
-                );
-                setVsls(vslsWithClicks as VSLVariantExtended[]);
-            }
-        } catch (error) {
-            setVsls(MOCK_VSLS);
-        }
-        setLoading(false);
-    };
+-- 2. Create vsl_test_centers table
+CREATE TABLE IF NOT EXISTS vsl_test_centers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  domain TEXT NOT NULL UNIQUE,
+  currency TEXT DEFAULT 'BRL',
+  bma_name TEXT,
+  status TEXT DEFAULT 'active',
+  vsl_slug TEXT,
+  active_vsl_id UUID REFERENCES vsl_variants(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
 
-    const fetchButtonClicksForVSL = async (vslId: string) => {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const db = supabase as any;
-            const { data } = await db.from("button_clicks").select("button_id, button_label").eq("vsl_id", vslId);
-            if (!data) return [];
-            const clicksByButton: Record<string, { label: string; count: number }> = {};
-            data.forEach((click: { button_id: string; button_label: string }) => {
-                if (!clicksByButton[click.button_id]) {
-                    clicksByButton[click.button_id] = { label: click.button_label || click.button_id, count: 0 };
-                }
-                clicksByButton[click.button_id].count++;
-            });
-            return Object.entries(clicksByButton).map(([id, info]) => ({ button_id: id, button_label: info.label, count: info.count }));
-        } catch (error) {
-            return [];
-        }
-    };
+-- 3. Disable RLS for immediate admin access
+ALTER TABLE vsl_variants DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vsl_test_centers DISABLE ROW LEVEL SECURITY;
 
+-- 4. Add column to tracking tables
+ALTER TABLE page_sessions ADD COLUMN IF NOT EXISTS vsl_slug TEXT;
+ALTER TABLE button_clicks ADD COLUMN IF NOT EXISTS vsl_slug TEXT;
+
+-- 5. Insert Default Data
+INSERT INTO vsl_test_centers (name, domain, currency)
+VALUES 
+('Brasil Principal', 'metodo-lovable-infinito.vip', 'BRL'),
+('USA Principal', 'lovable-app.vip', 'USD')
+ON CONFLICT (domain) DO NOTHING;
+`;
+
+    // Initial Load
     useEffect(() => {
-        loadVSLs();
+        refreshData();
     }, []);
 
-    const handleNameChange = (name: string) => {
-        setFormData({ ...formData, name, slug: generateSlug(name) });
-    };
+    const refreshData = async () => {
+        setLoading(true);
+        try {
+            // Try to fetch centers first to catch DB errors
+            try {
+                const centers = await listTestCenters();
+                const vsls = await listVSLs();
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setSelectedFile(file);
+                setTestCenters(centers);
+                setAllVSLs(vsls);
 
-        if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const text = event.target?.result as string;
-                setCopyText(text);
-                const lines = text.split('\n').filter(l => l.trim());
-                if (lines.length > 0) {
-                    const potentialHeadline = lines.find(l => l.toUpperCase() === l && l.length > 10);
-                    if (potentialHeadline) {
-                        setFormData(prev => ({ ...prev, headline: potentialHeadline.trim() }));
+                // Fetch metrics
+                const metrics: Record<string, any> = {};
+                for (const center of centers) {
+                    if (center.active_vsl) {
+                        const m = await getVSLMetrics(center.active_vsl.id, center.domain);
+                        // Mock revenue calculation (e.g., clicks * Avg Order Value)
+                        const ticket = center.currency === 'USD' ? 27 : 13.90;
+                        metrics[center.id] = { ...m, revenue: m.clicks * ticket * 0.1 };
                     }
                 }
-                toast({ title: "Documento carregado!", description: `${lines.length} linhas de copy extraídas.` });
-            };
-            reader.readAsText(file);
+                setMetricsCache(metrics);
+            } catch (dbError: any) {
+                console.error("Database Error Details:", dbError);
+                toast({
+                    title: "Erro de Execução no Banco",
+                    description: dbError.message || "Tabelas não encontradas ou erro de permissão.",
+                    variant: "destructive"
+                });
+                setSetupDialogOpen(true);
+            }
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Erro ao carregar dados", variant: "destructive" });
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleSubmit = async () => {
-        if (!formData.name || !formData.slug) {
-            toast({ title: "Erro", description: "Nome e slug são obrigatórios", variant: "destructive" });
-            return;
-        }
+    // --- Actions ---
 
-        const bookRef = useCustomBook ? customBookName : formData.book_reference;
-        const newIndex = vsls.length + 1;
+    const handleCreateVSL = async () => {
+        if (!vslForm.name || !vslForm.slug) return toast({ title: "Nome e Slug são obrigatórios", variant: "destructive" });
 
-        const result = await createVSL({
-            ...formData,
-            book_reference: bookRef,
-            description: copyText || formData.description,
-        });
-
-        if (result) {
-            toast({ title: "VSL Criada!", description: `VSL #${newIndex} "${result.name}" criada.` });
-            setDialogOpen(false);
-            resetForm();
-            loadVSLs();
-        } else {
-            const mockNew: VSLVariantExtended = {
-                id: `mock-${Date.now()}`,
-                name: formData.name,
-                slug: formData.slug,
-                book_reference: bookRef || null,
-                description: copyText || null,
-                headline: formData.headline || null,
-                status: formData.status || "draft",
-                is_control: false,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                sessions: 0,
-                clicks: 0,
-                ctr: 0,
-                index: newIndex,
-                buttonClicks: [],
-            };
-            setVsls(prev => [...prev, mockNew]);
-            toast({ title: "VSL Criada!", description: `VSL #${newIndex} adicionada.` });
-            setDialogOpen(false);
-            resetForm();
+        try {
+            const res = await createVSL({ ...vslForm });
+            if (res) {
+                toast({ title: "VSL Criada com sucesso!" });
+                setCreateVSLOpen(false);
+                refreshData();
+                setVslForm({ name: "", slug: "", status: "draft" }); // Reset
+            }
+        } catch (e) {
+            toast({ title: "Erro ao criar VSL", variant: "destructive" });
         }
     };
 
-    const handleEditSubmit = async () => {
-        if (!selectedVSL) return;
-
-        const bookRef = useCustomBook ? customBookName : formData.book_reference;
-
-        if (selectedVSL.id.startsWith("mock-")) {
-            setVsls(prev => prev.map(v => v.id === selectedVSL.id ? {
-                ...v,
-                name: formData.name || v.name,
-                slug: formData.slug || v.slug,
-                book_reference: bookRef || v.book_reference,
-                headline: formData.headline || v.headline,
-                description: copyText || v.description,
-                status: formData.status || v.status,
-            } : v));
-            toast({ title: "VSL Atualizada!" });
-            setEditDialogOpen(false);
-            resetForm();
-            return;
-        }
-
-        const success = await updateVSL(selectedVSL.id, {
-            name: formData.name,
-            slug: formData.slug,
-            book_reference: bookRef,
-            headline: formData.headline,
-            description: copyText || formData.description,
-            status: formData.status,
-        });
-
-        if (success) {
-            toast({ title: "VSL Atualizada!" });
-            setEditDialogOpen(false);
-            resetForm();
-            loadVSLs();
+    const handleCreateDomain = async () => {
+        if (!domainForm.name || !domainForm.domain) return;
+        try {
+            await createTestCenter(domainForm);
+            toast({ title: "Domínio adicionado!" });
+            setCreateDomainOpen(false);
+            refreshData();
+        } catch (e: any) {
+            console.error("Create Domain Error:", e);
+            toast({
+                title: "Erro ao adicionar domínio",
+                description: e.message || "Verifique se a tabela vsl_test_centers existe.",
+                variant: "destructive"
+            });
+            if (e.message?.includes("relation") || e.message?.includes("does not exist")) {
+                setSetupDialogOpen(true);
+            }
         }
     };
 
-    const resetForm = () => {
-        setFormData({ name: "", slug: "", book_reference: "", headline: "", description: "", status: "draft" });
-        setSelectedFile(null);
-        setCopyText("");
-        setCustomBookName("");
-        setUseCustomBook(false);
-        setSelectedVSL(null);
-    };
-
-    const openEditDialog = (vsl: VSLVariantExtended) => {
-        setSelectedVSL(vsl);
-        setFormData({
-            name: vsl.name,
-            slug: vsl.slug,
-            book_reference: vsl.book_reference || "",
-            headline: vsl.headline || "",
-            description: vsl.description || "",
-            status: vsl.status as "draft" | "active",
-        });
-        setCopyText(vsl.description || "");
-        setEditDialogOpen(true);
-    };
-
-    const openViewDialog = (vsl: VSLVariantExtended) => {
-        setSelectedVSL(vsl);
-        setViewDialogOpen(true);
-    };
-
-    const openPreviewDialog = (vsl: VSLVariantExtended) => {
-        setSelectedVSL(vsl);
-        setPreviewDialogOpen(true);
-    };
-
-    const copyCopyText = (vsl: VSLVariantExtended) => {
-        const text = vsl.description || ORIGINAL_VSL_COPY;
-        navigator.clipboard.writeText(text);
-        toast({ title: "Copy copiada!", description: "Texto da VSL copiado para a área de transferência." });
-    };
-
-    const handleStatusChange = async (id: string, status: "active" | "paused" | "winner") => {
-        if (id.startsWith("mock-")) {
-            setVsls(prev => prev.map(v => v.id === id ? { ...v, status } : v));
-            toast({ title: "Status atualizado!" });
-            return;
-        }
-        const success = await updateVSL(id, { status });
-        if (success) {
-            toast({ title: "Status atualizado!" });
-            loadVSLs();
+    const handleChangeActiveVSL = async () => {
+        if (!selectedDomainId || !selectedVSLForChange) return;
+        try {
+            await updateTestCenter(selectedDomainId, { active_vsl_id: selectedVSLForChange });
+            toast({ title: "VSL Ativa atualizada no domínio!" });
+            setChangeVSLOpen(false);
+            refreshData();
+        } catch (e) {
+            toast({ title: "Erro ao atualizar", variant: "destructive" });
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Tem certeza que deseja excluir "${name}"?`)) return;
-        if (id.startsWith("mock-")) {
-            setVsls(prev => prev.filter(v => v.id !== id));
-            toast({ title: "VSL excluída!" });
-            return;
+    const toggleDomainStatus = async (center: VSLTestCenter) => {
+        const newStatus = center.status === 'active' ? 'paused' : 'active';
+        await updateTestCenter(center.id, { status: newStatus });
+        refreshData();
+        toast({ title: `Domínio ${newStatus === 'active' ? 'Ativado' : 'Pausado'}` });
+    };
+
+    const handleDeleteDomain = async (id: string) => {
+        if (confirm("Tem certeza que deseja remover este domínio?")) {
+            await deleteTestCenter(id);
+            refreshData();
         }
-        const success = await deleteVSL(id);
-        if (success) {
-            toast({ title: "VSL excluída!" });
-            loadVSLs();
-        }
-    };
-
-    const handleSetPrimary = (slug: string, name: string) => {
-        setPrimaryVSLSlug(slug);
-        setPrimaryVSL(slug);
-        toast({ title: "🚀 VSL Principal Definida!", description: `"${name}" será exibida na página inicial.` });
-    };
-
-    const copyLink = (slug: string) => {
-        const link = `${window.location.origin}/?vsl=${slug}`;
-        navigator.clipboard.writeText(link);
-        toast({ title: "Link copiado!" });
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "active": return "bg-emerald-500/20 text-emerald-400 border-emerald-500/50";
-            case "winner": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/50";
-            case "paused": return "bg-gray-500/20 text-gray-400 border-gray-500/50";
-            default: return "bg-purple-500/20 text-purple-400 border-purple-500/50";
-        }
-    };
-
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case "active": return "Ativo";
-            case "winner": return "🏆 Vencedor";
-            case "paused": return "Pausado";
-            default: return "Rascunho";
-        }
-    };
-
-    const scrollToIndex = (index: number) => {
-        if (!carouselRef.current) return;
-        const cardWidth = carouselRef.current.offsetWidth;
-        carouselRef.current.scrollTo({ left: index * (cardWidth * 0.85 + 24), behavior: 'smooth' });
-        setActiveIndex(index);
-    };
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        setIsDragging(true);
-        setDragStartX(e.clientX);
-        setScrollStartX(carouselRef.current?.scrollLeft || 0);
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging || !carouselRef.current) return;
-        e.preventDefault();
-        carouselRef.current.scrollLeft = scrollStartX - (e.clientX - dragStartX);
-    };
-
-    const handleMouseUp = () => {
-        if (!isDragging) return;
-        setIsDragging(false);
-        if (carouselRef.current) {
-            const cardWidth = carouselRef.current.offsetWidth * 0.85 + 24;
-            const nearestIndex = Math.round(carouselRef.current.scrollLeft / cardWidth);
-            scrollToIndex(Math.max(0, Math.min(vsls.length - 1, nearestIndex)));
-        }
-    };
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        setIsDragging(true);
-        setDragStartX(e.touches[0].clientX);
-        setScrollStartX(carouselRef.current?.scrollLeft || 0);
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!isDragging || !carouselRef.current) return;
-        carouselRef.current.scrollLeft = scrollStartX - (e.touches[0].clientX - dragStartX);
-    };
-
-    const winnerVSL = vsls.filter(v => v.status !== "draft" && v.sessions >= 10).sort((a, b) => b.ctr - a.ctr)[0];
-    const chartData = vsls.filter(v => v.status !== "draft").map(v => ({ name: `#${v.index}`, CTR: v.ctr }));
-    const currentPrimaryVSL = vsls.find(v => v.slug === primaryVSL);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
-            </div>
-        );
     }
 
+    const handleSetAsTemplate = async (id: string) => {
+        try {
+            // Unset other templates first
+            const existing = allVSLs.filter(v => v.is_template);
+            for (const v of existing) {
+                await updateVSL(v.id, { is_template: false });
+            }
+            await updateVSL(id, { is_template: true });
+            toast({ title: "Template padrão definido!" });
+            refreshData();
+        } catch (e) {
+            toast({ title: "Erro ao definir template", variant: "destructive" });
+        }
+    };
+
+    const handleDeleteVSL = async (id: string) => {
+        if (confirm("Deletar esta VSL permanentemente?")) {
+            await deleteVSL(id);
+            toast({ title: "VSL removida" });
+            refreshData();
+        }
+    };
+
+    // Helpers
+    const formatCurrency = (val: number, currency: string = 'BRL') => {
+        return new Intl.NumberFormat(currency === 'USD' ? 'en-US' : 'pt-BR', {
+            style: 'currency',
+            currency: currency
+        }).format(val);
+    };
+
     return (
-        <div className="space-y-4 overflow-x-hidden">
+        <div className="space-y-8 animate-fade-in pb-20 min-h-screen">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/5 pb-6">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-2">
-                        <FlaskConical className="w-7 h-7 text-purple-400" />
-                        Testador de VSLs
+                    <h1 className="text-3xl md:text-4xl font-orbitron font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 flex items-center gap-3">
+                        <FlaskConical className="w-8 h-8 text-purple-400" />
+                        TESTADOR DE VSLs
                     </h1>
-                    <p className="text-gray-400 text-sm">Arraste para comparar • {vsls.length} VSLs</p>
+                    <p className="text-gray-500 font-mono text-sm tracking-widest uppercase mt-2">
+                        GERENCIAMENTO MULTI-DOMÍNIO & COPYWRITING
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={loadVSLs} className="border-gray-700">
-                        <RefreshCw className="w-4 h-4" />
+                    <Button variant="outline" className="border-white/10 hover:bg-white/5 font-mono text-xs" onClick={() => setSetupDialogOpen(true)}>
+                        DATABASE SETUP (SQL)
                     </Button>
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="bg-purple-600 hover:bg-purple-700">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nova VSL #{vsls.length + 1}
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-[#1a1a2e] border-gray-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2">
-                                    <Hash className="w-5 h-5 text-purple-400" />
-                                    Criar VSL #{vsls.length + 1}
-                                </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 mt-4">
-                                <div>
-                                    <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> Documento da Copy</Label>
-                                    <div className="mt-2 border-2 border-dashed border-gray-700 rounded-lg p-4 text-center hover:border-purple-500 transition-colors cursor-pointer">
-                                        <input type="file" accept=".txt,.md,text/plain" onChange={(e) => handleFileChange(e)} className="hidden" id="copy-doc" />
-                                        <label htmlFor="copy-doc" className="cursor-pointer">
-                                            {selectedFile ? (
-                                                <div className="space-y-1">
-                                                    <FileText className="w-8 h-8 mx-auto text-purple-400" />
-                                                    <p className="text-sm text-purple-400">{selectedFile.name}</p>
-                                                    <p className="text-xs text-gray-500">{copyText.split('\n').length} linhas</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-1">
-                                                    <Upload className="w-8 h-8 mx-auto text-gray-500" />
-                                                    <p className="text-sm text-gray-400">Upload da copy (.txt ou .md)</p>
-                                                </div>
-                                            )}
-                                        </label>
+                    <Button variant="outline" className="border-white/10 hover:bg-white/5 font-mono text-xs" onClick={refreshData}>
+                        <RefreshCw className={cn("w-3 h-3 mr-2", loading && "animate-spin")} />
+                        ATUALIZAR
+                    </Button>
+                    <Button
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-orbitron text-xs tracking-wider"
+                        onClick={() => setCreateVSLOpen(true)}
+                    >
+                        <Plus className="w-3 h-3 mr-2" />
+                        NOVA VSL
+                    </Button>
+                </div>
+            </div>
+
+            {/* DOMAINS GRID */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {testCenters.map((center) => {
+                    const metrics = metricsCache[center.id];
+                    const activeVSL = center.active_vsl;
+
+                    return (
+                        <Card key={center.id} className="bg-[#0f0f16] border-white/10 hover:border-purple-500/20 transition-all overflow-hidden relative">
+                            {/* Status Stripe */}
+                            <div className={cn("absolute top-0 left-0 w-1 h-full", center.status === 'active' ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" : "bg-red-500")} />
+
+                            <CardContent className="p-6 pl-8">
+                                {/* Header */}
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="text-xl font-orbitron text-white font-bold">{center.name}</h3>
+                                            <Badge variant="outline" className={cn("text-[10px] uppercase", center.status === 'active' ? "text-green-400 border-green-500/30" : "text-red-400 border-red-500/30")}>
+                                                {center.status === 'active' ? 'ONLINE' : 'OFFLINE'}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-gray-500 text-xs font-mono">
+                                            <Globe className="w-3 h-3" />
+                                            {center.domain}
+                                            <span className="text-white/20">•</span>
+                                            <span className="text-yellow-500/80">{center.currency}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/5" onClick={() => toggleDomainStatus(center)}>
+                                            {center.status === 'active' ? <Pause className="w-4 h-4 text-yellow-500" /> : <Play className="w-4 h-4 text-green-500" />}
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-500/10 hover:text-red-400" onClick={() => handleDeleteDomain(center.id)}>
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
                                     </div>
                                 </div>
-                                <div>
-                                    <Label>Nome da VSL</Label>
-                                    <Input placeholder="Ex: VSL Expert Secrets v1" value={formData.name} onChange={(e) => handleNameChange(e.target.value)} className="bg-white/5 border-gray-700 mt-1" />
-                                </div>
-                                <div>
-                                    <Label>Slug (URL)</Label>
-                                    <Input placeholder="ex: expert-secrets-v1" value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} className="bg-white/5 border-gray-700 mt-1" />
-                                </div>
-                                <div>
-                                    <Label className="flex items-center gap-2"><BookOpen className="w-4 h-4" /> Livro de Referência</Label>
-                                    <div className="flex items-center gap-2 mt-1 mb-2">
-                                        <input type="checkbox" id="custom-book-new" checked={useCustomBook} onChange={(e) => setUseCustomBook(e.target.checked)} className="rounded" />
-                                        <label htmlFor="custom-book-new" className="text-sm text-gray-400">Digitar manualmente</label>
-                                    </div>
-                                    {useCustomBook ? (
-                                        <Input placeholder="Nome do livro..." value={customBookName} onChange={(e) => setCustomBookName(e.target.value)} className="bg-white/5 border-gray-700" />
+
+                                {/* Active VSL */}
+                                <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6">
+                                    <h4 className="text-[10px] uppercase font-bold text-gray-500 mb-3 flex items-center gap-2">
+                                        <Rocket className="w-3 h-3" /> VSL ATIVA NESTE DOMÍNIO
+                                    </h4>
+
+                                    {activeVSL ? (
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-white font-orbitron font-bold text-lg">{activeVSL.name}</p>
+                                                {activeVSL.headline && <p className="text-gray-400 text-xs italic mt-1 line-clamp-1">"{activeVSL.headline}"</p>}
+                                            </div>
+                                            <Button size="sm" variant="secondary" className="bg-white/10 hover:bg-white/20 text-xs font-mono" onClick={() => window.open(`http://${center.domain}/?vsl=${activeVSL.slug}`, '_blank')}>
+                                                <Eye className="w-3 h-3 mr-2" /> PREVIEW
+                                            </Button>
+                                        </div>
                                     ) : (
-                                        <Select value={formData.book_reference} onValueChange={(v) => setFormData({ ...formData, book_reference: v })}>
-                                            <SelectTrigger className="bg-white/5 border-gray-700"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                            <SelectContent className="bg-[#1a1a2e] border-gray-700">
-                                                {BOOK_REFERENCES.map((book) => (<SelectItem key={book.value} value={book.label}>{book.label}</SelectItem>))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="text-center py-4 text-gray-500 text-sm font-mono italic">
+                                            Nenhuma VSL selecionada. O domínio usará o template padrão.
+                                        </div>
                                     )}
-                                </div>
-                                <div>
-                                    <Label>Headline Principal</Label>
-                                    <Textarea placeholder="Ex: VOCÊ AINDA PAGA PRA USAR O LOVABLE?" value={formData.headline || ""} onChange={(e) => setFormData({ ...formData, headline: e.target.value })} className="bg-white/5 border-gray-700 mt-1 min-h-[60px]" />
-                                </div>
-                                <div>
-                                    <Label>Status Inicial</Label>
-                                    <Select value={formData.status} onValueChange={(v: "draft" | "active") => setFormData({ ...formData, status: v })}>
-                                        <SelectTrigger className="bg-white/5 border-gray-700 mt-1"><SelectValue /></SelectTrigger>
-                                        <SelectContent className="bg-[#1a1a2e] border-gray-700">
-                                            <SelectItem value="draft">Rascunho</SelectItem>
-                                            <SelectItem value="active">Ativo</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button onClick={handleSubmit} className="w-full bg-purple-600 hover:bg-purple-700">Criar VSL #{vsls.length + 1}</Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
 
-            {/* SELETOR VSL PRINCIPAL */}
-            <div>
-                <Card className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border-2 border-cyan-500/50">
-                    <CardContent className="py-4">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-cyan-500/20 p-2 rounded-lg"><Globe className="w-6 h-6 text-cyan-400" /></div>
-                                <div>
-                                    <h3 className="text-white font-semibold">🚀 VSL Principal (Vercel)</h3>
-                                    <p className="text-gray-400 text-sm">Esta VSL será exibida na página inicial</p>
+                                    <Button
+                                        className="w-full mt-4 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-orbitron text-xs"
+                                        onClick={() => {
+                                            setSelectedDomainId(center.id);
+                                            setSelectedVSLForChange(center.active_vsl_id || null);
+                                            setChangeVSLOpen(true);
+                                        }}
+                                    >
+                                        TROCAR VSL ATIVA
+                                    </Button>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Select value={primaryVSL} onValueChange={(slug) => {
-                                    const vsl = vsls.find(v => v.slug === slug);
-                                    if (vsl) handleSetPrimary(slug, vsl.name);
-                                }}>
-                                    <SelectTrigger className="bg-white/10 border-cyan-500/50 min-w-[200px]"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                    <SelectContent className="bg-[#1a1a2e] border-gray-700">
-                                        {vsls.filter(v => v.status === "active" || v.status === "winner").map((vsl) => (
-                                            <SelectItem key={vsl.slug} value={vsl.slug}>#{vsl.index} {vsl.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {currentPrimaryVSL && (
-                                    <a href="/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg font-medium">
-                                        <Rocket className="w-4 h-4" /> Ver
-                                    </a>
+
+                                {/* Metrics */}
+                                {metrics ? (
+                                    <div className="grid grid-cols-4 gap-2">
+                                        <MetricBox label="Sessões" value={metrics.sessions} icon={Users} color="blue" />
+                                        <MetricBox label="Cliques" value={metrics.clicks} icon={MousePointerClick} color="purple" />
+                                        <MetricBox label="CTR" value={`${metrics.ctr}%`} icon={BarChart2} color="green" />
+                                        <MetricBox label="Receita" value={formatCurrency(metrics.revenue, center.currency)} icon={Coins} color="yellow" />
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center p-4 border border-dashed border-white/10 rounded-lg">
+                                        <p className="text-xs text-gray-500 font-mono">AGUARDANDO DADOS DE TRÁFEGO...</p>
+                                    </div>
                                 )}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Winner Banner */}
-            {
-                winnerVSL && (
-                    <div className="max-w-7xl mx-auto mb-4">
-                        <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-xl p-3 flex items-center gap-3">
-                            <Trophy className="w-6 h-6 text-yellow-400" />
-                            <div>
-                                <p className="text-yellow-400 font-semibold text-sm">🏆 Provável Vencedor: #{winnerVSL.index}</p>
-                                <p className="text-white text-sm"><strong>{winnerVSL.name}</strong> — CTR {winnerVSL.ctr}%</p>
-                            </div>
-                            {winnerVSL.slug !== primaryVSL && (
-                                <Button size="sm" onClick={() => handleSetPrimary(winnerVSL.slug, winnerVSL.name)} className="ml-auto bg-yellow-500 hover:bg-yellow-600 text-black">
-                                    <Globe className="w-3 h-3 mr-1" /> Definir Principal
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Carousel Navigation */}
-            <div className="max-w-7xl mx-auto mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <GripHorizontal className="w-5 h-5 text-cyan-400" /> VSLs em Teste
-                </h2>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" size="sm" onClick={() => scrollToIndex(Math.max(0, activeIndex - 1))} disabled={activeIndex === 0} className="border-gray-700 h-8 w-8 p-0">
-                        <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <span className="text-white font-medium min-w-[60px] text-center">{activeIndex + 1} / {vsls.length}</span>
-                    <Button variant="outline" size="sm" onClick={() => scrollToIndex(Math.min(vsls.length - 1, activeIndex + 1))} disabled={activeIndex === vsls.length - 1} className="border-gray-700 h-8 w-8 p-0">
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Carousel */}
-            <div className="max-w-7xl mx-auto mb-6 relative">
-                <div
-                    ref={carouselRef}
-                    className="flex gap-6 overflow-x-scroll pb-4 scroll-smooth select-none"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={() => handleMouseUp()}
-                >
-                    {vsls.map((vsl, index) => {
-                        const buttonClicks = vsl.buttonClicks || [];
-                        const isControl = vsl.is_control;
-                        const isPrimary = vsl.slug === primaryVSL;
-
-                        return (
-                            <div key={vsl.id} className="flex-shrink-0" style={{ width: '85%', maxWidth: '520px', scrollSnapAlign: 'start' }}>
-                                <Card className={`h-full transition-all ${isPrimary ? 'bg-gradient-to-br from-[#0a1a3e] to-[#1a2a4e] border-2 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.3)]' : isControl ? 'bg-gradient-to-br from-[#1a1a2e] to-[#2a1a3e] border-2 border-yellow-500/50' : 'bg-[#1a1a2e] border-gray-800'}`}>
-                                    <CardHeader className="pb-2">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-2">
-                                                {isPrimary && <Globe className="w-5 h-5 text-cyan-400" />}
-                                                {isControl && !isPrimary && <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
-                                                <div>
-                                                    <CardTitle className="text-base text-white flex items-center gap-2">
-                                                        <span className={`text-white text-xs px-2 py-0.5 rounded-full ${isPrimary ? 'bg-cyan-600' : 'bg-purple-600'}`}>#{vsl.index || index + 1}</span>
-                                                        {vsl.name}
-                                                        {isControl && <Lock className="w-3 h-3 text-yellow-400" />}
-                                                    </CardTitle>
-                                                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                                                        <BookOpen className="w-3 h-3" />
-                                                        {vsl.book_reference || "Sem referência"}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                {isPrimary && <span className="bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 px-2 py-0.5 rounded-full text-[10px] font-medium">PRINCIPAL</span>}
-                                                <span className={`px-2 py-1 rounded-full text-xs border ${getStatusColor(vsl.status)}`}>{getStatusLabel(vsl.status)}</span>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-
-                                    <CardContent className="space-y-3">
-                                        {/* Metrics */}
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <div className="bg-white/5 rounded-lg p-2 text-center">
-                                                <Users className="w-4 h-4 mx-auto text-purple-400 mb-1" />
-                                                <p className="text-lg font-bold text-white">{vsl.sessions}</p>
-                                                <p className="text-[10px] text-gray-500">Sessões</p>
-                                            </div>
-                                            <div className="bg-white/5 rounded-lg p-2 text-center">
-                                                <MousePointerClick className="w-4 h-4 mx-auto text-cyan-400 mb-1" />
-                                                <p className="text-lg font-bold text-white">{vsl.clicks}</p>
-                                                <p className="text-[10px] text-gray-500">Cliques</p>
-                                            </div>
-                                            <div className="bg-white/5 rounded-lg p-2 text-center">
-                                                <TrendingUp className="w-4 h-4 mx-auto text-emerald-400 mb-1" />
-                                                <p className="text-lg font-bold text-white">{vsl.ctr}%</p>
-                                                <p className="text-[10px] text-gray-500">CTR</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Page Map */}
-                                        <div className="bg-black/40 rounded-lg p-3 border border-gray-800">
-                                            <h4 className="text-xs font-semibold text-white mb-2 flex items-center gap-1">📍 Mapa da Página</h4>
-                                            <div className="space-y-1.5 text-[10px]">
-                                                <div className="bg-red-600/80 rounded py-1.5 px-2 text-center border border-red-500"><span className="text-white font-medium">🔴 Banner de Urgência</span></div>
-                                                <div className="bg-gray-800/60 rounded py-2 px-2 text-center border border-gray-700">
-                                                    <p className="text-gray-400">HERO SECTION</p>
-                                                    <p className="text-white text-[9px] font-medium truncate mt-0.5">{vsl.headline || "Título + Preço"}</p>
-                                                </div>
-                                                <div className="bg-gray-800/60 rounded py-2 px-2 text-center border border-gray-700"><Video className="w-4 h-4 mx-auto text-gray-500" /><p className="text-gray-400">VÍDEO VSL</p></div>
-                                                <div className="bg-red-500/90 rounded py-1.5 px-2 text-center border-2 border-yellow-500"><p className="text-white font-bold">🔘 QUERO O MÉTODO POR R$13,90</p><p className="text-yellow-300">{buttonClicks.find(b => b.button_id === 'btn-comprar-13-1')?.count || 0} cliques</p></div>
-                                                <div className="bg-gray-800/40 rounded py-1 px-2 text-center border border-gray-700"><p className="text-gray-500">O QUE VOCÊ RECEBE</p></div>
-                                                <div className="bg-gray-800/40 rounded py-1 px-2 text-center border border-gray-700"><p className="text-gray-500">🎁 BÔNUS EXCLUSIVOS</p></div>
-                                                <div className="bg-emerald-500/90 rounded py-1.5 px-2 text-center border-2 border-emerald-300"><p className="text-white font-bold">🔘 MÉTODO + BÔNUS POR R$24,90</p><p className="text-emerald-200">{buttonClicks.find(b => b.button_id === 'btn-comprar-24-1')?.count || 0} cliques</p></div>
-                                                <div className="bg-gray-800/40 rounded py-1 px-2 border border-gray-700">
-                                                    <p className="text-gray-500 text-center mb-1">ESCOLHA SEU PLANO</p>
-                                                    <div className="grid grid-cols-2 gap-1">
-                                                        <div className="bg-yellow-600/60 rounded p-1 border border-yellow-500 text-center"><p className="text-yellow-300 font-bold">GOLD</p><p className="text-white">R$24,90</p><p className="text-yellow-200">{buttonClicks.find(b => b.button_id === 'btn-comprar-24-2')?.count || 0} cliques</p></div>
-                                                        <div className="bg-gray-600/60 rounded p-1 border border-gray-500 text-center"><p className="text-gray-300 font-bold">PRATA</p><p className="text-white">R$13,90</p><p className="text-gray-300">{buttonClicks.find(b => b.button_id === 'btn-comprar-13-2')?.count || 0} cliques</p></div>
-                                                    </div>
-                                                </div>
-                                                <div className="bg-gray-800/30 rounded py-1 px-2 text-center border border-gray-800"><p className="text-gray-600">GARANTIA + FAQ + FOOTER</p></div>
-                                            </div>
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-gray-800">
-                                            {/* Editar (apenas VSLs que não são controle) */}
-                                            {!isControl && (
-                                                <Button size="sm" variant="ghost" onClick={() => openEditDialog(vsl)} className="text-purple-400 hover:text-purple-300 h-7 text-xs">
-                                                    <Pencil className="w-3 h-3 mr-1" /> Editar
-                                                </Button>
-                                            )}
-
-                                            {/* Ver Copy - TODAS as VSLs */}
-                                            <Button size="sm" variant="ghost" onClick={() => openViewDialog(vsl)} className="text-yellow-400 hover:text-yellow-300 h-7 text-xs">
-                                                <Eye className="w-3 h-3 mr-1" /> Ver Copy
-                                            </Button>
-
-                                            {/* Link */}
-                                            <Button size="sm" variant="ghost" onClick={() => copyLink(vsl.slug)} className="text-gray-400 hover:text-white h-7 text-xs">
-                                                <Copy className="w-3 h-3 mr-1" /> Link
-                                            </Button>
-
-                                            {/* Abrir Preview */}
-                                            <Button size="sm" variant="ghost" onClick={() => openPreviewDialog(vsl)} className="text-cyan-400 hover:text-cyan-300 h-7 text-xs">
-                                                <ExternalLink className="w-3 h-3 mr-1" /> Abrir
-                                            </Button>
-
-                                            {/* Status */}
-                                            {!isControl && (
-                                                <>
-                                                    {vsl.status === "active" ? (
-                                                        <Button size="sm" variant="ghost" onClick={() => handleStatusChange(vsl.id, "paused")} className="text-gray-400 hover:text-yellow-400 h-7 text-xs">
-                                                            <Pause className="w-3 h-3 mr-1" /> Pausar
-                                                        </Button>
-                                                    ) : (
-                                                        <Button size="sm" variant="ghost" onClick={() => handleStatusChange(vsl.id, "active")} className="text-gray-400 hover:text-emerald-400 h-7 text-xs">
-                                                            <Play className="w-3 h-3 mr-1" /> Ativar
-                                                        </Button>
-                                                    )}
-                                                </>
-                                            )}
-
-                                            {/* Delete */}
-                                            {!isControl && !isPrimary && (
-                                                <Button size="sm" variant="ghost" onClick={() => handleDelete(vsl.id, vsl.name)} className="text-gray-400 hover:text-red-400 h-7 text-xs ml-auto">
-                                                    <Trash2 className="w-3 h-3" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        );
-                    })}
-                </div>
-                <p className="text-center text-gray-500 text-xs mt-2 flex items-center justify-center gap-1">
-                    <GripHorizontal className="w-3 h-3" /> Clique e arraste para navegar
-                </p>
-            </div>
-
-            {/* Comparador */}
-            {
-                chartData.length >= 2 && (
-                    <div className="max-w-7xl mx-auto mb-6">
-                        <Card className="bg-[#1a1a2e] border-gray-800">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-white text-base flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4 text-emerald-400" /> Comparador A/B — CTR
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-48">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                                            <XAxis dataKey="name" stroke="#888" tick={{ fontSize: 10 }} />
-                                            <YAxis stroke="#888" />
-                                            <Tooltip contentStyle={{ backgroundColor: "#1a1a2e", border: "1px solid #333" }} />
-                                            <Bar dataKey="CTR" fill="#10b981" />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
                             </CardContent>
                         </Card>
-                    </div>
-                )
-            }
+                    );
+                })}
 
-            {/* Edit Dialog */}
-            <Dialog open={editDialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setEditDialogOpen(open); }}>
-                <DialogContent className="bg-[#1a1a2e] border-gray-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Pencil className="w-5 h-5 text-purple-400" />
-                            Editar VSL #{selectedVSL?.index}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                        <div>
-                            <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> Atualizar Copy</Label>
-                            <div className="mt-2 border-2 border-dashed border-gray-700 rounded-lg p-4 text-center hover:border-purple-500 transition-colors cursor-pointer">
-                                <input type="file" accept=".txt,.md,text/plain" onChange={(e) => handleFileChange(e, true)} className="hidden" id="copy-doc-edit" />
-                                <label htmlFor="copy-doc-edit" className="cursor-pointer">
-                                    {selectedFile ? (
-                                        <div className="space-y-1">
-                                            <FileText className="w-8 h-8 mx-auto text-purple-400" />
-                                            <p className="text-sm text-purple-400">{selectedFile.name}</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-1">
-                                            <Upload className="w-8 h-8 mx-auto text-gray-500" />
-                                            <p className="text-sm text-gray-400">Upload nova copy</p>
-                                        </div>
-                                    )}
-                                </label>
-                            </div>
-                        </div>
-                        <div>
-                            <Label>Nome</Label>
-                            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-white/5 border-gray-700 mt-1" />
-                        </div>
-                        <div>
-                            <Label>Slug</Label>
-                            <Input value={formData.slug} onChange={(e) => setFormData({ ...formData, slug: e.target.value })} className="bg-white/5 border-gray-700 mt-1" />
-                        </div>
-                        <div>
-                            <Label>Livro de Referência</Label>
-                            <div className="flex items-center gap-2 mt-1 mb-2">
-                                <input type="checkbox" id="custom-book-edit" checked={useCustomBook} onChange={(e) => setUseCustomBook(e.target.checked)} className="rounded" />
-                                <label htmlFor="custom-book-edit" className="text-sm text-gray-400">Digitar manualmente</label>
-                            </div>
-                            {useCustomBook ? (
-                                <Input placeholder="Nome do livro..." value={customBookName} onChange={(e) => setCustomBookName(e.target.value)} className="bg-white/5 border-gray-700" />
-                            ) : (
-                                <Select value={formData.book_reference} onValueChange={(v) => setFormData({ ...formData, book_reference: v })}>
-                                    <SelectTrigger className="bg-white/5 border-gray-700"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                                    <SelectContent className="bg-[#1a1a2e] border-gray-700">
-                                        {BOOK_REFERENCES.map((book) => (<SelectItem key={book.value} value={book.label}>{book.label}</SelectItem>))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </div>
-                        <div>
-                            <Label>Headline</Label>
-                            <Textarea value={formData.headline || ""} onChange={(e) => setFormData({ ...formData, headline: e.target.value })} className="bg-white/5 border-gray-700 mt-1" />
-                        </div>
-                        <Button onClick={handleEditSubmit} className="w-full bg-purple-600 hover:bg-purple-700">Salvar Alterações</Button>
+                {/* Add Domain Card */}
+                <button
+                    onClick={() => setCreateDomainOpen(true)}
+                    className="group border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center gap-4 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all min-h-[300px]"
+                >
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Globe className="w-8 h-8 text-gray-600 group-hover:text-purple-400" />
                     </div>
-                </DialogContent>
-            </Dialog>
+                    <p className="font-orbitron text-gray-400 group-hover:text-white">ADICIONAR NOVO DOMÍNIO</p>
+                </button>
+            </div>
 
-            {/* View Dialog - TODAS as VSLs */}
-            <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-                <DialogContent className="bg-[#1a1a2e] border-gray-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Eye className="w-5 h-5 text-yellow-400" />
-                            #{selectedVSL?.index} {selectedVSL?.name}
-                            {selectedVSL?.is_control && <Lock className="w-4 h-4 text-yellow-400" />}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                        {selectedVSL?.is_control && (
-                            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-center gap-2">
-                                <Lock className="w-4 h-4 text-yellow-400" />
-                                <p className="text-yellow-300 text-sm">VSL Original - não pode ser editada.</p>
-                            </div>
-                        )}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <Label>Copy Completa</Label>
-                                <Button size="sm" variant="outline" onClick={() => copyCopyText(selectedVSL!)} className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10">
-                                    <ClipboardCopy className="w-3 h-3 mr-1" /> Copiar Tudo
+            {/* VSL VARIANTS LIBRARY */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                    <h2 className="font-orbitron font-bold text-gray-400 tracking-[0.2em] flex items-center gap-2">
+                        <FlaskConical className="w-5 h-5 text-purple-400" />
+                        BIBLIOTECA DE VSLs (VARIANTES)
+                    </h2>
+                    <span className="text-[10px] font-mono text-gray-600 uppercase">
+                        {allVSLs.length} VARIANTES CARREGADAS
+                    </span>
+                </div>
+
+                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                    {allVSLs.map((vsl) => (
+                        <Card key={vsl.id} className="min-w-[320px] max-w-[320px] bg-white/5 border-white/5 group hover:border-purple-500/30 transition-all flex flex-col justify-between">
+                            <CardContent className="p-5 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <Badge variant="outline" className={cn(
+                                        "text-[10px]",
+                                        vsl.is_template ? "text-yellow-400 border-yellow-500/30" : "text-gray-500 border-white/5"
+                                    )}>
+                                        {vsl.is_template ? "GLOBAL TEMPLATE" : "VARIANTE"}
+                                    </Badge>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleSetAsTemplate(vsl.id)} title="Definir como Padrão Global">
+                                            <Zap className={cn("w-3 h-3", vsl.is_template ? "text-yellow-400" : "text-gray-400")} />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400/50 hover:text-red-400" onClick={() => handleDeleteVSL(vsl.id)}>
+                                            <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-orbitron text-lg font-bold text-white group-hover:text-purple-400 transition-colors uppercase truncate">
+                                        {vsl.name}
+                                    </h3>
+                                    <p className="text-[10px] items-center gap-1 font-mono text-gray-500 flex mt-1">
+                                        <LinkIcon className="w-3 h-3" /> /{vsl.slug}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-mono text-gray-400 uppercase">VIDEO FEED:</p>
+                                    <p className="text-xs text-gray-400 truncate font-mono bg-black/30 p-2 rounded border border-white/5">
+                                        {vsl.video_url || "SEM VÍDEO CONFIGURADO"}
+                                    </p>
+                                </div>
+                            </CardContent>
+
+                            <div className="p-3 border-t border-white/5 flex gap-2">
+                                <Button
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-[10px] font-orbitron h-8"
+                                    onClick={() => window.open(`/?vsl=${vsl.slug}`, '_blank')}
+                                >
+                                    <Eye className="w-3 h-3 mr-2" /> TESTAR COPY
                                 </Button>
                             </div>
-                            <div className="bg-black/40 rounded-lg p-4 border border-gray-800 max-h-80 overflow-y-auto">
-                                <pre className="text-gray-300 text-sm whitespace-pre-wrap font-sans">
-                                    {selectedVSL?.description || (selectedVSL?.is_control ? ORIGINAL_VSL_COPY : "(Nenhuma copy carregada. Use o botão Editar para fazer upload.)")}
-                                </pre>
+                        </Card>
+                    ))}
+
+                    {allVSLs.length === 0 && (
+                        <div className="w-full flex items-center justify-center p-12 border border-dashed border-white/5 rounded-xl">
+                            <p className="text-gray-600 font-mono text-sm">NENHUMA VSL CRIADA AINDA.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* --- MODALS --- */}
+
+            {/* 1. Create VSL Modal */}
+            <Dialog open={createVSLOpen} onOpenChange={setCreateVSLOpen}>
+                <DialogContent className="bg-[#0f0f16] border-white/10 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="font-orbitron text-xl text-purple-400">CRIAR NOVA VSL (COPY VARIANTE)</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+                        <div className="space-y-4">
+                            <h3 className="font-orbitron text-sm text-gray-400 border-b border-white/10 pb-2">DADOS BÁSICOS</h3>
+                            <Input
+                                placeholder="Nome da Variante (ex: Copy Agressiva - Marçal)"
+                                value={vslForm.name}
+                                onChange={e => setVslForm({ ...vslForm, name: e.target.value, slug: generateSlug(e.target.value) })}
+                                className="bg-[#050508] border-white/10"
+                            />
+                            <div className="flex gap-2">
+                                <span className="flex items-center bg-white/5 border border-white/10 px-3 rounded text-xs text-gray-500 font-mono">/</span>
+                                <Input
+                                    placeholder="slug-da-url"
+                                    value={vslForm.slug}
+                                    onChange={e => setVslForm({ ...vslForm, slug: e.target.value })}
+                                    className="bg-[#050508] border-white/10 font-mono text-sm"
+                                />
+                            </div>
+                            <Select onValueChange={(val) => setVslForm({ ...vslForm, book_reference: val })}>
+                                <SelectTrigger className="bg-[#050508] border-white/10">
+                                    <SelectValue placeholder="Selecione um Framework / Livro" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#0f0f16] border-white/10 text-white">
+                                    <SelectItem value="original">Original / Próprio</SelectItem>
+                                    <SelectItem value="codigos-milhao">Os Códigos do Milhão (Pablo Marçal)</SelectItem>
+                                    <SelectItem value="influence">Influence (Cialdini)</SelectItem>
+                                    <SelectItem value="traffic-secrets">Traffic Secrets (Russell Brunson)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Input
+                                placeholder="URL do Vídeo (Wistia/Youtube/Vimeo)"
+                                value={vslForm.video_url}
+                                onChange={e => setVslForm({ ...vslForm, video_url: e.target.value })}
+                                className="bg-[#050508] border-white/10"
+                            />
+                            <div className="flex items-center space-x-2 bg-yellow-500/5 p-3 rounded border border-yellow-500/10">
+                                <input
+                                    type="checkbox"
+                                    id="is_template"
+                                    checked={vslForm.is_template}
+                                    onChange={e => setVslForm({ ...vslForm, is_template: e.target.checked })}
+                                    className="w-4 h-4 bg-black"
+                                />
+                                <Label htmlFor="is_template" className="text-xs text-yellow-500 font-bold uppercase cursor-pointer">
+                                    DEFINIR COMO TEMPLATE GLOBAL (PADRÃO PARA TODOS OS DOMÍNIOS)
+                                </Label>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label className="text-gray-500 text-xs">Headline</Label>
-                                <p className="text-white text-sm">{selectedVSL?.headline || "—"}</p>
-                            </div>
-                            <div>
-                                <Label className="text-gray-500 text-xs">Livro de Referência</Label>
-                                <p className="text-white text-sm">{selectedVSL?.book_reference || "—"}</p>
-                            </div>
+
+                        <div className="space-y-4">
+                            <h3 className="font-orbitron text-sm text-gray-400 border-b border-white/10 pb-2">COPYWRITING</h3>
+                            <Input
+                                placeholder="HEADLINE PRINCIPAL (H1)"
+                                value={vslForm.headline}
+                                onChange={e => setVslForm({ ...vslForm, headline: e.target.value })}
+                                className="bg-[#050508] border-purple-500/30 text-lg font-bold"
+                            />
+                            <Textarea
+                                placeholder="Benefícios (Texto ou Markdown)"
+                                value={vslForm.benefits_copy}
+                                onChange={e => setVslForm({ ...vslForm, benefits_copy: e.target.value })}
+                                className="bg-[#050508] border-white/10 h-20"
+                            />
+                            <Textarea
+                                placeholder="Explicação do Método..."
+                                value={vslForm.method_explanation_copy}
+                                onChange={e => setVslForm({ ...vslForm, method_explanation_copy: e.target.value })}
+                                className="bg-[#050508] border-white/10 h-20"
+                            />
                         </div>
+                    </div>
+                    <Button onClick={handleCreateVSL} className="w-full mt-4 bg-purple-600 hover:bg-purple-700 font-orbitron">
+                        SALVAR NOVA VSL
+                    </Button>
+                </DialogContent>
+            </Dialog>
+
+            {/* 2. Change Active VSL Modal */}
+            <Dialog open={changeVSLOpen} onOpenChange={setChangeVSLOpen}>
+                <DialogContent className="bg-[#0f0f16] border-white/10 text-white max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="font-orbitron text-xl">SELECIONAR VSL ATIVA</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid grid-cols-1 gap-3 mt-4 max-h-[60vh] overflow-y-auto p-1">
+                        {allVSLs.map(vsl => (
+                            <VSLSelectionCard
+                                key={vsl.id}
+                                vsl={vsl}
+                                isActive={testCenters.find(c => c.id === selectedDomainId)?.active_vsl_id === vsl.id}
+                                isSelected={selectedVSLForChange === vsl.id}
+                                onClick={() => setSelectedVSLForChange(vsl.id)}
+                            />
+                        ))}
+                    </div>
+                    <div className="flex gap-3 justify-end mt-4">
+                        <Button variant="ghost" onClick={() => setChangeVSLOpen(false)}>Cancelar</Button>
+                        <Button className="bg-blue-600 hover:bg-blue-700 font-orbitron" onClick={handleChangeActiveVSL}>
+                            CONFIRMAR TROCA
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
 
-            {/* Preview Dialog - Compacto e Responsivo */}
-            <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
-                <DialogContent className="bg-[#0A0A0F] border-gray-700 text-white p-0 overflow-hidden w-[390px] max-w-[95vw] h-[700px] max-h-[85vh] flex flex-col gap-0">
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700 bg-[#1a1a2e] shrink-0">
-                        <div className="flex items-center gap-2">
-                            <ExternalLink className="w-4 h-4 text-cyan-400" />
-                            <span className="text-sm font-medium">#{selectedVSL?.index} {selectedVSL?.name?.substring(0, 20)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <a
-                                href={`/?vsl=${selectedVSL?.slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-cyan-600 hover:bg-cyan-700 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1"
+            {/* 3. Create Domain Modal */}
+            <Dialog open={createDomainOpen} onOpenChange={setCreateDomainOpen}>
+                <DialogContent className="bg-[#0f0f16] border-white/10 text-white">
+                    <DialogHeader>
+                        <DialogTitle className="font-orbitron">NOVO DOMÍNIO</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-2">
+                        <Input
+                            placeholder="Nome (ex: Brasil Principal)"
+                            value={domainForm.name}
+                            onChange={e => setDomainForm({ ...domainForm, name: e.target.value })}
+                            className="bg-[#050508] border-white/10"
+                        />
+                        <Input
+                            placeholder="Domínio (ex: site.com)"
+                            value={domainForm.domain}
+                            onChange={e => setDomainForm({ ...domainForm, domain: e.target.value })}
+                            className="bg-[#050508] border-white/10"
+                        />
+                        <Select onValueChange={(val) => setDomainForm({ ...domainForm, currency: val })} defaultValue="BRL">
+                            <SelectTrigger className="bg-[#050508] border-white/10">
+                                <SelectValue placeholder="Moeda" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#0f0f16] border-white/10 text-white">
+                                <SelectItem value="BRL">Real (BRL)</SelectItem>
+                                <SelectItem value="USD">Dólar (USD)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 font-orbitron" onClick={handleCreateDomain}>
+                            ADICIONAR
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            {/* 4. Database Setup Dialog */}
+            <Dialog open={setupDialogOpen} onOpenChange={setSetupDialogOpen}>
+                <DialogContent className="bg-[#0f0f16] border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="font-orbitron text-red-400 flex items-center gap-2">
+                            ⚠️ CONFIGURAÇÃO DO BANCO DE DADOS NECESSÁRIA
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-gray-400 text-sm">
+                            Parece que as tabelas necessárias não existem no seu Supabase.
+                            Copie o código SQL abaixo e rode no <strong>SQL Editor</strong> do seu painel Supabase.
+                        </p>
+
+                        <div className="relative">
+                            <pre className="bg-black/50 p-4 rounded-lg text-xs font-mono text-green-400 overflow-x-auto border border-white/10">
+                                {MIGRATION_SQL}
+                            </pre>
+                            <Button
+                                size="sm"
+                                className="absolute top-2 right-2 bg-blue-600 hover:bg-blue-700"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(MIGRATION_SQL);
+                                    toast({ title: "SQL Copiado!", description: "Cole no SQL Editor do Supabase." });
+                                }}
                             >
-                                <ExternalLink className="w-3 h-3" />
-                            </a>
-                            <Button size="sm" variant="ghost" onClick={() => setPreviewDialogOpen(false)} className="h-7 w-7 p-0 hover:bg-gray-700">
-                                <X className="w-4 h-4" />
+                                COPIAR SQL
                             </Button>
                         </div>
+
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-lg">
+                            <p className="text-yellow-400 text-xs font-bold">INSTRUÇÕES:</p>
+                            <ol className="list-decimal list-inside text-gray-400 text-xs mt-2 space-y-1">
+                                <li>Acesse o painel do Supabase do seu projeto.</li>
+                                <li>Vá até a seção <strong>SQL Editor</strong> no menu lateral.</li>
+                                <li>Clique em "New Query".</li>
+                                <li>Cole o código acima e clique em <strong>RUN</strong>.</li>
+                                <li>Volte aqui e clique no botão abaixo.</li>
+                            </ol>
+                        </div>
+
+                        <Button
+                            className="w-full bg-green-600 hover:bg-green-700 font-orbitron py-6 text-lg"
+                            onClick={() => {
+                                setSetupDialogOpen(false);
+                                refreshData();
+                            }}
+                        >
+                            JÁ EXECUTEI O SQL! REVERIFICAR 🚀
+                        </Button>
                     </div>
-                    <iframe
-                        src={`/?vsl=${selectedVSL?.slug}`}
-                        className="w-full flex-1 border-0 bg-white"
-                        title={`Preview ${selectedVSL?.name}`}
-                    />
                 </DialogContent>
             </Dialog>
-
-            <style>{`div::-webkit-scrollbar { display: none; }`}</style>
         </div>
     );
 }

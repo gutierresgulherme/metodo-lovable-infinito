@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentVSLSlug, getRegionByDomain } from "@/lib/vslService";
 
 // Mapeamento de IDs de botões para labels legíveis
 const BUTTON_LABELS: Record<string, string> = {
@@ -37,11 +38,16 @@ export const trackButtonClick = async (buttonId: string): Promise<void> => {
         const utms = getUtmParams();
         const buttonLabel = BUTTON_LABELS[buttonId] || buttonId;
 
-        await supabase.from("button_clicks").insert({
+        const vslSlug = await getCurrentVSLSlug();
+        const region = getRegionByDomain();
+
+        await (supabase.from("button_clicks" as any) as any).insert({
             button_id: buttonId,
             button_label: buttonLabel,
             page_url: window.location.href,
             session_id: sessionId,
+            vsl_slug: vslSlug,
+            region: region,
             ...utms,
         });
 
@@ -63,9 +69,11 @@ export const trackVideoEvent = async (
             ? Math.round((currentTimeSeconds / durationSeconds) * 100)
             : 0;
 
-        await supabase.from("video_watch_events").insert({
+        const vslSlug = await getCurrentVSLSlug();
+
+        await (supabase.from("video_watch_events" as any) as any).insert({
             session_id: sessionId,
-            video_id: "vsl_main",
+            video_id: vslSlug,
             event_type: eventType,
             current_time_seconds: Math.round(currentTimeSeconds),
             duration_seconds: Math.round(durationSeconds),
@@ -84,26 +92,32 @@ export const initPageSession = async (): Promise<void> => {
         const sessionId = getSessionId();
         const utms = getUtmParams();
 
+        console.log("[Analytics] Initializing session:", sessionId);
+
         // Verificar se sessão já existe
-        const { data: existing } = await supabase
-            .from("page_sessions")
+        const { data: existing } = await (supabase
+            .from("page_sessions" as any) as any)
             .select("id")
             .eq("session_id", sessionId)
             .maybeSingle();
 
         if (!existing) {
-            await supabase.from("page_sessions").insert({
+            const region = getRegionByDomain();
+            const vslSlug = await getCurrentVSLSlug();
+
+            await (supabase.from("page_sessions" as any) as any).insert({
                 session_id: sessionId,
                 page_url: window.location.href,
                 referrer: document.referrer || null,
                 user_agent: navigator.userAgent,
+                region: region,
+                vsl_id: vslSlug, // Guardamos o slug como ID de referência inicial
                 ...utms,
             });
-            console.log("[Analytics] Page session started:", sessionId);
+            console.log("[Analytics] Page session started successfully for:", region);
         } else {
             // Atualizar última atividade
-            await supabase
-                .from("page_sessions")
+            await (supabase.from("page_sessions" as any) as any)
                 .update({ last_activity_at: new Date().toISOString() })
                 .eq("session_id", sessionId);
         }
@@ -112,19 +126,25 @@ export const initPageSession = async (): Promise<void> => {
     }
 };
 
-// Hook para adicionar tracking a um botão
+// Hook para adicionar tracking a um botão (Usando Delegação de Eventos para 100% de Precisão)
 export const setupButtonTracking = (): void => {
-    const buttons = document.querySelectorAll("[id^='btn-comprar-']");
+    if ((window as any)._trackingInitialized) return;
 
-    buttons.forEach((button) => {
-        const buttonId = button.getAttribute("id");
-        if (buttonId && !button.getAttribute("data-tracking-attached")) {
-            button.addEventListener("click", () => {
+    document.addEventListener("click", (event) => {
+        const target = event.target as HTMLElement;
+        const button = target.closest("[id^='btn-comprar-']");
+
+        if (button) {
+            const buttonId = button.getAttribute("id");
+            if (buttonId) {
+                console.log("[Analytics] Intercepted click on:", buttonId);
                 trackButtonClick(buttonId);
-            });
-            button.setAttribute("data-tracking-attached", "true");
+            }
         }
-    });
+    }, true); // Capture phase para garantir que pegamos o clique antes de qualquer redirecionamento
+
+    (window as any)._trackingInitialized = true;
+    console.log("[Analytics] Global button tracking initialized");
 };
 
 // Tipo para dados de analytics
@@ -153,15 +173,22 @@ export const fetchAnalyticsData = async (
     endDate?: Date
 ): Promise<AnalyticsData> => {
     try {
-        const start = startDate?.toISOString() || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const start = startDate?.toISOString() || new Date(0).toISOString(); // 1970 para pegar TUDO
         const end = endDate?.toISOString() || new Date().toISOString();
 
         // Buscar cliques por botão
-        const { data: clicksRaw } = await supabase
-            .from("button_clicks")
-            .select("button_id, button_label")
+        console.log("[Analytics] Fetching clicks between:", start, "and", end);
+        const { data: clicksRaw, error: clicksError } = await (supabase
+            .from("button_clicks" as any) as any)
+            .select("button_id, button_label, created_at")
             .gte("created_at", start)
             .lte("created_at", end);
+
+        if (clicksError) {
+            console.error("[Analytics] Error fetching clicks:", clicksError);
+        } else {
+            console.log("[Analytics] Clicks fetched:", clicksRaw?.length || 0);
+        }
 
         // Agrupar cliques por botão
         const clicksByButton: Record<string, { label: string; count: number }> = {};
@@ -182,8 +209,8 @@ export const fetchAnalyticsData = async (
         }));
 
         // Buscar eventos de vídeo para retenção
-        const { data: videoEvents } = await supabase
-            .from("video_watch_events")
+        const { data: videoEvents } = await (supabase
+            .from("video_watch_events" as any) as any)
             .select("session_id, percent_watched, event_type")
             .gte("created_at", start)
             .lte("created_at", end);
@@ -218,11 +245,15 @@ export const fetchAnalyticsData = async (
         }));
 
         // Total de sessões
-        const { count: totalSessions } = await supabase
-            .from("page_sessions")
+        const { count: totalSessions, error: sessionsError } = await (supabase
+            .from("page_sessions" as any) as any)
             .select("id", { count: "exact", head: true })
             .gte("started_at", start)
             .lte("started_at", end);
+
+        if (sessionsError) {
+            console.error("[Analytics] Error fetching sessions:", sessionsError);
+        }
 
         // Total de cliques
         const totalClicks = clicksRaw?.length || 0;
@@ -233,8 +264,8 @@ export const fetchAnalyticsData = async (
             : 0;
 
         // Top UTM sources
-        const { data: sessionsWithUtm } = await supabase
-            .from("page_sessions")
+        const { data: sessionsWithUtm } = await (supabase
+            .from("page_sessions" as any) as any)
             .select("utm_source")
             .gte("started_at", start)
             .lte("started_at", end)

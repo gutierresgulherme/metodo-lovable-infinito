@@ -35,7 +35,7 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
     const validTypes = ['video/mp4', 'video/quicktime', 'video/x-matroska', 'video/x-msvideo', 'video/mpeg'];
     const validExtensions = ['.mp4', '.mov', '.mkv', '.avi', '.mpeg', '.mpg'];
     const maxSize = 200 * 1024 * 1024;
-    
+
     const hasValidType = validTypes.includes(file.type);
     const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
 
@@ -75,12 +75,12 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
     try {
       const uploadPath = `vsl/${slot.page_key}.mp4`;
-      
-      // Delete existing file if any
+
+      // Delete existing file if any (Best effort)
       try {
         await supabase.storage.from('videos').remove([uploadPath]);
       } catch (error) {
-        console.log('No existing video to delete:', error);
+        console.log('No existing video to delete or delete failed:', error);
       }
 
       setProgress(30);
@@ -94,7 +94,10 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
           cacheControl: '3600',
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Storage Video Upload Error:", uploadError);
+        throw new Error("STORAGE_UPLOAD_ERROR: " + uploadError.message);
+      }
 
       setProgress(70);
 
@@ -105,17 +108,25 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
         .getPublicUrl(`${uploadPath}?t=${timestamp}`);
 
       // Delete old database entry for this page_key
-      await supabase
+      const { error: deleteError } = await supabase
         .from('vsl_video')
         .delete()
         .eq('page_key', slot.page_key);
 
+      if (deleteError) {
+        console.error("DB Video Delete Error:", deleteError);
+        throw new Error("DB_DELETE_ERROR: " + deleteError.message);
+      }
+
       // Insert new database entry
-      const { error: dbError } = await supabase
+      const { error: insertError } = await supabase
         .from('vsl_video')
         .insert({ video_url: publicUrl, page_key: slot.page_key });
 
-      if (dbError) throw dbError;
+      if (insertError) {
+        console.error("DB Video Insert Error:", insertError);
+        throw new Error("DB_INSERT_ERROR: " + insertError.message);
+      }
 
       setProgress(100);
 
@@ -126,11 +137,11 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
       setFile(null);
       onVideoUpdated();
-    } catch (error) {
-      console.error('Upload error:', error);
+    } catch (error: any) {
+      console.error('Upload flow error:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao fazer upload do vídeo.',
+        title: 'Erro no Upload',
+        description: error.message || 'Falha ao fazer upload do vídeo.',
         variant: 'destructive',
       });
     } finally {
@@ -171,7 +182,7 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
   const inputId = `video-upload-${slot.page_key}`;
 
   return (
-    <div className="bg-card rounded-xl border border-border/50 overflow-hidden transition-all hover:border-primary/30 hover:shadow-lg">
+    <div className="bg-transparent rounded-xl border-0 overflow-hidden text-gray-200">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 border-b border-border/50">
         <div className="flex items-center gap-3">

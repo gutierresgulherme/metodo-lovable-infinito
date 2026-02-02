@@ -108,6 +108,27 @@ metodo-lovable-infinito-main/
 
 ---
 
+## 🔄 ATUALIZAÇÃO #003 — Gestão Dinâmica de Domínios VSL
+**Data:** 02/02/2026 às 00:15 (horário de Brasília)  
+**Responsável:** Antigravity AI
+
+### 📋 Descrição
+Refatoração completa do Testador de VSLs para suportar múltiplos domínios de forma dinâmica, eliminando as configurações estáticas (BR/USA).
+- Implementação da tabela `vsl_test_centers` para gestão de domínios.
+- Auto-seeding automático dos domínios padrão (Brasil e USA) no primeiro carregamento, preservando os slugs ativos.
+- Interface de gerenciamento para adicionar, excluir e pausar domínios individualmente.
+- Dashboards de métricas e carrosséis agora renderizam dinamicamente para cada domínio cadastrado.
+
+### ✏️ Arquivos Modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/AdminVSLTester.tsx` | Refatoração total para renderização dinâmica e auto-seeding |
+| `src/lib/vslService.ts` | Adicionadas funções CRUD para centers e detecção dinâmica de domínio |
+| `src/pages/Index.tsx` | Atualizado para detectar status do domínio (Ativo/Pausado) |
+
+---
+
 ## 🔄 ATUALIZAÇÃO #002 — Dashboard de Analytics
 **Data:** 01/02/2026 às 02:35 (horário de Brasília)  
 **Responsável:** Auditoria Automatizada

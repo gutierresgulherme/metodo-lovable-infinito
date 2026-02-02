@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminVideos from "./pages/AdminVideos";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminVSLTester from "./pages/AdminVSLTester";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => {
               <Route path="/thankyou" element={<ThankYou />} />
               <Route path="/pending" element={<Pending />} />
               <Route path="/utmify-debug" element={<TestUtmify />} />
+              <Route path="/login" element={<Login />} />
 
               {/* Admin Routes with Layout */}
               <Route path="/admin" element={<AdminLayout />}>

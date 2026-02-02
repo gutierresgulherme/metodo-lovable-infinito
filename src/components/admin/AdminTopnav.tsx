@@ -38,18 +38,6 @@ export function AdminTopnav() {
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </Button>
 
-                {/* Preview VSL Button */}
-                <a
-                    href={`/?vsl=${primarySlug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Button className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white h-9 px-3 text-sm gap-2">
-                        <Eye className="w-4 h-4" />
-                        <span className="hidden sm:inline">Ver VSL Ativa</span>
-                        <ExternalLink className="w-3 h-3" />
-                    </Button>
-                </a>
             </div>
         </header>
     );

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { VideoSlotCard } from '@/components/admin/VideoSlotCard';
 import { ImageSlotCard } from '@/components/admin/ImageSlotCard';
-import { Video, ImageIcon } from 'lucide-react';
+import { Video, ImageIcon, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Define all video slots in the project
 const VIDEO_SLOTS = [
@@ -50,26 +51,31 @@ const AdminVideos = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
-    
-    const [videosResult, imagesResult] = await Promise.all([
-      supabase
-        .from('vsl_video')
-        .select('*')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('banner_images')
-        .select('*')
-        .order('created_at', { ascending: false })
-    ]);
+  const fetchData = async (isInitialLog: boolean = false) => {
+    if (isInitialLog) setLoading(true);
 
-    setVideos((videosResult.data as VideoData[]) || []);
-    setImages((imagesResult.data as ImageData[]) || []);
-    setLoading(false);
+    try {
+      const [videosResult, imagesResult] = await Promise.all([
+        supabase
+          .from('vsl_video')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('banner_images')
+          .select('*')
+          .order('created_at', { ascending: false })
+      ]);
+
+      setVideos((videosResult.data as VideoData[]) || []);
+      setImages((imagesResult.data as ImageData[]) || []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getVideoForSlot = (pageKey: string) => {
@@ -81,67 +87,75 @@ const AdminVideos = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-            <Video className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Gerenciar Mídias</h1>
-            <p className="text-muted-foreground">Faça upload dos vídeos e imagens para cada seção do projeto</p>
+    <div className="space-y-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/5 pb-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-3xl font-orbitron font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            GESTÃO DE MÍDIAS
+          </h1>
+          <p className="text-gray-500 font-mono text-sm tracking-widest uppercase">
+            CONTROLE DE ASSETS VISUAIS
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => fetchData(false)}
+          disabled={loading}
+          className="border-white/10 hover:bg-white/5 text-gray-300"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          ATUALIZAR
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2].map(i => (
+              <div key={i} className="h-96 bg-white/5 rounded-xl animate-pulse border border-white/5" />
+            ))}
           </div>
         </div>
-
-        {loading ? (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[1, 2].map(i => (
-                <div key={i} className="h-96 bg-muted/50 rounded-xl animate-pulse" />
-              ))}
+      ) : (
+        <div className="space-y-12">
+          {/* Video Slots */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 border-l-2 border-purple-500 pl-4">
+              <h2 className="text-lg font-orbitron font-bold text-gray-200">SLOTS DE VÍDEO</h2>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-10">
-            {/* Video Slots */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Video className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold">Vídeos</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {VIDEO_SLOTS.map(slot => (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {VIDEO_SLOTS.map(slot => (
+                <div key={slot.page_key} className="bg-[#0f0f16] rounded-xl border border-white/5 overflow-hidden transition-all hover:border-purple-500/30 hover:shadow-[0_0_20px_rgba(147,51,234,0.1)]">
                   <VideoSlotCard
-                    key={slot.page_key}
-                    slot={slot}
-                    video={getVideoForSlot(slot.page_key)}
+                    slot={slot as any}
+                    video={getVideoForSlot(slot.page_key) as any}
                     onVideoUpdated={fetchData}
                   />
-                ))}
-              </div>
-            </section>
+                </div>
+              ))}
+            </div>
+          </section>
 
-            {/* Image Slots */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <ImageIcon className="w-5 h-5 text-pink-500" />
-                <h2 className="text-xl font-semibold">Imagens / Banners</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {IMAGE_SLOTS.map(slot => (
+          {/* Image Slots */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 border-l-2 border-pink-500 pl-4">
+              <h2 className="text-lg font-orbitron font-bold text-gray-200">SLOTS DE IMAGEM</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {IMAGE_SLOTS.map(slot => (
+                <div key={slot.page_key} className="bg-[#0f0f16] rounded-xl border border-white/5 overflow-hidden transition-all hover:border-pink-500/30 hover:shadow-[0_0_20px_rgba(236,72,153,0.1)]">
                   <ImageSlotCard
-                    key={slot.page_key}
-                    slot={slot}
-                    image={getImageForSlot(slot.page_key)}
+                    slot={slot as any}
+                    image={getImageForSlot(slot.page_key) as any}
                     onImageUpdated={fetchData}
                   />
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-      </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

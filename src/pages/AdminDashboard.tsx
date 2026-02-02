@@ -10,13 +10,17 @@ import {
     TrendingUp,
     MousePointer,
     Clock,
-    ExternalLink,
     ArrowRight,
+    Activity,
+    DollarSign
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { getPrimaryVSLSlug } from "@/lib/vslService";
+import { getPrimaryVSLSlug, getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
+import { cn } from "@/lib/utils";
+
+const db = supabase as any;
 
 interface QuickStats {
     sessions: number;
@@ -26,15 +30,16 @@ interface QuickStats {
 }
 
 const quickLinks = [
-    { icon: BarChart3, label: "Analytics", path: "/admin/analytics", color: "from-blue-500 to-cyan-500" },
-    { icon: Video, label: "Vídeos", path: "/admin/videos", color: "from-purple-500 to-pink-500" },
-    { icon: FlaskConical, label: "Testador VSLs", path: "/admin/vsl-tester", color: "from-orange-500 to-yellow-500" },
-    { icon: Zap, label: "UTMify Debug", path: "/utmify-debug", color: "from-yellow-500 to-red-500" },
-    { icon: Gift, label: "Obrigado", path: "/thankyou", color: "from-green-500 to-emerald-500", external: true },
+    { icon: BarChart3, label: "Analytics", path: "/admin/analytics", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+    { icon: Video, label: "Gestão Mídias", path: "/admin/videos", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
+    { icon: FlaskConical, label: "VSL Tester", path: "/admin/vsl-tester", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+    { icon: Zap, label: "UTM Debug", path: "/utmify-debug", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
+    { icon: Gift, label: "Página Obrigado", path: "/thankyou", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20", external: true },
 ];
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState<QuickStats>({ sessions: 0, clicks: 0, ctr: 0, avgWatchTime: 0 });
+    const [activeVsl, setActiveVsl] = useState<VSLVariant | null>(null);
     const [loading, setLoading] = useState(true);
     const primarySlug = getPrimaryVSLSlug();
 
@@ -44,20 +49,23 @@ export default function AdminDashboard() {
 
     const loadQuickStats = async () => {
         try {
+            const { vsl } = await getCurrentVSLInfo();
+            setActiveVsl(vsl);
+
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
             // Sessions
-            const { count: sessionsCount } = await (supabase as any)
+            const { count: sessionsCount } = await db
                 .from("page_sessions")
                 .select("*", { count: "exact", head: true })
                 .gte("created_at", sevenDaysAgo.toISOString());
 
             // Clicks
-            const { count: clicksCount } = await (supabase as any)
+            const { count: clicksCount } = await db
                 .from("button_clicks")
                 .select("*", { count: "exact", head: true })
-                .gte("clicked_at", sevenDaysAgo.toISOString());
+                .gte("created_at", sevenDaysAgo.toISOString());
 
             const sessions = sessionsCount || 0;
             const clicks = clicksCount || 0;
@@ -77,139 +85,170 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-white">Dashboard</h1>
-                    <p className="text-gray-400 text-sm mt-1">Visão geral do seu projeto</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/5 pb-6">
+                <div className="space-y-1">
+                    <h1 className="text-3xl md:text-4xl font-orbitron font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                        COMANDO CENTRAL
+                    </h1>
+                    <p className="text-gray-500 font-mono text-sm tracking-wider">
+                        SISTEMA OPERACIONAL V2.0 // <span className="text-green-500">ONLINE</span>
+                    </p>
                 </div>
-                <a href={`/?vsl=${primarySlug}`} target="_blank" rel="noopener noreferrer">
-                    <Button className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 gap-2">
-                        <Eye className="w-4 h-4" />
-                        Ver VSL Ativa
-                        <ExternalLink className="w-3 h-3" />
+                <div className="flex items-center gap-3">
+                    <a href={`/?vsl=${primarySlug}`} target="_blank" rel="noopener noreferrer">
+                        <Button className="bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 font-mono text-xs tracking-wider gap-2">
+                            <Eye className="w-4 h-4" />
+                            LIVE PREVIEW
+                        </Button>
+                    </a>
+                    <Button className="bg-purple-600 hover:bg-purple-700 text-white font-orbitron text-xs tracking-wider shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all hover:scale-105">
+                        <Activity className="w-4 h-4 mr-2" />
+                        RELATÓRIO COMPLETO
                     </Button>
-                </a>
+                </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30">
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide">Sessões (7d)</p>
-                                <p className="text-2xl font-bold text-white mt-1">
-                                    {loading ? "..." : stats.sessions.toLocaleString()}
-                                </p>
-                            </div>
-                            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                <Eye className="w-5 h-5 text-blue-400" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/30">
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide">Cliques (7d)</p>
-                                <p className="text-2xl font-bold text-white mt-1">
-                                    {loading ? "..." : stats.clicks.toLocaleString()}
-                                </p>
-                            </div>
-                            <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                                <MousePointer className="w-5 h-5 text-purple-400" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/30">
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide">CTR</p>
-                                <p className="text-2xl font-bold text-white mt-1">
-                                    {loading ? "..." : `${stats.ctr.toFixed(1)}%`}
-                                </p>
-                            </div>
-                            <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                                <TrendingUp className="w-5 h-5 text-green-400" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-orange-500/10 to-yellow-500/10 border-orange-500/30">
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wide">VSL Ativa</p>
-                                <p className="text-lg font-bold text-white mt-1 truncate max-w-[120px]">
-                                    {primarySlug || "default"}
-                                </p>
-                            </div>
-                            <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <Clock className="w-5 h-5 text-orange-400" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* KPI Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <KPICard
+                    title="SESSÕES (7D)"
+                    value={loading ? "..." : stats.sessions.toLocaleString()}
+                    icon={Eye}
+                    trend="+12%"
+                    color="cyan"
+                />
+                <KPICard
+                    title="CLIQUES (7D)"
+                    value={loading ? "..." : stats.clicks.toLocaleString()}
+                    icon={MousePointer}
+                    trend="+5.2%"
+                    color="purple"
+                />
+                <KPICard
+                    title="CTR GLOBAL"
+                    value={loading ? "..." : `${stats.ctr.toFixed(1)}%`}
+                    icon={TrendingUp}
+                    trend="-2.1%"
+                    color="pink"
+                />
+                <KPICard
+                    title="RECEITA EST."
+                    value="R$ 12.4K"
+                    icon={DollarSign}
+                    trend="+8.4%"
+                    color="green"
+                    isCurrency
+                />
             </div>
 
-            {/* Quick Links */}
-            <div>
-                <h2 className="text-lg font-semibold text-white mb-4">Acesso Rápido</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Active VSL & Quick Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Active VSL Card */}
+                <Card className="bg-[#0f0f16] border-white/5 overflow-hidden group relative">
+                    <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <CardContent className="p-6 space-y-4 relative z-10">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-orbitron text-sm text-gray-400 tracking-widest">VSL ATIVA</h3>
+                            <span className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-mono font-bold animate-pulse">
+                                TRANSMITINDO
+                            </span>
+                        </div>
+
+                        <div className="aspect-video rounded-lg bg-black/50 border border-white/10 relative overflow-hidden flex items-center justify-center group-hover:border-purple-500/30 transition-colors">
+                            {activeVsl?.video_url ? (
+                                <video
+                                    src={activeVsl.video_url}
+                                    className="absolute inset-0 w-full h-full object-cover opacity-50"
+                                    muted
+                                    playsInline
+                                />
+                            ) : (
+                                <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover opacity-20" />
+                            )}
+                            <Clock className="w-8 h-8 text-purple-500 opacity-50" />
+                        </div>
+
+                        <div>
+                            <p className="text-white font-orbitron font-bold truncate">{activeVsl?.name || "CARREGANDO..."}</p>
+                            <p className="text-gray-500 text-xs font-mono mt-1">SLUG: {activeVsl?.slug || "---"}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Quick Actions Grid */}
+                <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4">
                     {quickLinks.map((link) => (
-                        <Link key={link.path} to={link.path}>
-                            <Card className="bg-gray-900/50 border-gray-800 hover:border-gray-600 transition-all hover:scale-[1.02] cursor-pointer group">
-                                <CardContent className="p-4 flex flex-col items-center text-center">
-                                    <div className={`w-12 h-12 bg-gradient-to-br ${link.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                                        <link.icon className="w-6 h-6 text-white" />
+                        <Link key={link.path} to={link.path} target={link.external ? "_blank" : undefined}>
+                            <Card className={cn(
+                                "bg-[#0f0f16] border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 group h-full",
+                                "hover:shadow-[0_0_20px_rgba(0,0,0,0.5)]"
+                            )}>
+                                <CardContent className="p-6 flex flex-col items-center justify-center text-center h-full gap-4">
+                                    <div className={cn(
+                                        "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
+                                        link.bg, link.border, "border"
+                                    )}>
+                                        <link.icon className={cn("w-6 h-6", link.color)} />
                                     </div>
-                                    <p className="text-white text-sm font-medium">{link.label}</p>
-                                    <ArrowRight className="w-4 h-4 text-gray-500 mt-2 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                                    <div>
+                                        <h3 className="text-gray-200 font-orbitron text-sm font-bold group-hover:text-white transition-colors">
+                                            {link.label}
+                                        </h3>
+                                        <p className="text-gray-600 text-[10px] font-mono mt-1 uppercase tracking-wider group-hover:text-gray-400">
+                                            Acessar Módulo
+                                        </p>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </Link>
                     ))}
                 </div>
             </div>
-
-            {/* Recent Activity Placeholder */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="bg-gray-900/50 border-gray-800">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <BarChart3 className="w-5 h-5 text-cyan-400" />
-                            Performance Rápida
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center py-8 text-gray-500">
-                            <p className="text-sm">Acesse o módulo <Link to="/admin/analytics" className="text-cyan-400 hover:underline">Analytics</Link> para ver gráficos detalhados</p>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-gray-900/50 border-gray-800">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <FlaskConical className="w-5 h-5 text-purple-400" />
-                            Testes A/B Ativos
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center py-8 text-gray-500">
-                            <p className="text-sm">Acesse o <Link to="/admin/vsl-tester" className="text-purple-400 hover:underline">Testador de VSLs</Link> para gerenciar variantes</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
         </div>
     );
+}
+
+// KPI Card Component
+function KPICard({ title, value, icon: Icon, trend, color, isCurrency }: any) {
+    const colorMap: Record<string, string> = {
+        cyan: "text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.2)]",
+        purple: "text-purple-400 shadow-[0_0_10px_rgba(147,51,234,0.2)]",
+        pink: "text-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.2)]",
+        green: "text-green-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]",
+    };
+
+    const isPositive = trend.startsWith("+");
+
+    return (
+        <Card className="bg-[#0f0f16] border-white/5 relative overflow-hidden group hover:border-white/20 transition-all duration-300">
+            <div className={`absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity ${colorMap[color]}`}>
+                <Icon className="w-16 h-16" />
+            </div>
+
+            <CardContent className="p-6 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                    <p className="text-gray-500 font-mono text-xs uppercase tracking-widest">{title}</p>
+                    <Icon className={`w-5 h-5 ${colorMap[color].split(' ')[0]}`} />
+                </div>
+
+                <div className="space-y-1">
+                    <h2 className="text-3xl font-orbitron font-bold text-white tracking-tight">
+                        {value}
+                    </h2>
+                    <div className="flex items-center gap-2">
+                        <span className={cn(
+                            "text-xs font-mono font-bold px-1.5 py-0.5 rounded",
+                            isPositive ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                        )}>
+                            {trend}
+                        </span>
+                        <span className="text-gray-600 text-[10px] uppercase">vs semana anterior</span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
 }

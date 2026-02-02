@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
-import { Check, Zap, Users, TrendingUp, Shield, ArrowRight, Play, ImageIcon } from "lucide-react";
+import lovableIcon from "@/assets/lovable-icon.png";
+import lovableInfinitoLogoNew from "@/assets/lovable-infinito-thankyou.jpg";
+import { Check, Zap, Users, TrendingUp, Shield, ArrowRight, Play, ImageIcon, Mountain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import shaka from 'shaka-player';
 
 export default function ThankYou() {
   const { role, isLoading: isRoleLoading } = useUserRole();
   const isSubAdmin = role === 'moderator';
   const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<shaka.Player | null>(null);
   const unmuteListenersAdded = useRef(false);
   const [upsellVideoUrl, setUpsellVideoUrl] = useState<string | null>(null);
   const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export default function ThankYou() {
   useEffect(() => {
     // Auto-scroll suave após carregamento
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+
     // Fetch upsell video
     const fetchUpsellVideo = async () => {
       const { data } = await supabase
@@ -25,7 +25,7 @@ export default function ThankYou() {
         .select('video_url')
         .eq('page_key', 'thankyou_upsell')
         .maybeSingle();
-      
+
       if (data?.video_url) {
         setUpsellVideoUrl(data.video_url);
       }
@@ -37,12 +37,12 @@ export default function ThankYou() {
         .select('image_url')
         .eq('page_key', 'thankyou_banner')
         .maybeSingle();
-      
+
       if (data?.image_url) {
         setBannerImageUrl(data.image_url);
       }
     };
-    
+
     fetchUpsellVideo();
     fetchBannerImage();
   }, []);
@@ -51,75 +51,45 @@ export default function ThankYou() {
   useEffect(() => {
     if (!upsellVideoUrl || !videoRef.current || isSubAdmin) return;
 
-    const initPlayer = async () => {
+    const videoElement = videoRef.current;
+
+    // Set source directly
+    videoElement.src = upsellVideoUrl;
+
+    // Configurações básicas obrigatórias para autoplay
+    videoElement.muted = true;
+    videoElement.playsInline = true;
+    videoElement.autoplay = true;
+
+    const tryPlay = async () => {
       try {
-        shaka.polyfill.installAll();
-
-        if (!shaka.Player.isBrowserSupported()) {
-          console.log('[ThankYou] Browser not supported for Shaka Player');
-          return;
-        }
-
-        const player = new shaka.Player(videoRef.current!);
-        playerRef.current = player;
-
-        player.configure({
-          streaming: {
-            bufferingGoal: 30,
-            rebufferingGoal: 15,
-          }
-        });
-
-        await player.load(upsellVideoUrl);
-
-        // Autoplay muted (required by browsers) with multiple retries
-        if (videoRef.current) {
-          videoRef.current.muted = true;
-          
-          const tryPlay = async () => {
-            try {
-              await videoRef.current?.play();
-            } catch (e) {
-              console.log('[ThankYou] Autoplay attempt prevented:', e);
-            }
-          };
-
-          // Multiple retry attempts to ensure autoplay
-          tryPlay();
-          setTimeout(tryPlay, 300);
-          setTimeout(tryPlay, 800);
-        }
-
-        // Unmute on first interaction
-        if (!unmuteListenersAdded.current) {
-          const tryPlayWithSound = () => {
-            if (videoRef.current) {
-              videoRef.current.muted = false;
-              videoRef.current.play().catch(() => {});
-            }
-            // Remove listeners after activation
-            document.removeEventListener('click', tryPlayWithSound);
-            document.removeEventListener('touchstart', tryPlayWithSound);
-            document.removeEventListener('scroll', tryPlayWithSound);
-          };
-
-          document.addEventListener('click', tryPlayWithSound);
-          document.addEventListener('touchstart', tryPlayWithSound);
-          document.addEventListener('scroll', tryPlayWithSound);
-          unmuteListenersAdded.current = true;
-        }
-
-      } catch (err) {
-        console.error('[ThankYou] Error initializing player:', err);
+        await videoElement.play();
+      } catch (error) {
+        console.log("Autoplay blocked or failed:", error);
       }
     };
 
-    initPlayer();
+    // Tenta reproduzir imediatamente
+    tryPlay();
+
+    // Sound Unlocker
+    const unlockSound = () => {
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+      }
+      document.removeEventListener('click', unlockSound);
+      document.removeEventListener('touchstart', unlockSound);
+      document.removeEventListener('scroll', unlockSound);
+    };
+
+    document.addEventListener('click', unlockSound);
+    document.addEventListener('touchstart', unlockSound);
+    document.addEventListener('scroll', unlockSound);
 
     return () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-      }
+      document.removeEventListener('click', unlockSound);
+      document.removeEventListener('touchstart', unlockSound);
+      document.removeEventListener('scroll', unlockSound);
     };
   }, [upsellVideoUrl, isSubAdmin]);
 
@@ -133,7 +103,7 @@ export default function ThankYou() {
       </div>
 
       {/* Grid Pattern Overlay */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
@@ -152,14 +122,14 @@ export default function ThankYou() {
             </div>
 
             <img
-              src={lovableInfinitoTitle}
-              alt="Método Lovable Infinito"
+              src={lovableInfinitoLogoNew}
+              alt="Lovable Infinito Logo"
               className="w-[280px] sm:w-[340px] mx-auto mb-6 drop-shadow-2xl rounded-2xl"
             />
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
               <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-                🎉 Acesso Liberado!
+                Acesso Liberado!
               </span>
             </h1>
 
@@ -193,14 +163,14 @@ export default function ThankYou() {
               {/* Hook */}
               <div className="text-center mb-8">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                  <span className="text-white">Você já fez a parte difícil.</span>
+                  <span className="text-white">Você vai dominar o Lovable.</span>
                   <br />
                   <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 bg-clip-text text-transparent">
-                    Agora é hora de acelerar.
+                    Agora é hora de escalar de verdade.
                   </span>
                 </h2>
                 <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                  Estratégia sem ambiente não escala. É aqui que a maioria trava.
+                  Ferramenta sem comunidade não gera receita. É aqui que a maioria empaca.
                 </p>
               </div>
 
@@ -225,7 +195,7 @@ export default function ThankYou() {
                           <Play className="w-8 h-8 text-white ml-1" fill="white" />
                         </div>
                         <p className="text-gray-400 text-sm">
-                          VSL do Club Copy & Scale
+                          VSL da Comunidade Lovable Brasil
                         </p>
                         <p className="text-gray-500 text-xs mt-1">
                           (Faça upload via /admin/videos)
@@ -244,15 +214,15 @@ export default function ThankYou() {
                   rel="noopener noreferrer"
                   className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 text-black font-bold text-lg hover:shadow-[0_0_40px_rgba(251,191,36,0.4)] hover:scale-105 transition-all duration-300 mb-4 animate-pulse-slow"
                 >
-                  Entrar no Club Copy & Scale
+                  Entrar na Comunidade Lovable Brasil
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </a>
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
                   <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent">
-                    Club Copy & Scale
+                    Comunidade Lovable Brasil
                   </span>
                 </h3>
-                <p className="text-gray-300 text-base sm:text-lg text-center max-w-xl mx-auto">Comunidade no WhatsApp — Dia a dia lado a lado com quem escala +5 dígitos por dia vendendo produtos low ticket no digital</p>
+                <p className="text-gray-300 text-base sm:text-lg text-center max-w-xl mx-auto">Grupo exclusivo no WhatsApp — Lado a lado com quem está faturando alto construindo apps e sistemas no-code com Lovable</p>
               </div>
 
               {/* O que é */}
@@ -262,40 +232,40 @@ export default function ThankYou() {
                   <ul className="space-y-2 text-gray-400 text-sm">
                     <li className="flex items-start gap-2">
                       <span className="text-red-400">→</span>
-                      Gasta mais em testes
+                      Gasta semanas testando o que já foi validado
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-red-400">→</span>
-                      Perde a nova onda do mercado digital
+                      Perde as melhores práticas e atalhos do mercado
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-red-400">→</span>
-                      Terá os créditos infinitos no Lovable, mas não vai saber como faturar alto
+                      Tem créditos infinitos no Lovable, mas não sabe transformar isso em dinheiro
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-red-400">→</span>
-                      Vai ter que Pagar os 12% a + pro Meta, quando for rodar campanhas
+                      Vai cobrar barato e perder clientes para quem domina posicionamento
                     </li>
                   </ul>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
-                  <div className="text-emerald-400 text-sm font-semibold mb-2">✅ Se você seguir com a gente na Comunidade:</div>
+                  <div className="text-emerald-400 text-sm font-semibold mb-2">✅ Se você seguir com a maior comunidade de Lovable do Brasil:</div>
                   <ul className="space-y-2 text-gray-300 text-sm">
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-400">→</span>
-                      Encurta o caminho
+                      Encurta meses de aprendizado
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-400">→</span>
-                      Evita erros óbvios
+                      Evita erros que custam clientes
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-400">→</span>
-                      Aprende a rodar BR e na Gringa
+                      Aprende a precificar, vender e entregar projetos que pagam bem
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-400">→</span>
-                      Faz 1k por dia de lucro livre, grana no bolso, no primeiro mês
+                      Faz seus primeiros R$5k~10k em projetos no primeiro mês
                     </li>
                   </ul>
                 </div>
@@ -304,10 +274,10 @@ export default function ThankYou() {
               {/* Benefícios */}
               <div className="grid sm:grid-cols-2 gap-3 mb-8">
                 {[
-                  { icon: Zap, text: "Como produzir Criativos camaleão que te dão ROI de 4x ou 3x" },
-                  { icon: TrendingUp, text: "Ofertas validadas que já escalam mais de 10k mês" },
-                  { icon: Users, text: "Bastidores que nunca vão pro feed" },
-                  { icon: Shield, text: "Conversas que economizam dinheiro e tempo" },
+                  { icon: Zap, text: "Como estruturar propostas que vendem sozinhas" },
+                  { icon: TrendingUp, text: "Projetos validados que clientes pagam R$3k a R$15k" },
+                  { icon: Users, text: "Bastidores e cases reais de quem já fatura com Lovable" },
+                  { icon: Shield, text: "Suporte direto que economiza horas de tentativa e erro" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
@@ -325,7 +295,7 @@ export default function ThankYou() {
                   {bannerImageUrl ? (
                     <img
                       src={bannerImageUrl}
-                      alt="Club Copy & Scale"
+                      alt="Comunidade Lovable Brasil"
                       className="w-full h-auto max-h-[280px] sm:max-h-[400px] md:max-h-none object-cover object-top"
                     />
                   ) : (
@@ -335,7 +305,7 @@ export default function ThankYou() {
                           <ImageIcon className="w-6 h-6 text-yellow-400" />
                         </div>
                         <p className="text-gray-400 text-sm">
-                          Banner do Club Copy & Scale
+                          Banner da Comunidade Lovable Brasil
                         </p>
                         <p className="text-gray-500 text-xs mt-1">
                           (Faça upload via /admin/videos)
@@ -369,7 +339,7 @@ export default function ThankYou() {
                       rel="noopener noreferrer"
                       className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 text-black font-bold text-lg hover:shadow-[0_0_40px_rgba(251,191,36,0.4)] hover:scale-105 transition-all duration-300 animate-pulse-slow"
                     >
-                      Entrar no Club Copy & Scale
+                      Entrar na Comunidade Lovable Brasil
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </a>
 
@@ -378,16 +348,6 @@ export default function ThankYou() {
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* Frase de impacto */}
-              <div className="text-center mb-8 p-6 rounded-xl bg-gradient-to-r from-purple-500/5 to-cyan-500/5 border border-purple-500/10">
-                <p className="text-xl sm:text-2xl font-bold text-white">
-                  O método vai te dar a base.
-                </p>
-                <p className="text-base sm:text-xl font-bold bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 bg-clip-text text-transparent mt-2">
-                  ELES NÃO QUEREM QUE VOCÊ SAIBA, MAS O QUE VAI TE FAZER ESCALAR É PARTICIPAR DA COMUNIDADE
-                </p>
               </div>
             </div>
           </section>
@@ -414,62 +374,69 @@ export default function ThankYou() {
             <div className="relative">
               <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500 rounded-3xl blur-xl opacity-30 animate-pulse" />
               <div className="relative p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] border-2 border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.2)]">
-              <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                🎉 Acesso ao Método Lovable Infinito
-              </h2>
+                <div className="flex justify-center mb-4">
+                  <img
+                    src={lovableInfinitoLogoNew}
+                    alt="Lovable Infinito Logo"
+                    className="w-auto h-auto max-w-[180px] sm:max-w-[220px] object-contain rounded-xl drop-shadow-[0_0_15px_rgba(52,211,153,0.4)]"
+                  />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  Acesso ao Método Lovable Infinito
+                </h2>
 
-              <p className="text-gray-300 text-center mb-6">
-                Para entrar na área de membros, siga o passo a passo:
-              </p>
+                <p className="text-gray-300 text-center mb-6">
+                  Para entrar na área de membros, siga o passo a passo:
+                </p>
 
-              <div className="space-y-4 mb-6">
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5">
-                  <span className="text-2xl">1️⃣</span>
-                  <div>
-                    <p className="text-gray-200 mb-2">Acesse o link:</p>
-                    <a
-                      href="https://lovable-infinity-learn.lovable.app/login"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-cyan-400 hover:text-cyan-300 font-semibold break-all"
-                    >
-                      👉 https://lovable-infinity-learn.lovable.app/login
-                    </a>
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5">
+                    <span className="text-2xl">1️⃣</span>
+                    <div>
+                      <p className="text-gray-200 mb-2">Acesse o link:</p>
+                      <a
+                        href="https://area-de-membros-produto-lovable-inf.vercel.app/login"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-cyan-400 hover:text-cyan-300 font-semibold break-all"
+                      >
+                        👉 https://area-de-membros-produto-lovable-inf.vercel.app/login
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5">
+                    <span className="text-2xl">2️⃣</span>
+                    <p className="text-gray-200">Crie seu cadastro com seu e-mail e senha.</p>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5">
+                    <span className="text-2xl">3️⃣</span>
+                    <p className="text-gray-200">Acesse todos os módulos do Método Lovable Infinito.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5">
-                  <span className="text-2xl">2️⃣</span>
-                  <p className="text-gray-200">Crie seu cadastro com seu e-mail e senha.</p>
+                <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 mb-6">
+                  <p className="text-yellow-400 font-semibold text-center text-sm">
+                    ⚠️ IMPORTANTE: Salve esse link — ele é seu acesso permanente.
+                  </p>
                 </div>
 
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-white/5">
-                  <span className="text-2xl">3️⃣</span>
-                  <p className="text-gray-200">Acesse todos os módulos do Método Lovable Infinito.</p>
-                </div>
-              </div>
+                <a
+                  href="https://area-de-membros-produto-lovable-inf.vercel.app/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-lg hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:scale-105 transition-all duration-300"
+                >
+                  <Check className="w-5 h-5" />
+                  Acessar Área de Membros
+                </a>
 
-              <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30 mb-6">
-                <p className="text-yellow-400 font-semibold text-center text-sm">
-                  ⚠️ IMPORTANTE: Salve esse link — ele é seu acesso permanente.
+                <p className="mt-6 text-center text-sm text-gray-400">
+                  Se tiver qualquer dúvida, pode chamar nosso suporte via WhatsApp.
+                  <br />
+                  <span className="text-gray-300">Vamos escalar juntos! 🚀🔥</span>
                 </p>
-              </div>
-
-              <a
-                href="https://lovable-infinity-learn.lovable.app/login"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-lg hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:scale-105 transition-all duration-300"
-              >
-                <Check className="w-5 h-5" />
-                Acessar Área de Membros
-              </a>
-
-              <p className="mt-6 text-center text-sm text-gray-400">
-                Se tiver qualquer dúvida, pode chamar nosso suporte via WhatsApp.
-                <br />
-                <span className="text-gray-300">Vamos escalar juntos! 🚀🔥</span>
-              </p>
               </div>
             </div>
           </div>
