@@ -139,10 +139,17 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
       setFile(null);
       onVideoUpdated();
     } catch (error: any) {
-      console.error('Upload flow error:', error);
+      console.error('Erro detalhado no Upload:', error);
+
+      let errorMsg = error.message || 'Falha ao fazer upload do vídeo.';
+
+      if (errorMsg.includes('JWS') || errorMsg.includes('JWT')) {
+        errorMsg = "Erro de Sessão (JWS). Por favor, saia do painel (Logout) e entre novamente para limpar seu acesso.";
+      }
+
       toast({
         title: 'Erro no Upload',
-        description: error.message || 'Falha ao fazer upload do vídeo.',
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {
