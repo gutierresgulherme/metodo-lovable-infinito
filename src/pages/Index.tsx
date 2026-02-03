@@ -194,7 +194,7 @@ const Index = () => {
     };
 
     if (!isActive) return <div className="fixed inset-0 bg-black z-[9999]" />;
-    if (loading) return <div className="fixed inset-0 bg-black z-[9999] flex items-center justify-center text-white font-orbitron">CARREGANDO SISTEMA...</div>;
+    // Removido o bloqueio de 'loading' para abertura instantânea
 
     // Defaults if VSL data is missing fields
     const HEADLINE = vslData?.headline || "VOCÊ AINDA PAGA PRA USAR O LOVABLE?";
