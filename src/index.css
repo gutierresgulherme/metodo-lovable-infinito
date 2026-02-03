@@ -148,9 +148,7 @@ All colors MUST be HSL.
 a[href*="lovable.dev"], 
 iframe[src*="lovable.dev"], 
 div[style*="Edit with Lovable"], 
-.lovable-badge,
-[class*="lovable"],
-div[class*="watermark"] { 
+.lovable-badge { 
   display: none !important; 
   opacity: 0 !important; 
   visibility: hidden !important; 

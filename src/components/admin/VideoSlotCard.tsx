@@ -76,7 +76,7 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
     try {
       const fileName = `${slot.page_key}.mp4`;
-      const uploadPath = `vsl/${fileName}`;
+      let uploadPath = `vsl/${fileName}`;
 
       // --- TENTATIVA 1: CLIENTE AUTENTICADO ---
       console.log("🔐 [UPLOAD] Tentativa 1: Cliente Autenticado...");

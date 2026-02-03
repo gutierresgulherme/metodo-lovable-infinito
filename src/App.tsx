@@ -15,7 +15,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminVideos from "./pages/AdminVideos";
 import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminVSLTester from "./pages/AdminVSLTester";
+
 import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
@@ -43,7 +43,7 @@ const App = () => {
                 <Route index element={<AdminDashboard />} />
                 <Route path="videos" element={<AdminVideos />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
-                <Route path="vsl-tester" element={<AdminVSLTester />} />
+
               </Route>
 
               <Route path="*" element={<NotFound />} />

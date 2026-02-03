@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getCurrentVSLSlug, getRegionByDomain } from "@/lib/vslService";
 
 // Mapeamento de IDs de botões para labels legíveis
 const BUTTON_LABELS: Record<string, string> = {
@@ -38,16 +37,13 @@ export const trackButtonClick = async (buttonId: string): Promise<void> => {
         const utms = getUtmParams();
         const buttonLabel = BUTTON_LABELS[buttonId] || buttonId;
 
-        const vslSlug = await getCurrentVSLSlug();
-        const region = getRegionByDomain();
-
         await (supabase.from("button_clicks" as any) as any).insert({
             button_id: buttonId,
             button_label: buttonLabel,
             page_url: window.location.href,
             session_id: sessionId,
-            vsl_slug: vslSlug,
-            region: region,
+            vsl_slug: "home-vsl",
+            region: "BR",
             ...utms,
         });
 
@@ -69,11 +65,9 @@ export const trackVideoEvent = async (
             ? Math.round((currentTimeSeconds / durationSeconds) * 100)
             : 0;
 
-        const vslSlug = await getCurrentVSLSlug();
-
         await (supabase.from("video_watch_events" as any) as any).insert({
             session_id: sessionId,
-            video_id: vslSlug,
+            video_id: "home-vsl",
             event_type: eventType,
             current_time_seconds: Math.round(currentTimeSeconds),
             duration_seconds: Math.round(durationSeconds),
@@ -94,7 +88,6 @@ export const initPageSession = async (): Promise<void> => {
 
         console.log("[Analytics] Initializing session:", sessionId);
 
-        // Verificar se sessão já existe
         const { data: existing } = await (supabase
             .from("page_sessions" as any) as any)
             .select("id")
@@ -102,21 +95,17 @@ export const initPageSession = async (): Promise<void> => {
             .maybeSingle();
 
         if (!existing) {
-            const region = getRegionByDomain();
-            const vslSlug = await getCurrentVSLSlug();
-
             await (supabase.from("page_sessions" as any) as any).insert({
                 session_id: sessionId,
                 page_url: window.location.href,
                 referrer: document.referrer || null,
                 user_agent: navigator.userAgent,
-                region: region,
-                vsl_id: vslSlug, // Guardamos o slug como ID de referência inicial
+                region: "BR",
+                vsl_id: "home-vsl",
                 ...utms,
             });
-            console.log("[Analytics] Page session started successfully for:", region);
+            console.log("[Analytics] Page session started successfully");
         } else {
-            // Atualizar última atividade
             await (supabase.from("page_sessions" as any) as any)
                 .update({ last_activity_at: new Date().toISOString() })
                 .eq("session_id", sessionId);
@@ -126,7 +115,7 @@ export const initPageSession = async (): Promise<void> => {
     }
 };
 
-// Hook para adicionar tracking a um botão (Usando Delegação de Eventos para 100% de Precisão)
+// Hook para adicionar tracking a um botão
 export const setupButtonTracking = (): void => {
     if ((window as any)._trackingInitialized) return;
 
@@ -141,13 +130,13 @@ export const setupButtonTracking = (): void => {
                 trackButtonClick(buttonId);
             }
         }
-    }, true); // Capture phase para garantir que pegamos o clique antes de qualquer redirecionamento
+    }, true);
 
     (window as any)._trackingInitialized = true;
     console.log("[Analytics] Global button tracking initialized");
 };
 
-// Tipo para dados de analytics
+// Para o dashboard de Analytics, simplificamos para buscar tudo sem filtros complexos
 export interface AnalyticsData {
     buttonClicks: Array<{
         button_id: string;
@@ -167,32 +156,22 @@ export interface AnalyticsData {
     }>;
 }
 
-// Buscar dados de analytics (para o dashboard)
 export const fetchAnalyticsData = async (
     startDate?: Date,
     endDate?: Date
 ): Promise<AnalyticsData> => {
     try {
-        const start = startDate?.toISOString() || new Date(0).toISOString(); // 1970 para pegar TUDO
+        const start = startDate?.toISOString() || new Date(0).toISOString();
         const end = endDate?.toISOString() || new Date().toISOString();
 
-        // Buscar cliques por botão
-        console.log("[Analytics] Fetching clicks between:", start, "and", end);
-        const { data: clicksRaw, error: clicksError } = await (supabase
+        const { data: clicksRaw } = await (supabase
             .from("button_clicks" as any) as any)
             .select("button_id, button_label, created_at")
             .gte("created_at", start)
             .lte("created_at", end);
 
-        if (clicksError) {
-            console.error("[Analytics] Error fetching clicks:", clicksError);
-        } else {
-            console.log("[Analytics] Clicks fetched:", clicksRaw?.length || 0);
-        }
-
-        // Agrupar cliques por botão
         const clicksByButton: Record<string, { label: string; count: number }> = {};
-        clicksRaw?.forEach((click) => {
+        clicksRaw?.forEach((click: any) => {
             if (!clicksByButton[click.button_id]) {
                 clicksByButton[click.button_id] = {
                     label: click.button_label || click.button_id,
@@ -208,34 +187,26 @@ export const fetchAnalyticsData = async (
             count: data.count,
         }));
 
-        // Buscar eventos de vídeo para retenção
         const { data: videoEvents } = await (supabase
             .from("video_watch_events" as any) as any)
             .select("session_id, percent_watched, event_type")
             .gte("created_at", start)
             .lte("created_at", end);
 
-        // Calcular retenção: máximo percent_watched por sessão
         const maxPercentBySession: Record<string, number> = {};
-        videoEvents?.forEach((event) => {
+        videoEvents?.forEach((event: any) => {
             const current = maxPercentBySession[event.session_id] || 0;
             if ((event.percent_watched || 0) > current) {
                 maxPercentBySession[event.session_id] = event.percent_watched || 0;
             }
         });
 
-        // Agrupar em buckets de 10%
         const retentionBuckets: Record<number, number> = {};
-        for (let i = 0; i <= 100; i += 10) {
-            retentionBuckets[i] = 0;
-        }
+        for (let i = 0; i <= 100; i += 10) retentionBuckets[i] = 0;
 
         Object.values(maxPercentBySession).forEach((percent) => {
-            // Contar quantas sessões chegaram ATÉ cada ponto
             for (let bucket = 0; bucket <= 100; bucket += 10) {
-                if (percent >= bucket) {
-                    retentionBuckets[bucket]++;
-                }
+                if (percent >= bucket) retentionBuckets[bucket]++;
             }
         });
 
@@ -244,26 +215,17 @@ export const fetchAnalyticsData = async (
             sessions,
         }));
 
-        // Total de sessões
-        const { count: totalSessions, error: sessionsError } = await (supabase
+        const { count: totalSessions } = await (supabase
             .from("page_sessions" as any) as any)
             .select("id", { count: "exact", head: true })
             .gte("started_at", start)
             .lte("started_at", end);
 
-        if (sessionsError) {
-            console.error("[Analytics] Error fetching sessions:", sessionsError);
-        }
-
-        // Total de cliques
         const totalClicks = clicksRaw?.length || 0;
-
-        // CTR
         const ctr = totalSessions && totalSessions > 0
             ? Math.round((totalClicks / totalSessions) * 10000) / 100
             : 0;
 
-        // Top UTM sources
         const { data: sessionsWithUtm } = await (supabase
             .from("page_sessions" as any) as any)
             .select("utm_source")
@@ -273,7 +235,7 @@ export const fetchAnalyticsData = async (
             .not("utm_source", "eq", "");
 
         const utmCounts: Record<string, number> = {};
-        sessionsWithUtm?.forEach((s) => {
+        sessionsWithUtm?.forEach((s: any) => {
             if (s.utm_source) {
                 utmCounts[s.utm_source] = (utmCounts[s.utm_source] || 0) + 1;
             }

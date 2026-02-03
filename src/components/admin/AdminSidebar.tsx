@@ -19,7 +19,6 @@ const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
     { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
     { icon: Video, label: "Gestão de Mídias", path: "/admin/videos" },
-    { icon: FlaskConical, label: "VSL Tester", path: "/admin/vsl-tester" },
     { icon: Zap, label: "UTM Debug", path: "/utmify-debug" },
     { icon: Gift, label: "Página Obrigado", path: "/thankyou", external: true },
 ];

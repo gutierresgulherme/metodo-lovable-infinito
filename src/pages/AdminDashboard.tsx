@@ -17,7 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { getPrimaryVSLSlug, getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
+import { getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
 import { cn } from "@/lib/utils";
 
 const db = supabase as any;
@@ -32,7 +32,7 @@ interface QuickStats {
 const quickLinks = [
     { icon: BarChart3, label: "Analytics", path: "/admin/analytics", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
     { icon: Video, label: "Gestão Mídias", path: "/admin/videos", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-    { icon: FlaskConical, label: "VSL Tester", path: "/admin/vsl-tester", color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20" },
+
     { icon: Zap, label: "UTM Debug", path: "/utmify-debug", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
     { icon: Gift, label: "Página Obrigado", path: "/thankyou", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20", external: true },
 ];
@@ -41,7 +41,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<QuickStats>({ sessions: 0, clicks: 0, ctr: 0, avgWatchTime: 0 });
     const [activeVsl, setActiveVsl] = useState<VSLVariant | null>(null);
     const [loading, setLoading] = useState(true);
-    const primarySlug = getPrimaryVSLSlug();
+    const primarySlug = "home-vsl";
 
     useEffect(() => {
         loadQuickStats();
