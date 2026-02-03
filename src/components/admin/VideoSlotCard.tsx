@@ -122,20 +122,28 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
       // Delete old database entry for this page_key
-      const { error: deleteError } = await supabase
+      let deleteResult = await supabase
         .from('vsl_video')
         .delete()
         .eq('page_key', slot.page_key);
 
-      if (deleteError) {
-        console.error("DB Video Delete Error:", deleteError);
-        throw new Error("DB_DELETE_ERROR: " + deleteError.message);
+      if (deleteResult.error && (deleteResult.error.message.includes('JWS') || deleteResult.error.message.includes('JWT'))) {
+        console.warn("[DB] JWS Error on delete, retrying with public client...");
+        deleteResult = await supabasePublic
+          .from('vsl_video')
+          .delete()
+          .eq('page_key', slot.page_key);
+      }
+
+      if (deleteResult.error) {
+        console.error("DB Video Delete Error:", deleteResult.error);
+        throw new Error("DB_DELETE_ERROR: " + deleteResult.error.message);
       }
 
       console.log("[STORAGE] Final public URL:", finalUrl);
 
       // Insert new database entry
-      const { error: insertError } = await supabase
+      let insertResult = await supabase
         .from('vsl_video')
         .insert({
           video_url: finalUrl,
@@ -143,9 +151,20 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
           created_at: new Date().toISOString()
         });
 
-      if (insertError) {
-        console.error("[DB] Insert Error Object:", JSON.stringify(insertError, null, 2));
-        throw new Error("DB_INSERT_ERROR: " + insertError.message);
+      if (insertResult.error && (insertResult.error.message.includes('JWS') || insertResult.error.message.includes('JWT'))) {
+        console.warn("[DB] JWS Error on insert, retrying with public client...");
+        insertResult = await supabasePublic
+          .from('vsl_video')
+          .insert({
+            video_url: finalUrl,
+            page_key: slot.page_key,
+            created_at: new Date().toISOString()
+          });
+      }
+
+      if (insertResult.error) {
+        console.error("[DB] Insert Error Object:", JSON.stringify(insertResult.error, null, 2));
+        throw new Error("DB_INSERT_ERROR: " + insertResult.error.message);
       }
 
       setProgress(100);

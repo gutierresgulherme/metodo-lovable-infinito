@@ -19,4 +19,11 @@ export const supabase = createClient<Database>(SUPABASE_URL || "", SUPABASE_PUBL
 });
 
 // Clean client for public operations to avoid JWS errors
-export const supabasePublic = createClient<Database>(SUPABASE_URL || "", SUPABASE_PUBLISHABLE_KEY || "");
+// This client IGNORES any local storage or session, ensuring it always acts as 'anon/public'
+export const supabasePublic = createClient<Database>(SUPABASE_URL || "", SUPABASE_PUBLISHABLE_KEY || "", {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  }
+});

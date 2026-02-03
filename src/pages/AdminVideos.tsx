@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, supabasePublic } from '@/integrations/supabase/client';
 import { VideoSlotCard } from '@/components/admin/VideoSlotCard';
 import { ImageSlotCard } from '@/components/admin/ImageSlotCard';
 import { Video, ImageIcon, RefreshCw } from 'lucide-react';
@@ -58,16 +58,20 @@ const AdminVideos = () => {
     if (isInitialLog) setLoading(true);
 
     try {
+      console.log("[ADMIN] Fetching media data with public client...");
       const [videosResult, imagesResult] = await Promise.all([
-        supabase
+        supabasePublic
           .from('vsl_video')
           .select('*')
           .order('created_at', { ascending: false }),
-        supabase
+        supabasePublic
           .from('banner_images')
           .select('*')
           .order('created_at', { ascending: false })
       ]);
+
+      console.log("[ADMIN] Videos result:", videosResult.data?.length || 0, "rows found");
+      console.log("[ADMIN] Images result:", imagesResult.data?.length || 0, "rows found");
 
       setVideos((videosResult.data as VideoData[]) || []);
       setImages((imagesResult.data as ImageData[]) || []);
