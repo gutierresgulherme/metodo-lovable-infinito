@@ -12,13 +12,15 @@ import {
     Clock,
     ArrowRight,
     Activity,
-    DollarSign
+    DollarSign,
+    RefreshCw
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
 import { cn } from "@/lib/utils";
+import { APP_VERSION, BUILD_DATE } from "@/version";
 
 const db = supabase as any;
 
@@ -97,15 +99,22 @@ export default function AdminDashboard() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <div className="hidden md:flex flex-col items-end mr-2">
+                        <span className="text-[10px] font-mono text-gray-500 uppercase">Versão do Sistema</span>
+                        <span className="text-xs font-mono text-purple-400 font-bold">v{APP_VERSION}</span>
+                    </div>
                     <a href={`/?vsl=${primarySlug}`} target="_blank" rel="noopener noreferrer">
                         <Button className="bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 font-mono text-xs tracking-wider gap-2">
                             <Eye className="w-4 h-4" />
                             LIVE PREVIEW
                         </Button>
                     </a>
-                    <Button className="bg-purple-600 hover:bg-purple-700 text-white font-orbitron text-xs tracking-wider shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all hover:scale-105">
-                        <Activity className="w-4 h-4 mr-2" />
-                        RELATÓRIO COMPLETO
+                    <Button
+                        onClick={() => window.location.reload()}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-orbitron text-xs tracking-wider shadow-[0_0_15px_rgba(147,51,234,0.4)] transition-all hover:scale-105"
+                    >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        SINCRONIZAR
                     </Button>
                 </div>
             </div>

@@ -1,13 +1,14 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "packageManager": "npm@10.9.2",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/bump-version.js",
     "build": "vite build",
-    "cloudflare-build": "npm install && npm run build",
+    "cloudflare-build": "npm run prebuild && npm run build",
     "lint": "eslint .",
     "preview": "vite preview --port 8080"
   },
