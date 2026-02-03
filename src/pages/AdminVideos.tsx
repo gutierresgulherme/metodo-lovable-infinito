@@ -102,15 +102,27 @@ const AdminVideos = () => {
             CONTROLE DE ASSETS VISUAIS
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => fetchData(false)}
-          disabled={loading}
-          className="border-white/10 hover:bg-white/5 text-gray-300"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          ATUALIZAR
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            className="border-red-500/30 hover:bg-red-500/10 text-red-400 text-xs"
+          >
+            LIMPAR CONEXÃO
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => fetchData(false)}
+            disabled={loading}
+            className="border-white/10 hover:bg-white/5 text-gray-300"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            ATUALIZAR
+          </Button>
+        </div>
       </div>
 
       {loading ? (
