@@ -344,11 +344,11 @@ export const getTestCenterByDomain = async (domain: string): Promise<VSLTestCent
     return data as VSLTestCenter;
 };
 
-// Detectar região pelo domínio (Legado - Mantendo para compatibilidade)
+// Detectar região pelo domínio (Sempre BR por padrão agora)
 export const getRegionByDomain = (): "BR" | "USA" => {
     if (typeof window === "undefined") return "BR";
     const hostname = window.location.hostname;
-    if (hostname.includes("lovable-app.vip")) return "USA";
+    // Removida a trava de lovable-app.vip = USA
     if (hostname.includes("metodolovalbe.com") && !hostname.includes(".br")) return "USA";
     return "BR";
 };
@@ -485,7 +485,8 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
     }
 
     // Update currency/active if not set by test center
-    if (!currency) currency = (getRegionByDomain() === "USA" ? "USD" : "BRL");
+    // Padrão sempre Brasil (BRL) agora para ambos os seus domínios
+    if (!currency) currency = "BRL";
 
     return {
         vsl: activeVslObj,

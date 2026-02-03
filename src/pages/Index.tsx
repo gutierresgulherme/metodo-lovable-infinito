@@ -182,10 +182,15 @@ const Index = () => {
     };
 
     const getCheckoutLink = useCallback((plan: 'prata' | 'gold') => {
-        const isUSA = currency === 'USD'; // Use detected currency
-        const target = isUSA ? config.USA : config.BR;
-        return target[plan];
-    }, [config, currency]);
+        const hostname = window.location.hostname;
+        // Se for o domínio de contingência, usa o set de links "USA" (Segunda BM)
+        // Mesmo que a moeda exibida seja R$
+        if (hostname.includes('lovable-app.vip')) {
+            return config.USA[plan];
+        }
+        // Caso contrário, usa o set "BR" (Principal)
+        return config.BR[plan];
+    }, [config]);
 
     // Track Clicks with VSL Slug
     const handleCheckoutClick = async (buttonId: string, url: string) => {
