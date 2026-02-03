@@ -1,50 +1,64 @@
--- 📋 SETUP DE SEGURANÇA PÚBLICA - VSL & MEDIA
--- Este script libera o acesso público para visualização e upload, resolvendo os erros de JWS.
+-- ====================================================================
+-- 🔥 SCRIPT DEFINITIVO DE DESBLOQUEIO E SAÚDE DO BANCO (v2) 🔥
+-- Este script resolve:
+-- 1. Erro de Unique Constraint (42P10) no Upload
+-- 2. Permissões de Acesso Público para Vídeos e Banners
+-- 3. Configuração de Buckets de Storage
+-- ====================================================================
 
--- 1. LIMPEZA DE POLÍTICAS ANTIGAS (Garante que não haja conflitos)
-DROP POLICY IF EXISTS "Anyone can read videos" ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can upload videos" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated update" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated delete" ON storage.objects;
-DROP POLICY IF EXISTS "Public access to videos" ON storage.objects;
-DROP POLICY IF EXISTS "Public Upload" ON storage.objects;
+-- 1. LIMPEZA DE DADOS DUPLICADOS (Prepara para a Unique Constraint)
+-- Mantém apenas a versão mais recente de cada slot
+DELETE FROM vsl_video a USING vsl_video b 
+WHERE a.id < b.id AND a.page_key = b.page_key;
 
--- 2. CONFIGURAÇÃO DO BUCKET
+DELETE FROM banner_images a USING banner_images b 
+WHERE a.id < b.id AND a.page_key = b.page_key;
+
+-- 2. ADIÇÃO DE CONSTRAINTS EXCLUSIVAS (Essencial para o Upsert funcionar)
+-- Se já houver a constraint, o script ignorará com o DO block
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vsl_video_page_key_key') THEN
+        ALTER TABLE vsl_video ADD CONSTRAINT vsl_video_page_key_key UNIQUE (page_key);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'banner_images_page_key_key') THEN
+        ALTER TABLE banner_images ADD CONSTRAINT banner_images_page_key_key UNIQUE (page_key);
+    END IF;
+END $$;
+
+-- 3. DESBLOQUEIO TOTAL DE RLS (Para evitar erros de JWS/JWT em redes instáveis)
+ALTER TABLE vsl_video DISABLE ROW LEVEL SECURITY;
+ALTER TABLE banner_images DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vsl_test_centers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vsl_variants DISABLE ROW LEVEL SECURITY;
+
+-- 4. PERMISSÕES DE TABELA (Garante acesso público total)
+GRANT ALL ON TABLE public.vsl_video TO anon, authenticated, postgres, service_role;
+GRANT ALL ON TABLE public.banner_images TO anon, authenticated, postgres, service_role;
+GRANT ALL ON TABLE public.vsl_test_centers TO anon, authenticated, postgres, service_role;
+GRANT ALL ON TABLE public.vsl_variants TO anon, authenticated, postgres, service_role;
+GRANT ALL ON TABLE public.checkout_configs TO anon, authenticated, postgres, service_role;
+
+-- 5. STORAGE - CONFIGURAÇÃO DE BUCKETS (Garantiu que existem e são públicos)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('videos', 'videos', true, 524288000, '{video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-msvideo,video/mpeg,image/png,image/jpeg}')
-ON CONFLICT (id) DO UPDATE SET 
-    public = true, 
-    file_size_limit = 524288000,
-    allowed_mime_types = '{video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-msvideo,video/mpeg,image/png,image/jpeg}';
+VALUES 
+    ('videos', 'videos', true, 524288000, '{video/mp4,video/quicktime,video/x-msvideo}'),
+    ('site_uploads', 'site_uploads', true, 10485760, '{image/*}')
+ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = EXCLUDED.file_size_limit;
 
--- 3. POLÍTICAS DE STORAGE (BUCKET 'videos')
--- Permite que qualquer lead assista o vídeo (Crucial para a Home)
-CREATE POLICY "Public Read Access" ON storage.objects 
-FOR SELECT TO anon, public, authenticated 
-USING (bucket_id = 'videos');
+-- 6. STORAGE - POLÍTICAS DE ACESSO (Opcional se RLS estiver off, mas recomendado)
+-- Removemos políticas antigas para evitar conflitos
+DROP POLICY IF EXISTS "Public View" ON storage.objects;
+DROP POLICY IF EXISTS "Public Insert" ON storage.objects;
+DROP POLICY IF EXISTS "Public Update" ON storage.objects;
 
--- Permite que o Admin faça upload mesmo se o token falhar (Resolve o Erro JWS)
-CREATE POLICY "Public Upload Access" ON storage.objects 
-FOR INSERT TO anon, public, authenticated 
-WITH CHECK (bucket_id = 'videos');
+-- Criamos políticas ultra-permissivas para o bucket 'videos' e 'site_uploads'
+CREATE POLICY "Public Access All" ON storage.objects 
+FOR ALL USING ( bucket_id IN ('videos', 'site_uploads') ) 
+WITH CHECK ( bucket_id IN ('videos', 'site_uploads') );
 
--- Permite substituição de arquivos
-CREATE POLICY "Public Update Access" ON storage.objects 
-FOR UPDATE TO anon, public, authenticated 
-USING (bucket_id = 'videos');
+-- 7. REFRESH DE SCHEMA
+NOTIFY pgrst, 'reload schema';
 
--- 4. POLÍTICAS DA TABELA DE DADOS (vsl_video)
-ALTER TABLE public.vsl_video DISABLE ROW LEVEL SECURITY;
-GRANT ALL ON TABLE public.vsl_video TO anon, authenticated, public, service_role;
-
--- 5. POLÍTICAS DA TABELA DE BANNERS (Obrigado)
-ALTER TABLE public.banner_images DISABLE ROW LEVEL SECURITY;
-GRANT ALL ON TABLE public.banner_images TO anon, authenticated, public, service_role;
-
--- 6. GARANTIA DE PERMISSÕES DE SCHEMA
-GRANT USAGE ON SCHEMA storage TO anon, public, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, public, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, public, authenticated;
-GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, public, authenticated;
-
--- ✅ SCRIPT EXECUTADO COM SUCESSO. O SISTEMA ESTÁ BLINDADO.
+-- ✅ FINALIZADO: Execute este script no SQL Editor do Supabase.

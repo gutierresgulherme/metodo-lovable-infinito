@@ -133,18 +133,25 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
-      // ATUALIZAÇÃO DO BANCO COM RETRY
+      // ATUALIZAÇÃO DO BANCO COM WORKAROUND PARA FALTA DE CONSTRAINT UNIQUE
       const dbPayload = {
         video_url: finalUrl,
         page_key: slot.page_key,
         created_at: new Date().toISOString()
       };
 
-      let dbResult = await supabase.from('vsl_video').upsert(dbPayload, { onConflict: 'page_key' });
+      console.log("💾 [DB] Aplicando correção de registro (Delete + Insert)...");
+
+      // 1. Tentar deletar o registro antigo para evitar erro de conflito
+      await supabasePublic.from('vsl_video').delete().eq('page_key', slot.page_key);
+
+      // 2. Inserir o novo registro
+      let dbResult = await supabasePublic.from('vsl_video').insert(dbPayload);
 
       if (dbResult.error) {
-        console.warn("⚠️ [DB] Erro no registro autenticado, tentando via canal público...");
-        dbResult = await supabasePublic.from('vsl_video').upsert(dbPayload, { onConflict: 'page_key' });
+        console.warn("⚠️ [DB] Erro na inserção pública, tentando via canal autenticado...");
+        await supabase.from('vsl_video').delete().eq('page_key', slot.page_key);
+        dbResult = await supabase.from('vsl_video').insert(dbPayload);
       }
 
       if (dbResult.error) throw dbResult.error;

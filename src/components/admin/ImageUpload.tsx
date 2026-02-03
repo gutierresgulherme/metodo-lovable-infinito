@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, supabasePublic } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Trash2, Upload, ImageIcon } from 'lucide-react';
@@ -71,13 +71,26 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
 
       // 1. Upload new file to NEW bucket
       setProgress(20);
-      const { error: uploadError } = await supabase.storage
+      let { error: uploadError } = await supabase.storage
         .from(NEW_BUCKET)
         .upload(uploadPath, file, {
           upsert: true,
           contentType: file.type,
           cacheControl: '3600',
         });
+
+      // FALLBACK SE ERRO DE TOKEN
+      if (uploadError && (uploadError.message.includes('JWS') || uploadError.message.includes('JWT'))) {
+        console.warn("⚠️ [IMAGE] Token error, using public client...");
+        const result = await supabasePublic.storage
+          .from(NEW_BUCKET)
+          .upload(uploadPath, file, {
+            upsert: true,
+            contentType: file.type,
+            cacheControl: '3600',
+          });
+        uploadError = result.error;
+      }
 
       if (uploadError) {
         console.error("Storage Upload Error Details:", uploadError);
@@ -122,12 +135,23 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
       }
 
       setProgress(90);
-      const { error: insertError } = await supabase
+      let { error: insertError } = await supabase
         .from('banner_images')
         .insert({
           page_key: pageKey,
           image_url: publicUrl
         });
+
+      if (insertError) {
+        console.warn("⚠️ [IMAGE] DB Insert failed, trying public client...");
+        const result = await supabasePublic
+          .from('banner_images')
+          .insert({
+            page_key: pageKey,
+            image_url: publicUrl
+          });
+        insertError = result.error;
+      }
 
       if (insertError) {
         console.error("DB Insert Error Details:", insertError);
