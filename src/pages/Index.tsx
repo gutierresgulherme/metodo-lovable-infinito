@@ -1,6 +1,6 @@
 import { useEffect, useRef, lazy, Suspense, useCallback, useState } from "react";
 import { Check, Play } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabasePublic } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
 import lovableIcon from "@/assets/lovable-icon-heart.jpg";
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
@@ -12,7 +12,7 @@ import canvaBonus from "@/assets/canva-bonus.png";
 import garantia7dias from "@/assets/garantia-7dias.png";
 import { initPageSession, setupButtonTracking, trackVideoEvent } from "@/lib/analytics";
 
-const db = supabase as any;
+const db = supabasePublic as any;
 
 // Lazy load components
 const PricingCard = lazy(() => import("@/components/PricingCard").then(m => ({ default: m.PricingCard })));
@@ -42,7 +42,7 @@ const Index = () => {
     useEffect(() => {
         const initPage = async () => {
             try {
-                console.log("[VSL] Initializing page...");
+                console.log("[VSL] Initializing page with PUBLIC client...");
                 // 1. Get Active VSL & Domain Config
                 const { vsl, isActive: domainActive, currency: domainCurrency, slug } = await getCurrentVSLInfo();
 

@@ -3,7 +3,7 @@ import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import lovableIcon from "@/assets/lovable-icon.png";
 import lovableInfinitoLogoNew from "@/assets/lovable-infinito-thankyou.jpg";
 import { Check, Zap, Users, TrendingUp, Shield, ArrowRight, Play, ImageIcon, Mountain } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabasePublic } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export default function ThankYou() {
@@ -20,7 +20,7 @@ export default function ThankYou() {
 
     // Fetch upsell video
     const fetchUpsellVideo = async () => {
-      const { data } = await supabase
+      const { data } = await supabasePublic
         .from('vsl_video')
         .select('video_url')
         .eq('page_key', 'thankyou_upsell')
@@ -32,7 +32,7 @@ export default function ThankYou() {
     };
 
     const fetchBannerImage = async () => {
-      const { data } = await supabase
+      const { data } = await supabasePublic
         .from('banner_images')
         .select('image_url')
         .eq('page_key', 'thankyou_banner')

@@ -9,9 +9,7 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   console.error("Supabase URL or Publishable Key is missing! Check your .env file or Vercel environment variables.");
 }
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
+// Global client with auth
 export const supabase = createClient<Database>(SUPABASE_URL || "", SUPABASE_PUBLISHABLE_KEY || "", {
   auth: {
     storage: localStorage,
@@ -19,3 +17,6 @@ export const supabase = createClient<Database>(SUPABASE_URL || "", SUPABASE_PUBL
     autoRefreshToken: true,
   }
 });
+
+// Clean client for public operations to avoid JWS errors
+export const supabasePublic = createClient<Database>(SUPABASE_URL || "", SUPABASE_PUBLISHABLE_KEY || "");

@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabasePublic } from "@/integrations/supabase/client";
 
 // Chave do localStorage para VSL Principal
 const PRIMARY_VSL_KEY = "primary_vsl_slug";
@@ -76,7 +76,8 @@ export const BOOK_REFERENCES = [
 
 // Helper para acessar tabelas que ainda não estão nos tipos
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = supabase as any;
+const db = supabasePublic as any;
+const dbAuth = supabase as any;
 
 // Buscar VSL pelo slug
 export const getVSLBySlug = async (slug: string): Promise<VSLVariant | null> => {
@@ -453,12 +454,18 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
 
         // ABSOLUTE PRIORITY: If still no video, use the one from Admin "Gestão de Mídias"
         if ((!activeVslObj || !activeVslObj.video_url) && legacyVsl) {
-            console.log("[VSL] Using Forced Admin Video Slot");
+            console.log("[VSL] FALLBACK CLION: Using Admin Video Slot ->", legacyVsl.video_url);
             activeVslObj = legacyVsl;
             targetSlug = legacyVsl.slug;
             isActive = true; // FORCE ACTIVE IF VIDEO EXISTS
         }
     }
+
+    console.log("[VSL] FINAL CHOICE:", {
+        slug: targetSlug,
+        video: activeVslObj?.video_url,
+        active: isActive
+    });
 
     // D. Global Fallbacks (if still nothing)
     if (!activeVslObj) {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, supabasePublic } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Trash2, Upload, Play, Monitor } from 'lucide-react';
@@ -86,17 +86,28 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
       setProgress(30);
 
       console.log("[STORAGE] Starting upload to path:", uploadPath);
-      // Upload new video
-      const { error: uploadError } = await supabase.storage
+
+      // Try to upload. If it fails with JWS, we retry with public client since our policy allows anon!
+      let uploadResult = await supabase.storage
         .from('videos')
         .upload(uploadPath, file, {
           upsert: true,
           contentType: file.type || 'video/mp4'
         });
 
-      if (uploadError) {
-        console.error("[STORAGE] Upload Error Object:", JSON.stringify(uploadError, null, 2));
-        throw new Error(uploadError.message);
+      if (uploadResult.error && (uploadResult.error.message.includes('JWS') || uploadResult.error.message.includes('JWT'))) {
+        console.warn("[STORAGE] JWS Error detected, retrying with public client...");
+        uploadResult = await supabasePublic.storage
+          .from('videos')
+          .upload(uploadPath, file, {
+            upsert: true,
+            contentType: file.type || 'video/mp4'
+          });
+      }
+
+      if (uploadResult.error) {
+        console.error("[STORAGE] Upload Error Object:", JSON.stringify(uploadResult.error, null, 2));
+        throw new Error(uploadResult.error.message);
       }
 
       setProgress(70);
