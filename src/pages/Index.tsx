@@ -112,15 +112,15 @@ const Index = () => {
             console.log("[VSL] Attempting to load video:", vslData.video_url);
 
             try {
-                // Basic HTML5 Video
-                videoElement.src = vslData.video_url;
-                videoElement.load();
-                videoElement.muted = true;
-                videoElement.play().catch(e => console.warn("[VSL] Autoplay blocked", e));
+                // O React já gerencia o 'src' através da prop 'key' no elemento video
+                // Apenas garantimos que o play() seja chamado se não houver erro
+                console.log("[VSL] Video source set, play should follow...");
+                if (videoElement.paused) {
+                    videoElement.play().catch(e => console.warn("[VSL] Play deferred", e));
+                }
 
-                // Attempt Shaka only IF it really looks like a stream
+                // Shaka Player apenas para HLS (.m3u8)
                 if (vslData.video_url?.includes('.m3u8')) {
-                    console.log("[VSL] HLS detected, loading Shaka...");
                     const shaka = await import('shaka-player/dist/shaka-player.ui.js').then(m => m.default);
                     if (shaka.Player.isBrowserSupported()) {
                         const player = new shaka.Player(videoElement);
@@ -301,6 +301,7 @@ const Index = () => {
                             </div>
                         )}
                         <video
+                            key={vslData?.video_url}
                             ref={videoRef}
                             id="vsl-player"
                             src={vslData?.video_url || undefined}
@@ -308,9 +309,8 @@ const Index = () => {
                             onTimeUpdate={handleVideoTimeUpdate}
                             onError={(e) => {
                                 console.error("[VSL] Native video element error:", e);
-                                // Only set error if we don't already have one from Shaka or logic
-                                if (!videoError) {
-                                    setVideoError("Erro nativo do player de vídeo. O formato pode não ser suportado.");
+                                if (!videoError && vslData?.video_url) {
+                                    setVideoError("Erro ao carregar o arquivo. Verifique se o bucket no Supabase é PÚBLICO.");
                                 }
                             }}
                             className="w-full h-auto max-h-[500px] rounded-xl"
