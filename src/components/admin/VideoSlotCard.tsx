@@ -72,22 +72,16 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
     setUploading(true);
     setProgress(10);
+    console.log("🎬 [UPLOAD] Iniciando processo para:", slot.title);
 
     try {
-      const uploadPath = `vsl/${slot.page_key}.mp4`;
+      const fileName = `${slot.page_key}.mp4`;
+      const uploadPath = `vsl/${fileName}`;
 
-      // Delete existing file if any (Best effort)
-      try {
-        await supabase.storage.from('videos').remove([uploadPath]);
-      } catch (error) {
-        console.log('No existing video to delete or delete failed:', error);
-      }
+      // --- TENTATIVA 1: CLIENTE AUTENTICADO ---
+      console.log("🔐 [UPLOAD] Tentativa 1: Cliente Autenticado...");
+      setProgress(20);
 
-      setProgress(30);
-
-      console.log("[STORAGE] Starting upload to path:", uploadPath);
-
-      // Try to upload. If it fails with JWS, we retry with public client since our policy allows anon!
       let uploadResult = await supabase.storage
         .from('videos')
         .upload(uploadPath, file, {
@@ -95,8 +89,10 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
           contentType: file.type || 'video/mp4'
         });
 
-      if (uploadResult.error && (uploadResult.error.message.includes('JWS') || uploadResult.error.message.includes('JWT'))) {
-        console.warn("[STORAGE] JWS Error detected, retrying with public client...");
+      // --- TENTATIVA 2: CLIENTE PÚBLICO (FALLBACK JWS) ---
+      if (uploadResult.error && (uploadResult.error.message.includes('JWS') || uploadResult.error.message.includes('JWT') || uploadResult.error.message.includes('token'))) {
+        console.warn("⚠️ [UPLOAD] Erro de Token detectado. Mudando para Canal Público Blindado...");
+        setProgress(40);
         uploadResult = await supabasePublic.storage
           .from('videos')
           .upload(uploadPath, file, {
@@ -105,106 +101,69 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
           });
       }
 
+      // --- TENTATIVA 3: PATH ALTERNATIVO (ULTRA FALLBACK) ---
       if (uploadResult.error) {
-        console.error("[STORAGE] Upload Error Object:", JSON.stringify(uploadResult.error, null, 2));
-        throw new Error(uploadResult.error.message);
+        console.warn("🔻 [UPLOAD] Tentativa 2 falhou. Tentando Path Alternativo...");
+        const altPath = `vsl/alt_${Date.now()}_${fileName}`;
+        setProgress(60);
+        uploadResult = await supabasePublic.storage
+          .from('videos')
+          .upload(altPath, file, {
+            upsert: true,
+            contentType: file.type || 'video/mp4'
+          });
+
+        if (!uploadResult.error) {
+          // Se o alternativo funcionou, atualizamos o path para o resto do processo
+          (uploadPath as any) = (uploadResult.data as any).path;
+        }
       }
 
-      setProgress(70);
-      console.log("[STORAGE] Upload successful, fetching public URL...");
+      if (uploadResult.error) {
+        throw uploadResult.error;
+      }
 
-      // Get public URL - Clean version without auth token in URL
-      const { data: { publicUrl } } = supabase.storage
+      setProgress(80);
+      console.log("✅ [UPLOAD] Arquivo salvo no Storage. Atualizando Banco de Dados...");
+
+      // Get public URL
+      const { data: { publicUrl } } = supabasePublic.storage
         .from('videos')
         .getPublicUrl(uploadPath);
 
-      // Add cache buster to URL for instant update
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
-      // Delete old database entry for this page_key
-      let deleteResult = await supabase
-        .from('vsl_video')
-        .delete()
-        .eq('page_key', slot.page_key);
+      // ATUALIZAÇÃO DO BANCO COM RETRY
+      const dbPayload = {
+        video_url: finalUrl,
+        page_key: slot.page_key,
+        created_at: new Date().toISOString()
+      };
 
-      if (deleteResult.error && (deleteResult.error.message.includes('JWS') || deleteResult.error.message.includes('JWT'))) {
-        console.warn("[DB] JWS Error on delete, retrying with public client...");
-        deleteResult = await supabasePublic
-          .from('vsl_video')
-          .delete()
-          .eq('page_key', slot.page_key);
+      let dbResult = await supabase.from('vsl_video').upsert(dbPayload, { onConflict: 'page_key' });
+
+      if (dbResult.error) {
+        console.warn("⚠️ [DB] Erro no registro autenticado, tentando via canal público...");
+        dbResult = await supabasePublic.from('vsl_video').upsert(dbPayload, { onConflict: 'page_key' });
       }
 
-      if (deleteResult.error) {
-        console.error("DB Video Delete Error:", deleteResult.error);
-        throw new Error("DB_DELETE_ERROR: " + deleteResult.error.message);
-      }
-
-      console.log("[STORAGE] Final public URL:", finalUrl);
-
-      // Insert new database entry
-      let insertResult = await supabase
-        .from('vsl_video')
-        .insert({
-          video_url: finalUrl,
-          page_key: slot.page_key,
-          created_at: new Date().toISOString()
-        });
-
-      if (insertResult.error && (insertResult.error.message.includes('JWS') || insertResult.error.message.includes('JWT'))) {
-        console.warn("[DB] JWS Error on insert, retrying with public client...");
-        insertResult = await supabasePublic
-          .from('vsl_video')
-          .insert({
-            video_url: finalUrl,
-            page_key: slot.page_key,
-            created_at: new Date().toISOString()
-          });
-      }
-
-      if (insertResult.error) {
-        console.error("[DB] Insert Error Object:", JSON.stringify(insertResult.error, null, 2));
-        throw new Error("DB_INSERT_ERROR: " + insertResult.error.message);
-      }
+      if (dbResult.error) throw dbResult.error;
 
       setProgress(100);
+      console.log("🚀 [UPLOAD] Sucesso total:", finalUrl);
 
       toast({
-        title: 'Sucesso!',
-        description: `Vídeo da ${slot.title} atualizado!`,
+        title: 'Sucesso Total!',
+        description: `O vídeo da ${slot.title} está no ar.`,
       });
 
       setFile(null);
       onVideoUpdated();
     } catch (error: any) {
-      console.error('Erro detalhado no Upload:', error);
-
-      let errorMsg = error.message || 'Falha ao fazer upload do vídeo.';
-
-      if (errorMsg.includes('JWS') || errorMsg.includes('JWT') || errorMsg.includes('token')) {
-        errorMsg = "Erro de Sessão Detectado. Clique em 'Limpar Conexão' e tente novamente.";
-      }
-
+      console.error('❌ [UPLOAD] Erro crítico:', error);
       toast({
-        title: 'Erro no Upload',
-        description: (
-          <div className="flex flex-col gap-2">
-            <span>{errorMsg}</span>
-            {(errorMsg.includes('Sessão') || errorMsg.includes('JWS')) && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-2 text-xs"
-                onClick={() => {
-                  localStorage.clear();
-                  window.location.reload();
-                }}
-              >
-                Limpar Conexão e Recarregar
-              </Button>
-            )}
-          </div>
-        ),
+        title: 'Falha no Upload',
+        description: error.message || 'Erro desconhecido. Verifique se o SQL foi rodado no Supabase.',
         variant: 'destructive',
       });
     } finally {
