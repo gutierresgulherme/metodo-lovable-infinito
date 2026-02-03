@@ -436,7 +436,7 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
         targetSlug = legacyVsl.slug;
     } else {
         // C. Dynamic Domain Check (Test Centers)
-        const hostname = window.location.hostname;
+        const hostname = window.location.hostname.replace('www.', '');
         let testCenter = await getTestCenterByDomain(hostname);
 
         // Developer Experience: If localhost and no domain found, pick the first one
