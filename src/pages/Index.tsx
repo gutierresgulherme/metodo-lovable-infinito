@@ -1,5 +1,5 @@
 import { useEffect, useRef, lazy, Suspense, useCallback, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
 import lovableIcon from "@/assets/lovable-icon-heart.jpg";
@@ -153,6 +153,19 @@ const Index = () => {
         }
     }, [vslData?.video_url]);
 
+    // Fallback: Show play button if video is loaded but not playing
+    const [showFallbackPlay, setShowFallbackPlay] = useState(false);
+    useEffect(() => {
+        const checkPlaying = setInterval(() => {
+            if (videoRef.current && videoRef.current.paused && vslData?.video_url && !videoError) {
+                setShowFallbackPlay(true);
+            } else if (videoRef.current && !videoRef.current.paused) {
+                setShowFallbackPlay(false);
+            }
+        }, 3000);
+        return () => clearInterval(checkPlaying);
+    }, [vslData?.video_url, videoError]);
+
 
     // --- Helper Functions ---
     const getCurrentDate = () => {
@@ -290,8 +303,21 @@ const Index = () => {
                     <div className="relative w-full max-w-[100%] rounded-xl overflow-hidden shadow-2xl bg-black aspect-video flex items-center justify-center group/video">
                         {/* Carregando State */}
                         {loading && !videoError && (
-                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
-                                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                            <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                                    <p className="text-emerald-500 font-orbitron text-xs animate-pulse">PREPARANDO VÍDEO...</p>
+                                </div>
+                            </div>
+                        )}
+                        {showFallbackPlay && !loading && !videoError && (
+                            <div
+                                className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer group"
+                                onClick={() => videoRef.current?.play().then(() => setShowFallbackPlay(false))}
+                            >
+                                <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)] group-hover:scale-110 transition-transform">
+                                    <Play className="w-10 h-10 text-white fill-white ml-1" />
+                                </div>
                             </div>
                         )}
                         {videoError && (
@@ -312,11 +338,13 @@ const Index = () => {
                             id="vsl-player"
                             src={vslData?.video_url || undefined}
                             autoPlay muted playsInline controls
+                            crossOrigin="anonymous"
                             onTimeUpdate={handleVideoTimeUpdate}
+                            onPlay={() => setShowFallbackPlay(false)}
                             onError={(e) => {
                                 console.error("[VSL] Native video element error:", e);
                                 if (!videoError && vslData?.video_url) {
-                                    setVideoError("Erro ao carregar o arquivo. Verifique se o bucket no Supabase é PÚBLICO.");
+                                    setVideoError("Erro ao carregar o arquivo. Verifique se o bucket no Supabase é PÚBLICO e se o arquivo existe.");
                                 }
                             }}
                             className="w-full h-auto max-h-[500px] rounded-xl"

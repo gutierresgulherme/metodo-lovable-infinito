@@ -85,20 +85,22 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
       setProgress(30);
 
+      console.log("[STORAGE] Starting upload to path:", uploadPath);
       // Upload new video
       const { error: uploadError } = await supabase.storage
         .from('videos')
         .upload(uploadPath, file, {
           upsert: true,
-          contentType: 'video/mp4'
+          contentType: file.type || 'video/mp4'
         });
 
       if (uploadError) {
-        console.error("Storage Video Upload Error:", uploadError);
+        console.error("[STORAGE] Upload Error Object:", JSON.stringify(uploadError, null, 2));
         throw new Error(uploadError.message);
       }
 
       setProgress(70);
+      console.log("[STORAGE] Upload successful, fetching public URL...");
 
       // Get public URL - Clean version without auth token in URL
       const { data: { publicUrl } } = supabase.storage
@@ -119,13 +121,19 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
         throw new Error("DB_DELETE_ERROR: " + deleteError.message);
       }
 
+      console.log("[STORAGE] Final public URL:", finalUrl);
+
       // Insert new database entry
       const { error: insertError } = await supabase
         .from('vsl_video')
-        .insert({ video_url: finalUrl, page_key: slot.page_key });
+        .insert({
+          video_url: finalUrl,
+          page_key: slot.page_key,
+          created_at: new Date().toISOString()
+        });
 
       if (insertError) {
-        console.error("DB Video Insert Error:", insertError);
+        console.error("[DB] Insert Error Object:", JSON.stringify(insertError, null, 2));
         throw new Error("DB_INSERT_ERROR: " + insertError.message);
       }
 
