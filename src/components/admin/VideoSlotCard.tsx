@@ -90,22 +90,23 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
         .from('videos')
         .upload(uploadPath, file, {
           upsert: true,
-          contentType: 'video/mp4',
-          cacheControl: '3600',
+          contentType: 'video/mp4'
         });
 
       if (uploadError) {
         console.error("Storage Video Upload Error:", uploadError);
-        throw new Error("STORAGE_UPLOAD_ERROR: " + uploadError.message);
+        throw new Error(uploadError.message);
       }
 
       setProgress(70);
 
-      // Get public URL
-      const timestamp = Date.now();
+      // Get public URL - Clean version without auth token in URL
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
-        .getPublicUrl(`${uploadPath}?t=${timestamp}`);
+        .getPublicUrl(uploadPath);
+
+      // Add cache buster to URL for instant update
+      const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
       // Delete old database entry for this page_key
       const { error: deleteError } = await supabase
@@ -121,7 +122,7 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
       // Insert new database entry
       const { error: insertError } = await supabase
         .from('vsl_video')
-        .insert({ video_url: publicUrl, page_key: slot.page_key });
+        .insert({ video_url: finalUrl, page_key: slot.page_key });
 
       if (insertError) {
         console.error("DB Video Insert Error:", insertError);
