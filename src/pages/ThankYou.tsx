@@ -181,11 +181,13 @@ export default function ThankYou() {
                   {upsellVideoUrl ? (
                     <video
                       ref={videoRef}
+                      src={upsellVideoUrl || undefined}
                       controls
                       autoPlay
                       muted
                       playsInline
                       preload="auto"
+                      crossOrigin="anonymous"
                       className="w-full aspect-video"
                     />
                   ) : (

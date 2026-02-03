@@ -456,6 +456,7 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
             console.log("[VSL] Using Forced Admin Video Slot");
             activeVslObj = legacyVsl;
             targetSlug = legacyVsl.slug;
+            isActive = true; // FORCE ACTIVE IF VIDEO EXISTS
         }
     }
 

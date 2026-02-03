@@ -151,13 +151,30 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
       let errorMsg = error.message || 'Falha ao fazer upload do vídeo.';
 
-      if (errorMsg.includes('JWS') || errorMsg.includes('JWT')) {
-        errorMsg = "Erro de Sessão (JWS). Por favor, saia do painel (Logout) e entre novamente para limpar seu acesso.";
+      if (errorMsg.includes('JWS') || errorMsg.includes('JWT') || errorMsg.includes('token')) {
+        errorMsg = "Erro de Sessão Detectado. Clique em 'Limpar Conexão' e tente novamente.";
       }
 
       toast({
         title: 'Erro no Upload',
-        description: errorMsg,
+        description: (
+          <div className="flex flex-col gap-2">
+            <span>{errorMsg}</span>
+            {(errorMsg.includes('Sessão') || errorMsg.includes('JWS')) && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 text-xs"
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.reload();
+                }}
+              >
+                Limpar Conexão e Recarregar
+              </Button>
+            )}
+          </div>
+        ),
         variant: 'destructive',
       });
     } finally {
