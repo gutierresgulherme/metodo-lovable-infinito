@@ -391,14 +391,21 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
         console.log("[VSL] Using URL Param VSL:", targetSlug);
     }
 
-    // B. Check Legacy Video (Admin Panel Upload) - HIGH PRIORITY
+    // B. Check Legacy Video (Admin Panel Upload) - HIGHEST PRIORITY
     let legacyVsl: VSLVariant | null = null;
     try {
-        const { data: legacyVideo } = await db.from("vsl_video").select("*").eq("page_key", "home_vsl").maybeSingle();
+        // Buscamos o vídeo mais recente cadastrado para este slot
+        const { data: legacyVideo } = await db.from("vsl_video")
+            .select("*")
+            .eq("page_key", "home_vsl")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
         if (legacyVideo && legacyVideo.video_url) {
             legacyVsl = {
-                id: legacyVideo.id || "legacy-id",
-                name: "Vídeo Principal (Gestão de Mídias)",
+                id: legacyVideo.id,
+                name: "Vídeo Principal",
                 slug: "home-custom-video",
                 video_url: legacyVideo.video_url,
                 status: "active",
@@ -406,20 +413,20 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
                 headline: "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
                 hero_subheadline: null,
                 book_reference: null,
-                description: "Vídeo carregado via painel de Gestão de Mídias",
+                description: "Vídeo do Admin",
                 benefits_copy: null,
                 method_explanation_copy: null,
                 pricing_copy: null,
                 guarantee_copy: null,
                 faq_copy: null,
                 is_control: false,
-                created_at: legacyVideo.created_at || new Date().toISOString(),
-                updated_at: legacyVideo.created_at || new Date().toISOString()
+                created_at: legacyVideo.created_at,
+                updated_at: legacyVideo.created_at
             } as VSLVariant;
-            console.log("[VSL] Found Legacy/Admin Video Slot:", legacyVideo.video_url);
+            console.log("[VSL] Target Video URL:", legacyVideo.video_url);
         }
     } catch (e) {
-        console.error("[VSL] Error checking legacy video slot", e);
+        console.error("[VSL] Error checking video slot", e);
     }
 
     // DECISION LOGIC
