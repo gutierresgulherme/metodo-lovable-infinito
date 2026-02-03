@@ -287,7 +287,13 @@ const Index = () => {
                         <h2 className="text-sm md:text-base font-bold text-center text-gray-400 uppercase tracking-[0.3em]">Assista à Apresentação</h2>
                         <div className="h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent flex-1" />
                     </div>
-                    <div className="relative w-full max-w-[100%] rounded-xl overflow-hidden shadow-2xl bg-black aspect-video flex items-center justify-center">
+                    <div className="relative w-full max-w-[100%] rounded-xl overflow-hidden shadow-2xl bg-black aspect-video flex items-center justify-center group/video">
+                        {/* Carregando State */}
+                        {loading && !videoError && (
+                            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
+                                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                            </div>
+                        )}
                         {videoError && (
                             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
                                 <p className="text-red-500 font-bold mb-2">⚠️ Eita! O vídeo não carregou.</p>

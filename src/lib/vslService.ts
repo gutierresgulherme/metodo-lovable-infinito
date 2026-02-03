@@ -424,32 +424,29 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
 
     // DECISION LOGIC
     if (activeVslObj) {
-        // We have a variant from URL, use it. 
-        // If it lacks a video, try legacy fallback.
+        // If we have a variant but no video, force the admin video
         if (!activeVslObj.video_url && legacyVsl?.video_url) {
             activeVslObj.video_url = legacyVsl.video_url;
         }
     } else {
-        // No URL param, check Test Center (Domain)
+        // No variant? Check Domain (Test Center)
         const hostname = window.location.hostname.replace('www.', '');
         let testCenter = await getTestCenterByDomain(hostname);
 
-        if (testCenter) {
-            isActive = testCenter.status === "active";
+        if (testCenter && testCenter.status === "active") {
+            isActive = true;
             currency = testCenter.currency || "BRL";
 
             if (testCenter.active_vsl) {
                 activeVslObj = testCenter.active_vsl;
-                targetSlug = testCenter.active_vsl.slug;
             } else if (testCenter.vsl_slug) {
-                targetSlug = testCenter.vsl_slug;
-                activeVslObj = await getVSLBySlug(targetSlug);
+                activeVslObj = await getVSLBySlug(testCenter.vsl_slug);
             }
         }
 
-        // If even domain has no specific VSL, use legacy/admin video
-        if (!activeVslObj && legacyVsl) {
-            console.log("[VSL] Domain has no VSL, using Admin Video Slot");
+        // ABSOLUTE PRIORITY: If still no video, use the one from Admin "Gestão de Mídias"
+        if ((!activeVslObj || !activeVslObj.video_url) && legacyVsl) {
+            console.log("[VSL] Using Forced Admin Video Slot");
             activeVslObj = legacyVsl;
             targetSlug = legacyVsl.slug;
         }
