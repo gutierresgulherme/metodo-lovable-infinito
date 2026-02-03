@@ -392,11 +392,10 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
     }
 
     // B. Check Legacy Video (Admin Panel Upload) - HIGH PRIORITY
-    // We check this here but might use it only if URL didn't specify one
     let legacyVsl: VSLVariant | null = null;
     try {
         const { data: legacyVideo } = await db.from("vsl_video").select("*").eq("page_key", "home_vsl").maybeSingle();
-        if (legacyVideo) {
+        if (legacyVideo && legacyVideo.video_url) {
             legacyVsl = {
                 id: legacyVideo.id || "legacy-id",
                 name: "Vídeo Principal (Gestão de Mídias)",
@@ -417,6 +416,7 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
                 created_at: legacyVideo.created_at || new Date().toISOString(),
                 updated_at: legacyVideo.created_at || new Date().toISOString()
             } as VSLVariant;
+            console.log("[VSL] Found Legacy/Admin Video Slot:", legacyVideo.video_url);
         }
     } catch (e) {
         console.error("[VSL] Error checking legacy video slot", e);
@@ -424,26 +424,15 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
 
     // DECISION LOGIC
     if (activeVslObj) {
-        // Fallback to legacy video if current variant has no URL
+        // We have a variant from URL, use it. 
+        // If it lacks a video, try legacy fallback.
         if (!activeVslObj.video_url && legacyVsl?.video_url) {
-            console.log("[VSL] Requested variant has no video, falling back to legacy video slot");
             activeVslObj.video_url = legacyVsl.video_url;
         }
-    } else if (legacyVsl) {
-        // Use Legacy/Admin Panel Upload
-        console.log("[VSL] Using Legacy/Admin Video Slot (Priority)");
-        activeVslObj = legacyVsl;
-        targetSlug = legacyVsl.slug;
     } else {
-        // C. Dynamic Domain Check (Test Centers)
+        // No URL param, check Test Center (Domain)
         const hostname = window.location.hostname.replace('www.', '');
         let testCenter = await getTestCenterByDomain(hostname);
-
-        // Developer Experience: If localhost and no domain found, pick the first one
-        if (!testCenter && (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.includes('0.0.0.0'))) {
-            // REMOVED AUTOMATIC FALLBACK TO PREVENT CONFUSION
-            // We only fallback if strictly needed later
-        }
 
         if (testCenter) {
             isActive = testCenter.status === "active";
@@ -456,6 +445,13 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
                 targetSlug = testCenter.vsl_slug;
                 activeVslObj = await getVSLBySlug(targetSlug);
             }
+        }
+
+        // If even domain has no specific VSL, use legacy/admin video
+        if (!activeVslObj && legacyVsl) {
+            console.log("[VSL] Domain has no VSL, using Admin Video Slot");
+            activeVslObj = legacyVsl;
+            targetSlug = legacyVsl.slug;
         }
     }
 

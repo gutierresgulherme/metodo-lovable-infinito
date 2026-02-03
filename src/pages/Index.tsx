@@ -112,41 +112,19 @@ const Index = () => {
             console.log("[VSL] Attempting to load video:", vslData.video_url);
 
             try {
-                // Reset error
-                setVideoError(null);
-
-                // Basic HTML5 Video as fallback or primary if standard URL
+                // Basic HTML5 Video
                 videoElement.src = vslData.video_url;
                 videoElement.load();
                 videoElement.muted = true;
+                videoElement.play().catch(e => console.warn("[VSL] Autoplay blocked", e));
 
-                const playPromise = videoElement.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch((error) => {
-                        console.warn("[VSL] Auto-play prevented:", error);
-                        // Autoplay prevention is normal, not a critical error
-                    });
-                }
-
-                // Attempt Shaka if it's a stream (m3u8/mpd) - simplified check
+                // Attempt Shaka only IF it really looks like a stream
                 if (vslData.video_url?.includes('.m3u8')) {
-                    console.log("[VSL] Detected HLS stream, initializing Shaka Player...");
-                    try {
-                        const shaka = await import('shaka-player/dist/shaka-player.ui.js').then(m => m.default);
-                        if (shaka.Player.isBrowserSupported()) {
-                            const player = new shaka.Player(videoElement);
-                            player.addEventListener('error', (event: any) => {
-                                console.error('[VSL] Shaka Player Error:', event);
-                                setVideoError(`Erro no Shaka Player: ${event.detail?.code || 'Desconhecido'}`);
-                            });
-                            await player.load(vslData.video_url);
-                            console.log("[VSL] Shaka Player loaded successfully");
-                        } else {
-                            console.warn("[VSL] Browser not supported by Shaka Player");
-                        }
-                    } catch (shakaError) {
-                        console.error("[VSL] Shaka Player init failed:", shakaError);
-                        // Don't set fatal error yet, let native player try
+                    console.log("[VSL] HLS detected, loading Shaka...");
+                    const shaka = await import('shaka-player/dist/shaka-player.ui.js').then(m => m.default);
+                    if (shaka.Player.isBrowserSupported()) {
+                        const player = new shaka.Player(videoElement);
+                        await player.load(vslData.video_url);
                     }
                 }
             } catch (e: any) {
