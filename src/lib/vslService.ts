@@ -112,4 +112,61 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
     }
 };
 
+export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, bannerUrl: string | null }> => {
+    try {
+        const region = getRegionByDomain();
+        const suffix = region === 'USA' ? '_usa' : '_br';
+        console.log(`[THANKYOU-SERVICE] Buscando Mídias | Região: ${region} | Host: ${window.location.hostname}`);
+
+        let videoUrl: string | null = null;
+        let bannerUrl: string | null = null;
+
+        // --- 1. BUSCA VÍDEO (Upsell) ---
+        // Tenta Regional > Global > Qualquer > Fallback
+        const videoKeys = [`thankyou_upsell${suffix}`, 'thankyou_upsell'];
+
+        for (const key of videoKeys) {
+            const { data } = await db.from("vsl_video").select("video_url").eq("page_key", key).maybeSingle();
+            if (data?.video_url) {
+                console.log(`[THANKYOU-SERVICE] Vídeo encontrado (${key}):`, data.video_url);
+                videoUrl = data.video_url;
+                break;
+            }
+        }
+
+        if (!videoUrl) {
+            console.log(`[THANKYOU-SERVICE] Vídeo não encontrado por chave, tentando qualquer um...`);
+            const { data } = await db.from("vsl_video").select("video_url").limit(1).maybeSingle();
+            if (data?.video_url) videoUrl = data.video_url;
+        }
+
+        if (!videoUrl) {
+            console.warn(`[THANKYOU-SERVICE] NENHUM vídeo no banco. Usando fallback hardcoded.`);
+            videoUrl = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/home_vsl.mp4";
+        }
+
+        // --- 2. BUSCA BANNER ---
+        // Tenta Regional > Global
+        const bannerKeys = [`thankyou_banner${suffix}`, 'thankyou_banner'];
+
+        for (const key of bannerKeys) {
+            const { data } = await db.from("banner_images").select("image_url").eq("page_key", key).maybeSingle();
+            if (data?.image_url) {
+                console.log(`[THANKYOU-SERVICE] Banner encontrado (${key}):`, data.image_url);
+                bannerUrl = data.image_url;
+                break;
+            }
+        }
+
+        return { videoUrl, bannerUrl };
+
+    } catch (error) {
+        console.error("[THANKYOU-SERVICE] Erro crítico:", error);
+        return {
+            videoUrl: "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/home_vsl.mp4",
+            bannerUrl: null
+        };
+    }
+}
+
 export const getCurrentVSLSlug = async (): Promise<string> => "home-vsl";

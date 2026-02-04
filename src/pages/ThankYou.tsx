@@ -3,7 +3,7 @@ import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import lovableIcon from "@/assets/lovable-icon.png";
 import lovableInfinitoLogoNew from "@/assets/lovable-infinito-thankyou.jpg";
 import { Check, Zap, Users, TrendingUp, Shield, ArrowRight, Play, ImageIcon, Mountain } from "lucide-react";
-import { supabase, supabasePublic } from "@/integrations/supabase/client";
+import { getThankYouMedia } from "@/lib/vslService";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export default function ThankYou() {
@@ -20,75 +20,13 @@ export default function ThankYou() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const getRegionKey = () => {
-      const host = window.location.hostname;
-      // Se for localhost, podemos forçar um sufixo para teste ou deixar vazio
-      if (host.includes('lovable-app.vip')) return '_usa';
-      if (host.includes('metodo-lovable-infinito.vip')) return '_br';
-      return '';
+    const initPage = async () => {
+      const { videoUrl, bannerUrl } = await getThankYouMedia();
+      if (videoUrl) setUpsellVideoUrl(videoUrl);
+      if (bannerUrl) setBannerImageUrl(bannerUrl);
     };
 
-    const fetchMedia = async () => {
-      try {
-        const suffix = getRegionKey();
-        console.log(`[THANKYOU-MEDIA] Iniciando busca | Host: ${window.location.hostname} | Sufixo: "${suffix}"`);
-
-        // --- FETCH VIDEO ---
-        const vKeys = [`thankyou_upsell${suffix}`, 'thankyou_upsell'];
-        let videoUrlFound = null;
-
-        for (const key of vKeys) {
-          console.log(`[THANKYOU-MEDIA] Tentando chave de vídeo: ${key}`);
-          const { data, error } = await supabase
-            .from('vsl_video')
-            .select('video_url')
-            .eq('page_key', key)
-            .maybeSingle();
-
-          if (data?.video_url) {
-            console.log(`[THANKYOU-MEDIA] SUCESSO VÍDEO encontrada chave "${key}":`, data.video_url);
-            videoUrlFound = data.video_url;
-            break;
-          }
-          if (error) console.error(`[THANKYOU-MEDIA] Erro na chave ${key}:`, error.message);
-        }
-
-        // Ultravariante: Pega o primeiro vídeo se nada foi achado
-        if (!videoUrlFound) {
-          console.log(`[THANKYOU-MEDIA] Nenhuma chave específica funcionou, pegando primeiro vídeo disponível no banco...`);
-          const { data } = await supabase.from('vsl_video').select('video_url').limit(1).maybeSingle();
-          if (data?.video_url) videoUrlFound = data.video_url;
-        }
-
-        if (videoUrlFound) setUpsellVideoUrl(videoUrlFound);
-
-        // --- FETCH BANNER ---
-        const bKeys = [`thankyou_banner${suffix}`, 'thankyou_banner'];
-        let bannerUrlFound = null;
-
-        for (const key of bKeys) {
-          console.log(`[THANKYOU-MEDIA] Tentando chave de banner: ${key}`);
-          const { data } = await supabase
-            .from('banner_images')
-            .select('image_url')
-            .eq('page_key', key)
-            .maybeSingle();
-
-          if (data?.image_url) {
-            console.log(`[THANKYOU-MEDIA] SUCESSO BANNER encontrada chave "${key}":`, data.image_url);
-            bannerUrlFound = data.image_url;
-            break;
-          }
-        }
-
-        if (bannerUrlFound) setBannerImageUrl(bannerUrlFound);
-
-      } catch (err) {
-        console.error("[THANKYOU-MEDIA] Erro catastrófico:", err);
-      }
-    };
-
-    fetchMedia();
+    initPage();
   }, []);
 
   // Initialize video player with autoplay
