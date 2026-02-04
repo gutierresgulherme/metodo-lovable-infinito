@@ -12,10 +12,17 @@ export function AdminLayout() {
 
     useEffect(() => {
         const checkAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
             const isHardcodedAuth = localStorage.getItem("admin_authenticated");
 
-            if (!session && !isHardcodedAuth) {
+            // Se já tem o flag no localStorage, permite o acesso imediato
+            if (isHardcodedAuth === "true") {
+                return;
+            }
+
+            // Caso contrário, tenta ver se tem uma sessão real no Supabase
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                console.log("[ADMIN] Sem autenticação Detectada, redirecionando...");
                 navigate("/login");
             }
         };

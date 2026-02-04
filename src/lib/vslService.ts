@@ -24,19 +24,29 @@ export interface ActiveVSLInfo {
     currency: string;
 }
 
+export const getRegionByDomain = () => {
+    const hostname = window.location.hostname;
+    if (hostname.includes('lovable-app.vip')) return 'USA';
+    return 'BR';
+};
+
 export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
     try {
-        console.log("[VSL] Buscando vídeo no banco...");
+        const region = getRegionByDomain();
+        const currency = region === 'USA' ? 'USD' : 'BRL';
+
+        console.log(`[VSL] Detectado: Região ${region} | Moeda ${currency} | Host ${window.location.hostname}`);
 
         // 1. Tenta buscar o vídeo configurado
+        const pageKey = region === 'USA' ? 'home_vsl_usa' : 'home_vsl';
         let { data: videoData, error } = await db.from("vsl_video")
             .select("*")
-            .eq("page_key", "home_vsl")
+            .eq("page_key", pageKey)
             .maybeSingle();
 
         if (error) console.error("[VSL] Erro na busca por page_key:", error);
 
-        // 2. Fallback: Qualquer vídeo
+        // 2. Fallback: Qualquer vídeo se o específico da região não existir
         if (!videoData) {
             const { data: anyVideo } = await db.from("vsl_video")
                 .select("*")
@@ -61,7 +71,7 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
-            return { vsl, slug: "home-vsl", isActive: true, currency: "BRL" };
+            return { vsl, slug: "home-vsl", isActive: true, currency };
         }
 
         const vsl: VSLVariant = {
@@ -69,7 +79,7 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
             name: "Vídeo Principal",
             slug: "home-vsl",
             video_url: videoData.video_url,
-            headline: "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
+            headline: videoData.headline || "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
             benefits_copy: null,
             method_explanation_copy: null,
             pricing_copy: null,
@@ -78,12 +88,13 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
             updated_at: videoData.created_at
         };
 
-        return { vsl, slug: "home-vsl", isActive: true, currency: "BRL" };
+        return { vsl, slug: "home-vsl", isActive: true, currency };
     } catch (e) {
         console.error("[VSL] Erro crítico no service:", e);
-        return { vsl: null, slug: "default", isActive: true, currency: "BRL" };
+        const region = getRegionByDomain();
+        const currency = region === 'USA' ? 'USD' : 'BRL';
+        return { vsl: null, slug: "default", isActive: true, currency };
     }
 };
 
 export const getCurrentVSLSlug = async (): Promise<string> => "home-vsl";
-export const getRegionByDomain = () => "BR";

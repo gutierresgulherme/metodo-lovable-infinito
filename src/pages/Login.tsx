@@ -16,35 +16,42 @@ export default function Login() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        console.log("[LOGIN] Iniciando tentativa de login para:", email);
 
         try {
-            // 1. Tenta autenticação REAL no Supabase primeiro
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+            // 1. Tenta autenticação REAL no Supabase (silencioso se falhar)
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
 
-            if (!error && data.user) {
-                console.log("[LOGIN] Autenticação Supabase bem-sucedida");
-                localStorage.setItem("admin_authenticated", "true");
-                toast.success("Acesso concedido via Supabase.");
-                setTimeout(() => navigate("/admin"), 1000);
-                return;
+                if (!error && data?.user) {
+                    console.log("[LOGIN] Autenticação Supabase OK");
+                    localStorage.setItem("admin_authenticated", "true");
+                    toast.success("Acesso concedido via Supabase.");
+                    setTimeout(() => navigate("/admin"), 500);
+                    return;
+                }
+                if (error) console.warn("[LOGIN] Erro Supabase Auth (esperado se não houver user):", error.message);
+            } catch (authErr) {
+                console.error("[LOGIN] Falha crítica na chamada do Supabase:", authErr);
             }
 
-            // 2. Fallback para Credenciais Hardcoded (Se o usuário não existir no Auth ou der erro)
+            // 2. Fallback para Credenciais Hardcoded (Sempre funciona)
             if (email === "joaomelloair40@gmail.com" && password === "Relogios40@") {
-                console.log("[LOGIN] Usando credenciais de contingência");
+                console.log("[LOGIN] Acesso via modo de contingência");
                 localStorage.setItem("admin_authenticated", "true");
-                toast.success("Acesso concedido (Modo Contingência). Bem-vindo, Admin.");
-                setTimeout(() => navigate("/admin"), 1000);
+                toast.success("Acesso concedido (Modo Contingência).");
+                setTimeout(() => navigate("/admin"), 500);
             } else {
+                console.warn("[LOGIN] Credenciais incorretas");
                 toast.error("Credenciais inválidas. Verifique seu email e senha.");
                 setLoading(false);
             }
         } catch (err) {
-            console.error("[LOGIN] Erro inesperado:", err);
-            toast.error("Ocorreu um erro ao tentar acessar o sistema.");
+            console.error("[LOGIN] Erro geral no handleLogin:", err);
+            toast.error("Erro interno ao processar login.");
             setLoading(false);
         }
     };
