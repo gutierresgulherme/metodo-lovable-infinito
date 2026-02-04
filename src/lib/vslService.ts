@@ -170,8 +170,9 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
 
     } catch (error) {
         console.error("[THANKYOU-SERVICE] Erro crítico:", error);
+        // Fallback de emergência (Catastrófico) - Tenta o Upsell Global
         return {
-            videoUrl: "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/home_vsl.mp4",
+            videoUrl: "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/thankyou_upsell.mp4",
             bannerUrl: null
         };
     }
