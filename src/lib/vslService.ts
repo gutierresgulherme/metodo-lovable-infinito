@@ -141,8 +141,16 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
         }
 
         if (!videoUrl) {
-            console.warn(`[THANKYOU-SERVICE] NENHUM vídeo no banco. Usando fallback hardcoded.`);
-            videoUrl = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/home_vsl.mp4";
+            console.warn(`[THANKYOU-SERVICE] NENHUM vídeo encontrado no banco. Tentando URL direta do Storage (Blind Fallback).`);
+            // Construir URL baseada no padrão do bucket 'videos/vsl/'
+            const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
+
+            // Tenta usar a chave regional (upsell BR ou USA) como nome do arquivo
+            // Se o usuário fez upload no Admin, o arquivo tem esse nome.
+            const fallbackKey = `thankyou_upsell${suffix}`;
+            videoUrl = `${storageBase}${fallbackKey}.mp4`;
+
+            console.log(`[THANKYOU-SERVICE] URL Construída (Fallback): ${videoUrl}`);
         }
 
         // --- 2. BUSCA BANNER ---
