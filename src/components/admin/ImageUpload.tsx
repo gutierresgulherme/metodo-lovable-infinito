@@ -65,8 +65,11 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
 
     try {
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'png';
-      const timestamp = Date.now();
-      const uploadPath = `${pageKey}/banner_${timestamp}.${fileExt}`;
+      // const timestamp = Date.now(); // REMOVED TIMESTAMP FOR PREDICTABLE URL
+      // Usamos um caminho fixo para permitir "Blind Fetch" (Fallback de Storage)
+      // Gravamos sem extensão no path para simplificar o fallback, ou forçamos uma extensão?
+      // Vamos gravar como `banners/${pageKey}` e confiar no Content-Type do Supabase.
+      const uploadPath = `banners/${pageKey}`;
       const NEW_BUCKET = 'site_uploads';
 
       // 1. Upload new file to NEW bucket

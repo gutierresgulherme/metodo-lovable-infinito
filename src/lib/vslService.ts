@@ -151,8 +151,6 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
         let bannerUrl: string | null = null;
 
         // --- 1. BUSCA VÍDEO (Upsell) ---
-        // Tenta Regional > Global
-
         const videoKeys = [`thankyou_upsell${suffix}`, 'thankyou_upsell'];
 
         for (const key of videoKeys) {
@@ -166,18 +164,13 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
 
         if (!videoUrl) {
             console.warn(`[THANKYOU-SERVICE] NENHUM vídeo encontrado no banco. Tentando URL direta do Storage (Blind Fallback).`);
-            // Construir URL baseada no padrão do bucket 'videos/vsl/'
             const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
-
-            // Se estou no BR, tento thankyou_upsell_br.mp4
             const fallbackKey = `thankyou_upsell${suffix}`;
             videoUrl = `${storageBase}${fallbackKey}.mp4`;
-
             console.log(`[THANKYOU-SERVICE] URL Construída (Fallback): ${videoUrl}`);
         }
 
         // --- 2. BUSCA BANNER ---
-        // Tenta Regional > Global
         const bannerKeys = [`thankyou_banner${suffix}`, 'thankyou_banner'];
 
         for (const key of bannerKeys) {
@@ -189,11 +182,20 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
             }
         }
 
+        if (!bannerUrl) {
+            // Fallback Blind para Banner
+            const storageBaseImg = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/site_uploads/";
+            // Padrão novo: banners/page_key (sem extensão, rely on content-type)
+            // Tenta o regional primeiro
+            const fallbackKey = `banners/thankyou_banner${suffix}`;
+            bannerUrl = `${storageBaseImg}${fallbackKey}`;
+            console.log(`[THANKYOU-SERVICE] Banner URL Construída (Fallback): ${bannerUrl}`);
+        }
+
         return { videoUrl, bannerUrl };
 
     } catch (error) {
         console.error("[THANKYOU-SERVICE] Erro crítico:", error);
-        // Fallback de emergência (Catastrófico) - Tenta o Upsell Global
         return {
             videoUrl: "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/thankyou_upsell.mp4",
             bannerUrl: null
