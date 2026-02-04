@@ -9,24 +9,59 @@ import { Button } from '@/components/ui/button';
 const VIDEO_SLOTS = [
   {
     page_key: 'home_vsl',
-    title: 'VSL Principal',
-    description: 'Vídeo de vendas da página inicial',
+    title: 'VSL Principal (Padrão)',
+    description: 'Vídeo de vendas global/fallback',
+    route: '/',
+  },
+  {
+    page_key: 'home_vsl_br',
+    title: 'VSL Brasil (.vip)',
+    description: 'Vídeo específico para o domínio do Brasil',
+    route: '/',
+  },
+  {
+    page_key: 'home_vsl_usa',
+    title: 'VSL USA (.vip)',
+    description: 'Vídeo específico para o domínio dos EUA',
     route: '/',
   },
   {
     page_key: 'thankyou_upsell',
-    title: 'Upsell - Página de Obrigado',
-    description: 'VSL do Club Copy & Scale',
+    title: 'Upsell (Padrão)',
+    description: 'VSL de Upsell global/fallback',
+    route: '/thankyou',
+  },
+  {
+    page_key: 'thankyou_upsell_br',
+    title: 'Upsell Brasil',
+    description: 'Vídeo de Upsell para o domínio do Brasil',
+    route: '/thankyou',
+  },
+  {
+    page_key: 'thankyou_upsell_usa',
+    title: 'Upsell USA',
+    description: 'Vídeo de Upsell para o domínio dos EUA',
     route: '/thankyou',
   },
 ];
 
-// Define all image slots in the project
 const IMAGE_SLOTS = [
   {
     page_key: 'thankyou_banner',
-    title: 'Banner Club Copy & Scale',
-    description: 'Imagem do banner na página de obrigado',
+    title: 'Banner (Padrão)',
+    description: 'Banner global/fallback',
+    route: '/thankyou',
+  },
+  {
+    page_key: 'thankyou_banner_br',
+    title: 'Banner Brasil',
+    description: 'Banner para o domínio do Brasil',
+    route: '/thankyou',
+  },
+  {
+    page_key: 'thankyou_banner_usa',
+    title: 'Banner USA',
+    description: 'Banner para o domínio dos EUA',
     route: '/thankyou',
   },
 ];

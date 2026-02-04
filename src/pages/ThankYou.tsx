@@ -30,58 +30,80 @@ export default function ThankYou() {
     const fetchMedia = async () => {
       try {
         const suffix = getRegionKey();
-        console.log(`[THANKYOU] Detectando mídia para sufixo: "${suffix}" (Host: ${window.location.hostname})`);
+        console.log(`[THANKYOU] Detectando mídia | Suffix: "${suffix}" | Host: ${window.location.hostname}`);
 
-        // 1. Fetch Video (Tenta regional, depois padrão)
-        let videoKey = `thankyou_upsell${suffix}`;
-        console.log(`[THANKYOU] Tentando vídeo: ${videoKey}`);
+        // --- FETCH VIDEO ---
+        let videoData = null;
 
-        let { data: videoData } = await supabasePublic
+        // 1. Tenta Regional (thankyou_upsell_br)
+        const regionalVideoKey = `thankyou_upsell${suffix}`;
+        console.log(`[THANKYOU] 1. Tentando vídeo regional: ${regionalVideoKey}`);
+        const { data: regVideo, error: regVidErr } = await supabasePublic
           .from('vsl_video')
           .select('video_url')
-          .eq('page_key', videoKey)
+          .eq('page_key', regionalVideoKey)
           .maybeSingle();
+        videoData = regVideo;
+        if (regVidErr) console.error("[THANKYOU] Erro vídeo regional:", regVidErr.message);
 
-        if (!videoData && suffix !== '') {
-          console.log(`[THANKYOU] Regional não encontrada, tentando padrão: thankyou_upsell`);
-          const { data: defaultVideo } = await supabasePublic
+        // 2. Fallback Global (thankyou_upsell)
+        if (!videoData) {
+          console.log(`[THANKYOU] 2. Tentando vídeo global: thankyou_upsell`);
+          const { data: globalVideo, error: globVidErr } = await supabasePublic
             .from('vsl_video')
             .select('video_url')
             .eq('page_key', 'thankyou_upsell')
             .maybeSingle();
-          videoData = defaultVideo;
+          videoData = globalVideo;
+          if (globVidErr) console.error("[THANKYOU] Erro vídeo global:", globVidErr.message);
+        }
+
+        // 3. Fallback Ultra (Qualquer vídeo vindo do upsell ou similar)
+        if (!videoData) {
+          console.log(`[THANKYOU] 3. Tentando QUALQUER vídeo do banco...`);
+          const { data: anyVideo } = await supabasePublic
+            .from('vsl_video')
+            .select('video_url')
+            .limit(1)
+            .maybeSingle();
+          videoData = anyVideo;
         }
 
         if (videoData?.video_url) {
-          console.log("[THANKYOU] Vídeo carregado:", videoData.video_url);
+          console.log("[THANKYOU] Sucesso Vídeo:", videoData.video_url);
           setUpsellVideoUrl(videoData.video_url);
-        } else {
-          console.warn("[THANKYOU] Nenhum vídeo encontrado para o Upsell.");
         }
 
-        // 2. Fetch Banner (Tenta regional, depois padrão)
-        let bannerKey = `thankyou_banner${suffix}`;
-        let { data: bannerData } = await supabasePublic
+        // --- FETCH BANNER ---
+        let bannerData = null;
+
+        // 1. Tenta Regional (thankyou_banner_br)
+        const regionalBannerKey = `thankyou_banner${suffix}`;
+        console.log(`[THANKYOU] 1. Tentando banner regional: ${regionalBannerKey}`);
+        const { data: regBanner } = await supabasePublic
           .from('banner_images')
           .select('image_url')
-          .eq('page_key', bannerKey)
+          .eq('page_key', regionalBannerKey)
           .maybeSingle();
+        bannerData = regBanner;
 
-        if (!bannerData && suffix !== '') {
-          const { data: defaultBanner } = await supabasePublic
+        // 2. Fallback Global (thankyou_banner)
+        if (!bannerData) {
+          console.log(`[THANKYOU] 2. Tentando banner global: thankyou_banner`);
+          const { data: globalBanner } = await supabasePublic
             .from('banner_images')
             .select('image_url')
             .eq('page_key', 'thankyou_banner')
             .maybeSingle();
-          bannerData = defaultBanner;
+          bannerData = globalBanner;
         }
 
         if (bannerData?.image_url) {
-          console.log("[THANKYOU] Banner carregado:", bannerData.image_url);
+          console.log("[THANKYOU] Sucesso Banner:", bannerData.image_url);
           setBannerImageUrl(bannerData.image_url);
         }
       } catch (err) {
-        console.error("[THANKYOU] Erro crítico ao buscar mídias:", err);
+        console.error("[THANKYOU] Erro geral ao buscar mídias:", err);
       }
     };
 
