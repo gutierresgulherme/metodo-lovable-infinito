@@ -42,43 +42,49 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
         const regionalKey = `home_vsl${suffix}`;
         console.log(`[VSL] Buscando chave regional: ${regionalKey}`);
 
-        let { data: videoData, error: regError } = await db.from("vsl_video")
+        let videoData = null;
+
+        // Use maybeSingle and explicitly check against the keys, avoid fetching "any"
+        let { data: regionalData, error: regError } = await db.from("vsl_video")
             .select("*")
             .eq("page_key", regionalKey)
             .maybeSingle();
 
-        if (regError) console.error("[VSL] Erro na busca regional:", regError.message);
+        if (regionalData) {
+            videoData = regionalData;
+        } else {
+            if (regError) console.error("[VSL] Erro na busca regional:", regError.message);
 
-        // 2. FALLBACK 1: TENTA VÍDEO GLOBAL (EX: home_vsl)
-        if (!videoData) {
+            // 2. FALLBACK 1: TENTA VÍDEO GLOBAL (EX: home_vsl)
             console.log(`[VSL] Sem vídeo regional, buscando global: home_vsl`);
             const { data: globalData, error: globError } = await db.from("vsl_video")
                 .select("*")
                 .eq("page_key", "home_vsl")
                 .maybeSingle();
-            videoData = globalData;
-            if (globError) console.error("[VSL] Erro na busca global:", globError.message);
+
+            if (globalData) {
+                videoData = globalData;
+            } else {
+                if (globError) console.error("[VSL] Erro na busca global:", globError.message);
+            }
         }
 
-        // 3. FALLBACK 2: TENTA QUALQUER VÍDEO DO BANCO (ULTRA FALLBACK)
+        // 3. FALLBACK DE STORAGE (BLIND FALLBACK)
+        // Se não achou nada no banco, NÃO PEGA QUALQUER VÍDEO. Constrói a URL esperada.
         if (!videoData) {
-            console.log(`[VSL] Sem vídeo global, buscando QUALQUER registro...`);
-            const { data: anyVideo, error: anyError } = await db.from("vsl_video")
-                .select("*")
-                .limit(1)
-                .maybeSingle();
-            videoData = anyVideo;
-            if (anyError) console.error("[VSL] Erro no ultra fallback:", anyError.message);
-        }
+            console.warn("[VSL] NADA ENCONTRADO NO BANCO. Tentando URL direta do Storage (Blind Fallback).");
+            const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
 
-        // 4. SE AINDA NÃO ACHOU NADA (Banco Vazio ou Bloqueado), USA URL DE EMERGÊNCIA
-        if (!videoData) {
-            console.warn("[VSL] NADA ENCONTRADO NO BANCO. Usando URL de redundância máxima.");
+            // Assume que se o admin subiu para "Home VSL Brasil", o arquivo é home_vsl_br.mp4
+            const fallbackKey = regionalKey;
+            const fallbackUrl = `${storageBase}${fallbackKey}.mp4`;
+
+            // Mockando um objeto VSLVariant com a URL direta
             const vsl: VSLVariant = {
-                id: "fallback",
-                name: "Vídeo de Emergência",
+                id: "fallback-storage",
+                name: "Vídeo Recuperado (Storage)",
                 slug: "home-vsl",
-                video_url: "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/home_vsl.mp4",
+                video_url: fallbackUrl,
                 headline: "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
                 benefits_copy: null,
                 method_explanation_copy: null,
@@ -108,7 +114,30 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
     } catch (e: any) {
         console.error("[VSL] Erro catastrófico no service:", e);
         const region = getRegionByDomain();
-        return { vsl: null, slug: "default", isActive: true, currency: region === 'USA' ? 'USD' : 'BRL' };
+        const suffix = region === 'USA' ? '_usa' : '_br';
+        const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
+
+        // Em caso de erro total, tenta construir URL também, não força home_vsl padrão se for BR
+        const fallbackUrl = `${storageBase}home_vsl${suffix}.mp4`;
+
+        return {
+            vsl: {
+                id: 'catastrophic',
+                video_url: fallbackUrl,
+                slug: 'home-vsl',
+                headline: "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
+                benefits_copy: null,
+                method_explanation_copy: null,
+                pricing_copy: null,
+                guarantee_copy: null,
+                name: 'Fallback',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            },
+            slug: "home-vsl",
+            isActive: true,
+            currency: region === 'USA' ? 'USD' : 'BRL'
+        };
     }
 };
 
@@ -122,7 +151,8 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
         let bannerUrl: string | null = null;
 
         // --- 1. BUSCA VÍDEO (Upsell) ---
-        // Tenta Regional > Global > Qualquer > Fallback
+        // Tenta Regional > Global
+
         const videoKeys = [`thankyou_upsell${suffix}`, 'thankyou_upsell'];
 
         for (const key of videoKeys) {
@@ -135,18 +165,11 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
         }
 
         if (!videoUrl) {
-            console.log(`[THANKYOU-SERVICE] Vídeo não encontrado por chave, tentando qualquer um...`);
-            const { data } = await db.from("vsl_video").select("video_url").limit(1).maybeSingle();
-            if (data?.video_url) videoUrl = data.video_url;
-        }
-
-        if (!videoUrl) {
             console.warn(`[THANKYOU-SERVICE] NENHUM vídeo encontrado no banco. Tentando URL direta do Storage (Blind Fallback).`);
             // Construir URL baseada no padrão do bucket 'videos/vsl/'
             const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
 
-            // Tenta usar a chave regional (upsell BR ou USA) como nome do arquivo
-            // Se o usuário fez upload no Admin, o arquivo tem esse nome.
+            // Se estou no BR, tento thankyou_upsell_br.mp4
             const fallbackKey = `thankyou_upsell${suffix}`;
             videoUrl = `${storageBase}${fallbackKey}.mp4`;
 
