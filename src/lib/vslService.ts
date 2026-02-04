@@ -185,9 +185,9 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
         if (!bannerUrl) {
             // Fallback Blind para Banner
             const storageBaseImg = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/site_uploads/";
-            // Padrão novo: banners/page_key (sem extensão, rely on content-type)
+            // Padrão novo: banners/page_key.png (FORÇADO .png no upload)
             // Tenta o regional primeiro
-            const fallbackKey = `banners/thankyou_banner${suffix}`;
+            const fallbackKey = `banners/thankyou_banner${suffix}.png`;
             bannerUrl = `${storageBaseImg}${fallbackKey}`;
             console.log(`[THANKYOU-SERVICE] Banner URL Construída (Fallback): ${bannerUrl}`);
         }
@@ -205,7 +205,7 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
 
         return {
             videoUrl: `${storageBaseVideo}thankyou_upsell${suffix}.mp4`,
-            bannerUrl: `${storageBaseImg}banners/thankyou_banner${suffix}`
+            bannerUrl: `${storageBaseImg}banners/thankyou_banner${suffix}.png`
         };
     }
 }
