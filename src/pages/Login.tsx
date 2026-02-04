@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowRight, Lock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -12,17 +13,38 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        // Hardcoded credentials as per user request
-        if (email === "joaomelloair40@gmail.com" && password === "Relogios40@") {
-            localStorage.setItem("admin_authenticated", "true");
-            toast.success("Acesso concedido. Bem-vindo, Admin.");
-            setTimeout(() => navigate("/admin"), 1000);
-        } else {
-            toast.error("Credenciais inválidas. Acesso negado.");
+        try {
+            // 1. Tenta autenticação REAL no Supabase primeiro
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (!error && data.user) {
+                console.log("[LOGIN] Autenticação Supabase bem-sucedida");
+                localStorage.setItem("admin_authenticated", "true");
+                toast.success("Acesso concedido via Supabase.");
+                setTimeout(() => navigate("/admin"), 1000);
+                return;
+            }
+
+            // 2. Fallback para Credenciais Hardcoded (Se o usuário não existir no Auth ou der erro)
+            if (email === "joaomelloair40@gmail.com" && password === "Relogios40@") {
+                console.log("[LOGIN] Usando credenciais de contingência");
+                localStorage.setItem("admin_authenticated", "true");
+                toast.success("Acesso concedido (Modo Contingência). Bem-vindo, Admin.");
+                setTimeout(() => navigate("/admin"), 1000);
+            } else {
+                toast.error("Credenciais inválidas. Verifique seu email e senha.");
+                setLoading(false);
+            }
+        } catch (err) {
+            console.error("[LOGIN] Erro inesperado:", err);
+            toast.error("Ocorreu um erro ao tentar acessar o sistema.");
             setLoading(false);
         }
     };

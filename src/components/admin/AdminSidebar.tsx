@@ -28,10 +28,13 @@ interface AdminSidebarProps {
     onToggle: () => void;
 }
 
+import { supabase } from "@/integrations/supabase/client";
+
 export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
     const location = useLocation();
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
         localStorage.removeItem("admin_authenticated");
         window.location.href = "/login";
     };

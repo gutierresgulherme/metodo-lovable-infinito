@@ -4,15 +4,23 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminTopnav } from "@/components/admin/AdminTopnav";
 import { cn } from "@/lib/utils";
 
+import { supabase } from "@/integrations/supabase/client";
+
 export function AdminLayout() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const isAuthenticated = localStorage.getItem("admin_authenticated");
-        if (!isAuthenticated) {
-            navigate("/login");
-        }
+        const checkAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const isHardcodedAuth = localStorage.getItem("admin_authenticated");
+
+            if (!session && !isHardcodedAuth) {
+                navigate("/login");
+            }
+        };
+
+        checkAuth();
     }, [navigate]);
 
     return (
