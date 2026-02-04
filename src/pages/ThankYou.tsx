@@ -22,6 +22,7 @@ export default function ThankYou() {
 
     const getRegionKey = () => {
       const host = window.location.hostname;
+      // Se for localhost, podemos forçar um sufixo para teste ou deixar vazio
       if (host.includes('lovable-app.vip')) return '_usa';
       if (host.includes('metodo-lovable-infinito.vip')) return '_br';
       return '';
@@ -30,80 +31,60 @@ export default function ThankYou() {
     const fetchMedia = async () => {
       try {
         const suffix = getRegionKey();
-        console.log(`[THANKYOU] Detectando mídia | Suffix: "${suffix}" | Host: ${window.location.hostname}`);
+        console.log(`[THANKYOU-MEDIA] Iniciando busca | Host: ${window.location.hostname} | Sufixo: "${suffix}"`);
 
         // --- FETCH VIDEO ---
-        let videoData = null;
+        const vKeys = [`thankyou_upsell${suffix}`, 'thankyou_upsell'];
+        let videoUrlFound = null;
 
-        // 1. Tenta Regional (thankyou_upsell_br)
-        const regionalVideoKey = `thankyou_upsell${suffix}`;
-        console.log(`[THANKYOU] 1. Tentando vídeo regional: ${regionalVideoKey}`);
-        const { data: regVideo, error: regVidErr } = await supabasePublic
-          .from('vsl_video')
-          .select('video_url')
-          .eq('page_key', regionalVideoKey)
-          .maybeSingle();
-        videoData = regVideo;
-        if (regVidErr) console.error("[THANKYOU] Erro vídeo regional:", regVidErr.message);
-
-        // 2. Fallback Global (thankyou_upsell)
-        if (!videoData) {
-          console.log(`[THANKYOU] 2. Tentando vídeo global: thankyou_upsell`);
-          const { data: globalVideo, error: globVidErr } = await supabasePublic
+        for (const key of vKeys) {
+          console.log(`[THANKYOU-MEDIA] Tentando chave de vídeo: ${key}`);
+          const { data, error } = await supabase
             .from('vsl_video')
             .select('video_url')
-            .eq('page_key', 'thankyou_upsell')
+            .eq('page_key', key)
             .maybeSingle();
-          videoData = globalVideo;
-          if (globVidErr) console.error("[THANKYOU] Erro vídeo global:", globVidErr.message);
+
+          if (data?.video_url) {
+            console.log(`[THANKYOU-MEDIA] SUCESSO VÍDEO encontrada chave "${key}":`, data.video_url);
+            videoUrlFound = data.video_url;
+            break;
+          }
+          if (error) console.error(`[THANKYOU-MEDIA] Erro na chave ${key}:`, error.message);
         }
 
-        // 3. Fallback Ultra (Qualquer vídeo vindo do upsell ou similar)
-        if (!videoData) {
-          console.log(`[THANKYOU] 3. Tentando QUALQUER vídeo do banco...`);
-          const { data: anyVideo } = await supabasePublic
-            .from('vsl_video')
-            .select('video_url')
-            .limit(1)
-            .maybeSingle();
-          videoData = anyVideo;
+        // Ultravariante: Pega o primeiro vídeo se nada foi achado
+        if (!videoUrlFound) {
+          console.log(`[THANKYOU-MEDIA] Nenhuma chave específica funcionou, pegando primeiro vídeo disponível no banco...`);
+          const { data } = await supabase.from('vsl_video').select('video_url').limit(1).maybeSingle();
+          if (data?.video_url) videoUrlFound = data.video_url;
         }
 
-        if (videoData?.video_url) {
-          console.log("[THANKYOU] Sucesso Vídeo:", videoData.video_url);
-          setUpsellVideoUrl(videoData.video_url);
-        }
+        if (videoUrlFound) setUpsellVideoUrl(videoUrlFound);
 
         // --- FETCH BANNER ---
-        let bannerData = null;
+        const bKeys = [`thankyou_banner${suffix}`, 'thankyou_banner'];
+        let bannerUrlFound = null;
 
-        // 1. Tenta Regional (thankyou_banner_br)
-        const regionalBannerKey = `thankyou_banner${suffix}`;
-        console.log(`[THANKYOU] 1. Tentando banner regional: ${regionalBannerKey}`);
-        const { data: regBanner } = await supabasePublic
-          .from('banner_images')
-          .select('image_url')
-          .eq('page_key', regionalBannerKey)
-          .maybeSingle();
-        bannerData = regBanner;
-
-        // 2. Fallback Global (thankyou_banner)
-        if (!bannerData) {
-          console.log(`[THANKYOU] 2. Tentando banner global: thankyou_banner`);
-          const { data: globalBanner } = await supabasePublic
+        for (const key of bKeys) {
+          console.log(`[THANKYOU-MEDIA] Tentando chave de banner: ${key}`);
+          const { data } = await supabase
             .from('banner_images')
             .select('image_url')
-            .eq('page_key', 'thankyou_banner')
+            .eq('page_key', key)
             .maybeSingle();
-          bannerData = globalBanner;
+
+          if (data?.image_url) {
+            console.log(`[THANKYOU-MEDIA] SUCESSO BANNER encontrada chave "${key}":`, data.image_url);
+            bannerUrlFound = data.image_url;
+            break;
+          }
         }
 
-        if (bannerData?.image_url) {
-          console.log("[THANKYOU] Sucesso Banner:", bannerData.image_url);
-          setBannerImageUrl(bannerData.image_url);
-        }
+        if (bannerUrlFound) setBannerImageUrl(bannerUrlFound);
+
       } catch (err) {
-        console.error("[THANKYOU] Erro geral ao buscar mídias:", err);
+        console.error("[THANKYOU-MEDIA] Erro catastrófico:", err);
       }
     };
 
