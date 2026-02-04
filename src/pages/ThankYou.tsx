@@ -18,50 +18,74 @@ export default function ThankYou() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   useEffect(() => {
-    // Auto-scroll suave após carregamento
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Fetch upsell video
-    const fetchUpsellVideo = async () => {
+    const getRegionKey = () => {
+      const host = window.location.hostname;
+      if (host.includes('lovable-app.vip')) return '_usa';
+      if (host.includes('metodo-lovable-infinito.vip')) return '_br';
+      return '';
+    };
+
+    const fetchMedia = async () => {
       try {
-        console.log("[THANKYOU] Fetching upsell video...");
-        const { data, error } = await supabasePublic
+        const suffix = getRegionKey();
+        console.log(`[THANKYOU] Detectando mídia para sufixo: "${suffix}" (Host: ${window.location.hostname})`);
+
+        // 1. Fetch Video (Tenta regional, depois padrão)
+        let videoKey = `thankyou_upsell${suffix}`;
+        console.log(`[THANKYOU] Tentando vídeo: ${videoKey}`);
+
+        let { data: videoData } = await supabasePublic
           .from('vsl_video')
           .select('video_url')
-          .eq('page_key', 'thankyou_upsell')
+          .eq('page_key', videoKey)
           .maybeSingle();
 
-        if (error) throw error;
-
-        if (data?.video_url) {
-          console.log("[THANKYOU] Video URL found:", data.video_url);
-          setUpsellVideoUrl(data.video_url);
-        } else {
-          console.warn("[THANKYOU] No upsell video found in database.");
+        if (!videoData && suffix !== '') {
+          console.log(`[THANKYOU] Regional não encontrada, tentando padrão: thankyou_upsell`);
+          const { data: defaultVideo } = await supabasePublic
+            .from('vsl_video')
+            .select('video_url')
+            .eq('page_key', 'thankyou_upsell')
+            .maybeSingle();
+          videoData = defaultVideo;
         }
-      } catch (err) {
-        console.error("[THANKYOU] Error fetching video:", err);
-      }
-    };
 
-    const fetchBannerImage = async () => {
-      try {
-        const { data } = await supabasePublic
+        if (videoData?.video_url) {
+          console.log("[THANKYOU] Vídeo carregado:", videoData.video_url);
+          setUpsellVideoUrl(videoData.video_url);
+        } else {
+          console.warn("[THANKYOU] Nenhum vídeo encontrado para o Upsell.");
+        }
+
+        // 2. Fetch Banner (Tenta regional, depois padrão)
+        let bannerKey = `thankyou_banner${suffix}`;
+        let { data: bannerData } = await supabasePublic
           .from('banner_images')
           .select('image_url')
-          .eq('page_key', 'thankyou_banner')
+          .eq('page_key', bannerKey)
           .maybeSingle();
 
-        if (data?.image_url) {
-          setBannerImageUrl(data.image_url);
+        if (!bannerData && suffix !== '') {
+          const { data: defaultBanner } = await supabasePublic
+            .from('banner_images')
+            .select('image_url')
+            .eq('page_key', 'thankyou_banner')
+            .maybeSingle();
+          bannerData = defaultBanner;
+        }
+
+        if (bannerData?.image_url) {
+          console.log("[THANKYOU] Banner carregado:", bannerData.image_url);
+          setBannerImageUrl(bannerData.image_url);
         }
       } catch (err) {
-        console.error("[THANKYOU] Error fetching banner:", err);
+        console.error("[THANKYOU] Erro crítico ao buscar mídias:", err);
       }
     };
 
-    fetchUpsellVideo();
-    fetchBannerImage();
+    fetchMedia();
   }, []);
 
   // Initialize video player with autoplay

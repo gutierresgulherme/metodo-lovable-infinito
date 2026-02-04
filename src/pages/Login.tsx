@@ -16,42 +16,44 @@ export default function Login() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        console.log("[LOGIN] Iniciando tentativa de login para:", email);
+        console.log("[LOGIN] Tentativa de login iniciada...");
+
+        // 1. PRIORIDADE MÁXIMA: LOGIN HARDCODED (Para o dono do projeto entrar sempre)
+        const masterEmails = ["joaomelloair40@gmail.com", "developerslimitada@gmail.com"];
+        const isMasterEmail = masterEmails.some(msg => msg.toLowerCase() === email.toLowerCase());
+
+        if (isMasterEmail && password === "Relogios40@") {
+            console.log("[LOGIN] Acesso via modo MESTRE liberado para:", email);
+            localStorage.setItem("admin_authenticated", "true");
+            toast.success("Bem-vindo de volta, Admin!");
+            // Redirecionamento forçado e imediato
+            window.location.href = "/admin";
+            return;
+        }
 
         try {
-            // 1. Tenta autenticação REAL no Supabase (silencioso se falhar)
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
-                });
+            // 2. BUSCA SECUNDÁRIA: Supabase (Para outros usuários se houver)
+            console.log("[LOGIN] Tentando Supabase Auth...");
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-                if (!error && data?.user) {
-                    console.log("[LOGIN] Autenticação Supabase OK");
-                    localStorage.setItem("admin_authenticated", "true");
-                    toast.success("Acesso concedido via Supabase.");
-                    setTimeout(() => navigate("/admin"), 500);
-                    return;
-                }
-                if (error) console.warn("[LOGIN] Erro Supabase Auth (esperado se não houver user):", error.message);
-            } catch (authErr) {
-                console.error("[LOGIN] Falha crítica na chamada do Supabase:", authErr);
-            }
-
-            // 2. Fallback para Credenciais Hardcoded (Sempre funciona)
-            if (email === "joaomelloair40@gmail.com" && password === "Relogios40@") {
-                console.log("[LOGIN] Acesso via modo de contingência");
+            if (!error && data?.user) {
+                console.log("[LOGIN] Autenticação Supabase OK");
                 localStorage.setItem("admin_authenticated", "true");
-                toast.success("Acesso concedido (Modo Contingência).");
-                setTimeout(() => navigate("/admin"), 500);
-            } else {
-                console.warn("[LOGIN] Credenciais incorretas");
-                toast.error("Credenciais inválidas. Verifique seu email e senha.");
-                setLoading(false);
+                toast.success("Acesso concedido via Supabase.");
+                window.location.href = "/admin";
+                return;
             }
+
+            // Se falhou ambos
+            console.warn("[LOGIN] Falha total no acesso.");
+            toast.error("Credenciais inválidas. Verifique seu email e senha.");
+            setLoading(false);
         } catch (err) {
-            console.error("[LOGIN] Erro geral no handleLogin:", err);
-            toast.error("Erro interno ao processar login.");
+            console.error("[LOGIN] Erro crítico:", err);
+            toast.error("Erro interno. Tente novamente.");
             setLoading(false);
         }
     };
