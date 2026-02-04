@@ -196,9 +196,16 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
 
     } catch (error) {
         console.error("[THANKYOU-SERVICE] Erro crítico:", error);
+
+        // Fallback de emergência (Catastrófico)
+        const region = getRegionByDomain();
+        const suffix = region === 'USA' ? '_usa' : '_br';
+        const storageBaseVideo = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
+        const storageBaseImg = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/site_uploads/";
+
         return {
-            videoUrl: "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/thankyou_upsell.mp4",
-            bannerUrl: null
+            videoUrl: `${storageBaseVideo}thankyou_upsell${suffix}.mp4`,
+            bannerUrl: `${storageBaseImg}banners/thankyou_banner${suffix}`
         };
     }
 }
