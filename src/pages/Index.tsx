@@ -323,6 +323,18 @@ const Index = () => {
                 </div>
             </section>
 
+            {/* FEEDBACK SECTION */}
+            <section className="py-8 md:py-12 px-6 md:px-4 bg-black/20">
+                <div className="max-w-3xl mx-auto space-y-8">
+                    <h2 className="text-2xl md:text-3xl font-bold text-center text-white uppercase">FEEDBACK DA GALERA QUE <br /> COMPROU:</h2>
+                    <div className="space-y-4">
+                        <img src={feedback1} alt="Feedback 1" className="w-full rounded-xl border border-white/10 shadow-lg" />
+                        <img src={feedback2} alt="Feedback 2" className="w-full rounded-xl border border-white/10 shadow-lg" />
+                        <img src={feedback3} alt="Feedback 3" className="w-full rounded-xl border border-white/10 shadow-lg" />
+                    </div>
+                </div>
+            </section>
+
             {/* DYNAMIC COPY SECTIONS */}
             {vslData?.benefits_copy && (
                 <section className="py-8 md:py-12 px-6 md:px-4">
@@ -435,17 +447,6 @@ const Index = () => {
                     </div>
                 </section>
             )}
-
-            <section className="py-8 md:py-12 px-6 md:px-4 bg-black/20">
-                <div className="max-w-3xl mx-auto space-y-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-center text-white uppercase">FEEDBACK DA GALERA QUE <br /> COMPROU:</h2>
-                    <div className="space-y-4">
-                        <img src={feedback1} alt="Feedback 1" className="w-full rounded-xl border border-white/10 shadow-lg" />
-                        <img src={feedback2} alt="Feedback 2" className="w-full rounded-xl border border-white/10 shadow-lg" />
-                        <img src={feedback3} alt="Feedback 3" className="w-full rounded-xl border border-white/10 shadow-lg" />
-                    </div>
-                </div>
-            </section>
 
             {/* BONUS SECTION */}
             <section className="py-8 md:py-12 px-6 md:px-4">
