@@ -1,5 +1,5 @@
 import { useEffect, useRef, lazy, Suspense, useCallback, useState } from "react";
-import { Check, Play } from "lucide-react";
+import { Check, Play, X } from "lucide-react";
 import { supabasePublic } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
 import lovableIcon from "@/assets/lovable-icon-heart.jpg";
@@ -319,13 +319,88 @@ const Index = () => {
             {!vslData?.benefits_copy && (
                 <section className="py-8 md:py-12 px-6 md:px-4">
                     <div className="max-w-5xl mx-auto space-y-4">
-                        <div className="grid md:grid-cols-2 gap-4 md:gap-6 mb-8">
-                            {["Acesso ILIMITADO ao Lovable", "Criar SITES E APLICATIVOS ilimitadas com IA", "Sem bloqueio, sem limite", "Método testado e aprovado", "Suporte incluso"].map((feature, i) => (
-                                <div key={i} className="flex items-start gap-3 bg-black/40 p-4 rounded-lg border border-[hsl(267,100%,65%,0.3)]">
-                                    <Check className="w-5 h-5 text-[hsl(94,100%,73%)] mt-1" />
-                                    <span className="text-base text-foreground font-medium">{feature}</span>
+                        <div className="space-y-12">
+                            {/* 2 TYPES SECTION */}
+                            <div className="space-y-6">
+                                <h2 className="text-2xl md:text-3xl font-black text-center text-white uppercase tracking-tight">
+                                    SÓ EXISTEM 2 TIPOS DE PESSOAS AQUI:
+                                </h2>
+                                <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                                    <div className="bg-black/40 border-2 border-emerald-500/50 rounded-xl p-6 relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors" />
+                                        <div className="relative z-10 flex gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                                                <Check className="w-5 h-5 text-white" />
+                                            </div>
+                                            <p className="text-gray-200 font-medium leading-relaxed">
+                                                As que pegam agora esse método e <span className="text-emerald-400 font-bold">desbloqueiam o Lovable de forma ilimitada</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-black/40 border-2 border-red-900/30 rounded-xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-colors">
+                                        <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
+                                        <div className="relative z-10 flex gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-red-900/50 flex items-center justify-center flex-shrink-0">
+                                                <X className="w-5 h-5 text-red-500" />
+                                            </div>
+                                            <p className="text-gray-400 font-medium leading-relaxed">
+                                                As que vão continuar presas no plano gratuito, empacadas nos projetos sem poder testar logo
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                            ))}
+                            </div>
+
+                            {/* PRICE ANCHOR SECTION */}
+                            <div className="max-w-3xl mx-auto relative">
+                                {/* Red Banner */}
+                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-[110%] md:w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600 py-2 px-4 shadow-[0_0_20px_rgba(220,38,38,0.5)] z-20 text-center transform -rotate-1 rounded-sm">
+                                    <p className="text-white font-black text-xs md:text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+                                        <span className="animate-pulse">🔥</span> DESCONTO VÁLIDO SOMENTE HOJE — {getCurrentDate()}
+                                    </p>
+                                </div>
+
+                                <div className="bg-[#0A0A0F] border border-white/10 rounded-2xl p-8 pt-12 md:p-12 mt-8 relative overflow-hidden shadow-2xl">
+                                    <div className="space-y-8 relative z-10">
+                                        <h3 className="text-xl md:text-2xl font-bold text-center text-gray-200 uppercase">
+                                            SE FOSSE PAGAR O PREÇO REAL POR TUDO ISSO...
+                                        </h3>
+
+                                        <div className="space-y-4">
+                                            {[
+                                                { item: "só pra ter acesso ao Lovable", price: "US$20", period: "por mês" },
+                                                { item: "pra usar o Gamma PRO sem limitações", price: "US$15", period: "mensais" },
+                                                { item: "pra liberar o verdadeiro poder do ChatGPT PRO", price: "US$20", period: "mensais" },
+                                                { item: "pra liberar todos os recursos do Canva PRO ANUAL", price: "US$58", period: "mensais" },
+                                            ].map((row, i) => (
+                                                <div key={i} className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                                                    <span className="text-yellow-500">💰</span>
+                                                    <p className="text-gray-400 flex-1">
+                                                        <span className="text-red-400 font-bold">{row.price}</span> {row.period} {row.item}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="text-center space-y-2 pt-4 border-t border-white/10">
+                                            <p className="text-lg md:text-xl text-white">
+                                                Soma total? <span className="text-red-500 font-bold">US$103/mês</span>
+                                            </p>
+                                            <p className="text-emerald-500 font-bold text-sm">(+ de R$570 por mês, fácil.)</p>
+                                        </div>
+
+                                        <div className="text-center space-y-4 pt-4">
+                                            <p className="text-gray-400 uppercase tracking-widest text-xs">E o que você vai pagar aqui?</p>
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-4xl md:text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                                                    Apenas {PRICE_PRATA}
+                                                </span>
+                                                <span className="text-yellow-400 font-bold uppercase tracking-widest text-sm mt-2">Uma Única Vez.</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
