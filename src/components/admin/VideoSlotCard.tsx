@@ -76,51 +76,25 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
 
     try {
       const fileName = `${slot.page_key}.mp4`;
-      let uploadPath = `vsl/${fileName}`;
+      const uploadPath = `vsl/${fileName}`;
 
-      // --- TENTATIVA 1: CLIENTE AUTENTICADO ---
-      console.log("🔐 [UPLOAD] Tentativa 1: Cliente Autenticado...");
-      setProgress(20);
+      // --- UPLOAD PÚBLICO DIRETO ---
+      // Como os buckets são públicos, não precisamos de autenticação para upload
+      // desde que a Policy de "INSERT" esteja aberta para public/anon.
+      console.log("🌍 [UPLOAD] Usando Cliente Público (Direct Upload)...");
+      setProgress(30);
 
-      let uploadResult = await supabase.storage
+      const { data, error: uploadError } = await supabasePublic.storage
         .from('videos')
         .upload(uploadPath, file, {
           upsert: true,
-          contentType: file.type || 'video/mp4'
+          contentType: file.type || 'video/mp4',
+          cacheControl: '3600'
         });
 
-      // --- TENTATIVA 2: CLIENTE PÚBLICO (FALLBACK JWS) ---
-      if (uploadResult.error && (uploadResult.error.message.includes('JWS') || uploadResult.error.message.includes('JWT') || uploadResult.error.message.includes('token'))) {
-        console.warn("⚠️ [UPLOAD] Erro de Token detectado. Mudando para Canal Público Blindado...");
-        setProgress(40);
-        uploadResult = await supabasePublic.storage
-          .from('videos')
-          .upload(uploadPath, file, {
-            upsert: true,
-            contentType: file.type || 'video/mp4'
-          });
-      }
-
-      // --- TENTATIVA 3: PATH ALTERNATIVO (ULTRA FALLBACK) ---
-      if (uploadResult.error) {
-        console.warn("🔻 [UPLOAD] Tentativa 2 falhou. Tentando Path Alternativo...");
-        const altPath = `vsl/alt_${Date.now()}_${fileName}`;
-        setProgress(60);
-        uploadResult = await supabasePublic.storage
-          .from('videos')
-          .upload(altPath, file, {
-            upsert: true,
-            contentType: file.type || 'video/mp4'
-          });
-
-        if (!uploadResult.error) {
-          // Se o alternativo funcionou, atualizamos o path para o resto do processo
-          (uploadPath as any) = (uploadResult.data as any).path;
-        }
-      }
-
-      if (uploadResult.error) {
-        throw uploadResult.error;
+      if (uploadError) {
+        console.error("❌ [STORAGE] Erro no upload:", uploadError);
+        throw new Error(`Erro no Storage: ${uploadError.message}`);
       }
 
       setProgress(80);
@@ -131,30 +105,27 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
         .from('videos')
         .getPublicUrl(uploadPath);
 
+      // Cache busting
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
-      // ATUALIZAÇÃO DO BANCO COM WORKAROUND PARA FALTA DE CONSTRAINT UNIQUE
       const dbPayload = {
         video_url: finalUrl,
         page_key: slot.page_key,
         created_at: new Date().toISOString()
       };
 
-      console.log("💾 [DB] Aplicando correção de registro (Delete + Insert)...");
+      console.log("💾 [DB] Atualizando registro...");
 
-      // 1. Tentar deletar o registro antigo para evitar erro de conflito
+      // 1. Delete antigo (prevenção de conflito)
       await supabasePublic.from('vsl_video').delete().eq('page_key', slot.page_key);
 
-      // 2. Inserir o novo registro
-      let dbResult = await supabasePublic.from('vsl_video').insert(dbPayload);
+      // 2. Insert novo
+      const { error: dbError } = await supabasePublic.from('vsl_video').insert(dbPayload);
 
-      if (dbResult.error) {
-        console.warn("⚠️ [DB] Erro na inserção pública, tentando via canal autenticado...");
-        await supabase.from('vsl_video').delete().eq('page_key', slot.page_key);
-        dbResult = await supabase.from('vsl_video').insert(dbPayload);
+      if (dbError) {
+        console.error("❌ [DB] Erro no banco:", dbError);
+        throw new Error(`Erro no Banco: ${dbError.message}`);
       }
-
-      if (dbResult.error) throw dbResult.error;
 
       setProgress(100);
       console.log("🚀 [UPLOAD] Sucesso total:", finalUrl);
@@ -170,7 +141,7 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
       console.error('❌ [UPLOAD] Erro crítico:', error);
       toast({
         title: 'Falha no Upload',
-        description: error.message || 'Erro desconhecido. Verifique se o SQL foi rodado no Supabase.',
+        description: error.message || 'Erro desconhecido ao fazer upload.',
         variant: 'destructive',
       });
     } finally {
