@@ -342,6 +342,40 @@ const Index = () => {
                 </div>
             </section>
 
+            {/* BONUS SECTION */}
+            <section className="py-8 md:py-12 px-6 md:px-4">
+                <div className="max-w-5xl mx-auto">
+                    <h2 className="text-2xl md:text-4xl font-bold text-center text-white mb-8 uppercase tracking-wider">
+                        <span className="text-emerald-400">2 BÔNUS EXCLUSIVOS</span> PARA QUEM ENTRAR HOJE
+                    </h2>
+
+                    <div className="grid md:grid-cols-2 gap-6 relative z-10">
+                        {/* Bonus 1 */}
+                        <div className="group relative bg-gradient-to-br from-[#10a37f]/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#10a37f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-[#10a37f]/20 group-hover:border-[#10a37f]/50 relative z-10">
+                                <img src={chatgptBonus} alt="ChatGPT Bônus" className="w-24 h-24 mb-4 object-contain drop-shadow-[0_0_15px_rgba(16,163,127,0.3)]" />
+                                <span className="text-[#10a37f] font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #01</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Módulo ChatGPT 5 Plus</h3>
+                                <p className="text-gray-400 text-sm">Aprenda a integrar a inteligência artificial mais poderosa do mundo nos seus aplicativos Lovable.</p>
+                            </div>
+                        </div>
+
+                        {/* Bonus 2 */}
+                        <div className="group relative bg-gradient-to-br from-[#00c4cc]/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#00c4cc]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-[#00c4cc]/20 group-hover:border-[#00c4cc]/50 relative z-10">
+                                <img src={canvaBonus} alt="Canva Bônus" className="w-24 h-24 mb-4 object-contain drop-shadow-[0_0_15px_rgba(0,196,204,0.3)]" />
+                                <span className="text-[#00c4cc] font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #02</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Canva Design Pro</h3>
+                                <p className="text-gray-400 text-sm">Domine a criação de assets visuais profissionais para valorizar (e cobrar mais caro) pelos seus apps.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
             <div className="flex flex-col items-center py-8 relative z-10 px-6">
                 <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/50 to-green-600/50 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500 opacity-60"></div>
@@ -371,6 +405,20 @@ const Index = () => {
                             />
                         </div>
                     </Suspense>
+                </div>
+            </section>
+
+            {/* GUARANTEE SECTION */}
+            <section className="py-12 px-6 bg-black/20">
+                <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center text-center md:text-left gap-8 bg-gradient-to-b from-white/5 to-transparent p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] group-hover:bg-emerald-500/20 transition-all"></div>
+                    <img src={garantia7dias} alt="Garantia 7 Dias" className="w-40 md:w-56 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] flex-shrink-0" />
+                    <div className="relative z-10">
+                        <h2 className="text-2xl font-bold text-white mb-3">RISCO ZERO POR 7 DIAS</h2>
+                        <p className="text-gray-400 leading-relaxed text-lg">
+                            Entre, assista às aulas, use os bônus. Se você achar que não é pra você, devolvemos <span className="text-white font-bold">100% do seu dinheiro</span>. Sem perguntas.
+                        </p>
+                    </div>
                 </div>
             </section>
 
