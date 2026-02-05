@@ -1,5 +1,5 @@
 import { useEffect, useRef, lazy, Suspense, useCallback, useState } from "react";
-import { Check, Play, X } from "lucide-react";
+import { Check, Play, X, Clock } from "lucide-react";
 import { supabasePublic } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
 import lovableIcon from "@/assets/lovable-icon-heart.jpg";
@@ -32,6 +32,7 @@ const Index = () => {
         usa_prata: 'https://go.pepperpay.com.br/lonsw',
         usa_gold: 'https://go.pepperpay.com.br/ukrg2',
     });
+    const [timeLeft, setTimeLeft] = useState({ minutes: 5, seconds: 0 });
 
     // --- Refs ---
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -140,6 +141,22 @@ const Index = () => {
         }, 3000);
         return () => clearInterval(checkPlaying);
     }, [vslData?.video_url, videoError]);
+
+    // Countdown Timer logic
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev.minutes === 0 && prev.seconds === 0) {
+                    return { minutes: 5, seconds: 0 }; // Restart loop or stop
+                }
+                if (prev.seconds === 0) {
+                    return { minutes: prev.minutes - 1, seconds: 59 };
+                }
+                return { ...prev, seconds: prev.seconds - 1 };
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     // --- Video Tracking Handler ---
     const handleVideoTimeUpdate = () => {
@@ -353,10 +370,11 @@ const Index = () => {
 
                             {/* PRICE ANCHOR SECTION */}
                             <div className="max-w-3xl mx-auto relative">
-                                {/* Red Banner */}
+                                {/* Red Banner - Timer */}
                                 <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-[110%] md:w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600 py-2 px-4 shadow-[0_0_20px_rgba(220,38,38,0.5)] z-20 text-center transform -rotate-1 rounded-sm">
                                     <p className="text-white font-black text-xs md:text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                                        <span className="animate-pulse">🔥</span> DESCONTO VÁLIDO SOMENTE HOJE — {getCurrentDate()}
+                                        <Clock className="w-4 h-4 animate-pulse" />
+                                        🔥 OFERTA LOVABLE INFINITO EXPIRA EM: <span className="font-mono text-yellow-300 text-base">{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}</span>
                                     </p>
                                 </div>
 
@@ -372,30 +390,42 @@ const Index = () => {
                                                 { item: "pra usar o Gamma PRO sem limitações", price: "US$15", period: "mensais" },
                                                 { item: "pra liberar o verdadeiro poder do ChatGPT PRO", price: "US$20", period: "mensais" },
                                                 { item: "pra liberar todos os recursos do Canva PRO ANUAL", price: "US$58", period: "mensais" },
-                                            ].map((row, i) => (
-                                                <div key={i} className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                                                    <span className="text-yellow-500">💰</span>
-                                                    <p className="text-gray-400 flex-1">
-                                                        <span className="text-red-400 font-bold">{row.price}</span> {row.period} {row.item}
-                                                    </p>
-                                                </div>
-                                            ))}
+                                                // Removed Canva Pro monthly line as it's not in the new request list, kept the one from previous code or just stick to the new list?
+                                                // The user request says: "Canva PRO: US$ 15/mês". I will use 15.
+                                            ].map((row, i) => {
+                                                // Quick fix for the map to match specific values requested if different from array
+                                                // Actually I'll just rewrite the array below cleanly.
+                                                return null;
+                                            })}
+
+                                            <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
+                                                <span className="text-yellow-500">💰</span>
+                                                <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$20</span> por mês só pra ter acesso ao Lovable</p>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
+                                                <span className="text-yellow-500">💰</span>
+                                                <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$20</span> mensais pra liberar o verdadeiro poder do ChatGPT PRO</p>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
+                                                <span className="text-yellow-500">💰</span>
+                                                <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$15</span> mensais pra liberar todos os recursos do Canva PRO</p>
+                                            </div>
                                         </div>
 
                                         <div className="text-center space-y-2 pt-4 border-t border-white/10">
                                             <p className="text-lg md:text-xl text-white">
-                                                Soma total? <span className="text-red-500 font-bold">US$103/mês</span>
+                                                Soma total? <span className="text-red-500 font-bold">US$55/mês</span>
                                             </p>
-                                            <p className="text-emerald-500 font-bold text-sm">(+ de R$570 por mês, fácil.)</p>
+                                            <p className="text-emerald-500 font-bold text-sm">(aprox. R$ 300,00/mês)</p>
                                         </div>
 
                                         <div className="text-center space-y-4 pt-4">
                                             <p className="text-gray-400 uppercase tracking-widest text-xs">E o que você vai pagar aqui?</p>
                                             <div className="flex flex-col items-center">
                                                 <span className="text-4xl md:text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
-                                                    Apenas {PRICE_PRATA}
+                                                    Apenas R$24,90
                                                 </span>
-                                                <span className="text-yellow-400 font-bold uppercase tracking-widest text-sm mt-2">Uma Única Vez.</span>
+                                                <span className="text-yellow-400 font-bold uppercase tracking-widest text-sm mt-2">UMA ÚNICA VEZ.</span>
                                             </div>
                                         </div>
                                     </div>
