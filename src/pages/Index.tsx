@@ -349,7 +349,7 @@ const Index = () => {
                         <span className="text-emerald-400">2 BÔNUS EXCLUSIVOS</span> PARA QUEM ENTRAR HOJE
                     </h2>
 
-                    <div className="grid md:grid-cols-2 gap-6 relative z-10">
+                    <div className="grid md:grid-cols-3 gap-6 relative z-10">
                         {/* Bonus 1 */}
                         <div className="group relative bg-gradient-to-br from-[#10a37f]/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
                             <div className="absolute inset-0 bg-gradient-to-br from-[#10a37f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -369,6 +369,17 @@ const Index = () => {
                                 <span className="text-[#00c4cc] font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #02</span>
                                 <h3 className="text-xl font-bold text-white mb-2">Canva Design Pro</h3>
                                 <p className="text-gray-400 text-sm">Domine a criação de assets visuais profissionais para valorizar (e cobrar mais caro) pelos seus apps.</p>
+                            </div>
+                        </div>
+
+                        {/* Bonus 3 */}
+                        <div className="group relative bg-gradient-to-br from-rose-500/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-rose-500/20 group-hover:border-rose-500/50 relative z-10">
+                                <img src={lovableIcon} alt="Comunidade Lovable" className="w-24 h-24 mb-4 object-contain rounded-full drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" />
+                                <span className="text-rose-500 font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #03</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Comunidade Lovable</h3>
+                                <p className="text-gray-400 text-sm">Networking exclusivo com outros criadores. Tire dúvidas, compartilhe projetos e cresça junto.</p>
                             </div>
                         </div>
                     </div>
@@ -418,6 +429,22 @@ const Index = () => {
                         <p className="text-gray-400 leading-relaxed text-lg">
                             Entre, assista às aulas, use os bônus. Se você achar que não é pra você, devolvemos <span className="text-white font-bold">100% do seu dinheiro</span>. Sem perguntas.
                         </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* FAQ SECTION */}
+            <section className="py-12 md:py-20 px-6 md:px-4">
+                <div className="max-w-3xl mx-auto space-y-8">
+                    <h2 className="text-2xl md:text-3xl font-bold text-center text-white">PERGUNTAS FREQUENTES</h2>
+                    <div className="space-y-4">
+                        <Suspense fallback={<div className="h-20 bg-white/5 animate-pulse rounded-lg" />}>
+                            <FAQItem question="Preciso saber programar?" answer="Não! O método ensina exatamente como usar a IA do Lovable para criar códigos complexos sem que você precise digitar uma linha sequer." />
+                            <FAQItem question="Funciona para iniciantes?" answer="Sim, o curso é desenhado para pegar do zero e levar até a publicação do seu primeiro app." />
+                            <FAQItem question="O acesso é vitalício?" answer="Sim! No Plano Prata e Gold você garante acesso vitalício às aulas e futuras atualizações do método." />
+                            <FAQItem question="E se eu não gostar?" answer="Você tem 7 dias de garantia incondicional. Se não curtir, devolvemos seu dinheiro." />
+                            <FAQItem question="Como recebo o acesso?" answer="Imediatamente após a aprovação do pagamento, você recebe um e-mail com seu login e senha exclusivos." />
+                        </Suspense>
                     </div>
                 </div>
             </section>
