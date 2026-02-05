@@ -345,6 +345,61 @@ const Index = () => {
                 </section>
             )}
 
+            {/* BONUS SECTION */}
+            <section className="py-8 md:py-12 px-6 md:px-4">
+                <div className="max-w-5xl mx-auto">
+                    <h2 className="text-2xl md:text-4xl font-bold text-center text-white mb-8 uppercase tracking-wider">
+                        <span className="text-emerald-400">2 BÔNUS EXCLUSIVOS</span> PARA QUEM ENTRAR HOJE
+                    </h2>
+
+                    <div className="grid md:grid-cols-3 gap-6 relative z-10">
+                        {/* Bonus 1 */}
+                        <div className="group relative bg-gradient-to-br from-[#10a37f]/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#10a37f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-[#10a37f]/20 group-hover:border-[#10a37f]/50 relative z-10">
+                                <img src={chatgptBonus} alt="ChatGPT Bônus" className="w-24 h-24 mb-4 object-contain drop-shadow-[0_0_15px_rgba(16,163,127,0.3)]" />
+                                <span className="text-[#10a37f] font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #01</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Módulo ChatGPT 5 Plus</h3>
+                                <p className="text-gray-400 text-sm">Aprenda a integrar a inteligência artificial mais poderosa do mundo nos seus aplicativos Lovable.</p>
+                            </div>
+                        </div>
+
+                        {/* Bonus 2 */}
+                        <div className="group relative bg-gradient-to-br from-[#00c4cc]/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#00c4cc]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-[#00c4cc]/20 group-hover:border-[#00c4cc]/50 relative z-10">
+                                <img src={canvaBonus} alt="Canva Bônus" className="w-24 h-24 mb-4 object-contain drop-shadow-[0_0_15px_rgba(0,196,204,0.3)]" />
+                                <span className="text-[#00c4cc] font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #02</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Canva Design Pro</h3>
+                                <p className="text-gray-400 text-sm">Domine a criação de assets visuais profissionais para valorizar (e cobrar mais caro) pelos seus apps.</p>
+                            </div>
+                        </div>
+
+                        {/* Bonus 3 */}
+                        <div className="group relative bg-gradient-to-br from-rose-500/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-rose-500/20 group-hover:border-rose-500/50 relative z-10">
+                                <img src={lovableIcon} alt="Comunidade Lovable" className="w-24 h-24 mb-4 object-contain rounded-full drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" />
+                                <span className="text-rose-500 font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #03</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Comunidade Lovable</h3>
+                                <p className="text-gray-400 text-sm">Networking exclusivo com outros criadores. Tire dúvidas, compartilhe projetos e cresça junto.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <div className="flex flex-col items-center py-8 relative z-10 px-6">
+                <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/50 to-green-600/50 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500 opacity-60"></div>
+                    <button onClick={() => handleCheckoutClick('btn-comprar-bonus', getCheckoutLink('gold'))} className="relative flex items-center justify-center gap-3 w-full max-w-[340px] px-6 py-3.5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tight shadow-[0_10px_30px_rgba(5,150,105,0.4)] active:scale-95 transition-all duration-300 overflow-hidden">
+                        <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
+                        <span className="relative z-10 text-center leading-tight">QUERO O MÉTODO + 2 BÔNUS <br /><span className="text-xs font-black text-white/90">E AULA EXCLUSIVA POR {PRICE_GOLD}</span></span>
+                    </button>
+                </div>
+            </div>
+
             {!vslData?.benefits_copy && (
                 <section className="py-8 md:py-12 px-6 md:px-4">
                     <div className="max-w-5xl mx-auto space-y-4">
@@ -448,60 +503,7 @@ const Index = () => {
                 </section>
             )}
 
-            {/* BONUS SECTION */}
-            <section className="py-8 md:py-12 px-6 md:px-4">
-                <div className="max-w-5xl mx-auto">
-                    <h2 className="text-2xl md:text-4xl font-bold text-center text-white mb-8 uppercase tracking-wider">
-                        <span className="text-emerald-400">2 BÔNUS EXCLUSIVOS</span> PARA QUEM ENTRAR HOJE
-                    </h2>
 
-                    <div className="grid md:grid-cols-3 gap-6 relative z-10">
-                        {/* Bonus 1 */}
-                        <div className="group relative bg-gradient-to-br from-[#10a37f]/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#10a37f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-[#10a37f]/20 group-hover:border-[#10a37f]/50 relative z-10">
-                                <img src={chatgptBonus} alt="ChatGPT Bônus" className="w-24 h-24 mb-4 object-contain drop-shadow-[0_0_15px_rgba(16,163,127,0.3)]" />
-                                <span className="text-[#10a37f] font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #01</span>
-                                <h3 className="text-xl font-bold text-white mb-2">Módulo ChatGPT 5 Plus</h3>
-                                <p className="text-gray-400 text-sm">Aprenda a integrar a inteligência artificial mais poderosa do mundo nos seus aplicativos Lovable.</p>
-                            </div>
-                        </div>
-
-                        {/* Bonus 2 */}
-                        <div className="group relative bg-gradient-to-br from-[#00c4cc]/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#00c4cc]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-[#00c4cc]/20 group-hover:border-[#00c4cc]/50 relative z-10">
-                                <img src={canvaBonus} alt="Canva Bônus" className="w-24 h-24 mb-4 object-contain drop-shadow-[0_0_15px_rgba(0,196,204,0.3)]" />
-                                <span className="text-[#00c4cc] font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #02</span>
-                                <h3 className="text-xl font-bold text-white mb-2">Canva Design Pro</h3>
-                                <p className="text-gray-400 text-sm">Domine a criação de assets visuais profissionais para valorizar (e cobrar mais caro) pelos seus apps.</p>
-                            </div>
-                        </div>
-
-                        {/* Bonus 3 */}
-                        <div className="group relative bg-gradient-to-br from-rose-500/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
-                            <div className="absolute inset-0 bg-gradient-to-br from-rose-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-rose-500/20 group-hover:border-rose-500/50 relative z-10">
-                                <img src={lovableIcon} alt="Comunidade Lovable" className="w-24 h-24 mb-4 object-contain rounded-full drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" />
-                                <span className="text-rose-500 font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #03</span>
-                                <h3 className="text-xl font-bold text-white mb-2">Comunidade Lovable</h3>
-                                <p className="text-gray-400 text-sm">Networking exclusivo com outros criadores. Tire dúvidas, compartilhe projetos e cresça junto.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </section>
-
-            <div className="flex flex-col items-center py-8 relative z-10 px-6">
-                <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/50 to-green-600/50 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500 opacity-60"></div>
-                    <button onClick={() => handleCheckoutClick('btn-comprar-bonus', getCheckoutLink('gold'))} className="relative flex items-center justify-center gap-3 w-full max-w-[340px] px-6 py-3.5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tight shadow-[0_10px_30px_rgba(5,150,105,0.4)] active:scale-95 transition-all duration-300 overflow-hidden">
-                        <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
-                        <span className="relative z-10 text-center leading-tight">QUERO O MÉTODO + 2 BÔNUS <br /><span className="text-xs font-black text-white/90">E AULA EXCLUSIVA POR {PRICE_GOLD}</span></span>
-                    </button>
-                </div>
-            </div>
 
             <section id="pricing" className="py-8 md:py-12 px-6 md:px-4">
                 <div className="max-w-6xl mx-auto space-y-4">
