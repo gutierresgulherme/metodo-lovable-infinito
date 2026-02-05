@@ -19,6 +19,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, getThankYouMedia, VSLVariant } from "@/lib/vslService";
+import { analyzeVSL, VSLElement } from "@/lib/vslAnalyzer";
+import VSLVisualMap from "@/components/admin/VSLVisualMap";
+import CheckoutLinksManager from "@/components/admin/CheckoutLinksManager";
 import { cn } from "@/lib/utils";
 import { APP_VERSION, BUILD_DATE } from "@/version";
 
@@ -43,6 +46,8 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<QuickStats>({ sessions: 0, clicks: 0, ctr: 0, avgWatchTime: 0 });
     const [activeVsl, setActiveVsl] = useState<VSLVariant | null>(null);
     const [thankYouMedia, setThankYouMedia] = useState<{ videoUrl: string | null, bannerUrl: string | null }>({ videoUrl: null, bannerUrl: null });
+    const [homeElements, setHomeElements] = useState<VSLElement[]>([]);
+    const [tyElements, setTyElements] = useState<VSLElement[]>([]);
     const [loading, setLoading] = useState(true);
     const primarySlug = "home-vsl";
 
@@ -52,13 +57,17 @@ export default function AdminDashboard() {
 
     const loadQuickStats = async () => {
         try {
-            const [{ vsl }, tyMedia] = await Promise.all([
+            const [{ vsl }, tyMedia, homeAnalysis, tyAnalysis] = await Promise.all([
                 getCurrentVSLInfo(),
-                getThankYouMedia()
+                getThankYouMedia(),
+                analyzeVSL('home'),
+                analyzeVSL('thankyou')
             ]);
 
             setActiveVsl(vsl);
             setThankYouMedia(tyMedia);
+            setHomeElements(homeAnalysis.elements);
+            setTyElements(tyAnalysis.elements);
 
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -169,38 +178,27 @@ export default function AdminDashboard() {
                     <Card className="bg-[#0f0f16] border-white/5 overflow-hidden group relative">
                         <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                        <CardContent className="p-6 space-y-4 relative z-10">
+                        <CardContent className="p-6 space-y-6 relative z-10">
                             <div className="flex items-center justify-between">
                                 <h3 className="font-orbitron text-sm text-gray-400 tracking-widest uppercase">VSL HOME (VENDAS)</h3>
-                                <span className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-mono font-bold animate-pulse">
-                                    ATIVA
-                                </span>
-                            </div>
-
-                            <div className="aspect-video rounded-lg bg-black/50 border border-white/10 relative overflow-hidden flex items-center justify-center group-hover:border-purple-500/30 transition-colors">
-                                {activeVsl?.video_url ? (
-                                    <video
-                                        src={activeVsl.video_url}
-                                        className="absolute inset-0 w-full h-full object-cover opacity-50"
-                                        muted
-                                        playsInline
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover opacity-20" />
-                                )}
-                                <Clock className="w-8 h-8 text-purple-500 opacity-50" />
-                            </div>
-
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <p className="text-white font-orbitron font-bold truncate">{activeVsl?.name || "CARREGANDO..."}</p>
-                                    <p className="text-gray-500 text-xs font-mono mt-1">SLUG: home_vsl</p>
+                                <div className="flex gap-2">
+                                    <Link to="/admin/videos">
+                                        <Button size="sm" variant="outline" className="h-6 text-[9px] font-mono border-white/10 hover:bg-white/5">
+                                            EDITAR ASSSETS
+                                        </Button>
+                                    </Link>
+                                    <span className="px-2 py-0.5 rounded bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-mono font-bold animate-pulse">
+                                        ATIVA
+                                    </span>
                                 </div>
-                                <Link to="/admin/videos">
-                                    <Button size="sm" variant="outline" className="h-7 text-[10px] font-mono border-white/10 hover:bg-white/5">
-                                        EDITAR MÍDIAS
-                                    </Button>
-                                </Link>
+                            </div>
+
+                            {/* Mapa Visual */}
+                            <VSLVisualMap vslType="home" />
+
+                            <div className="border-t border-white/5 pt-4">
+                                {/* Gestão de Links */}
+                                <CheckoutLinksManager vslType="home" elements={homeElements} />
                             </div>
                         </CardContent>
                     </Card>
@@ -209,52 +207,27 @@ export default function AdminDashboard() {
                     <Card className="bg-[#0f0f16] border-white/5 overflow-hidden group relative">
                         <div className="absolute inset-0 bg-gradient-to-b from-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                        <CardContent className="p-6 space-y-4 relative z-10">
+                        <CardContent className="p-6 space-y-6 relative z-10">
                             <div className="flex items-center justify-between">
                                 <h3 className="font-orbitron text-sm text-gray-400 tracking-widest uppercase">VSL THANK YOU (OBRIGADO)</h3>
-                                <span className="px-2 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono font-bold animate-pulse">
-                                    UPSERLL
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="aspect-video rounded-lg bg-black/50 border border-white/10 relative overflow-hidden flex items-center justify-center group-hover:border-pink-500/30 transition-colors">
-                                    {thankYouMedia.videoUrl ? (
-                                        <video
-                                            src={thankYouMedia.videoUrl}
-                                            className="absolute inset-0 w-full h-full object-cover opacity-50"
-                                            muted
-                                            playsInline
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover opacity-20" />
-                                    )}
-                                    <Video className="w-6 h-6 text-pink-500 opacity-50" />
-                                </div>
-                                <div className="aspect-video rounded-lg bg-black/50 border border-white/10 relative overflow-hidden flex items-center justify-center group-hover:border-pink-500/30 transition-colors">
-                                    {thankYouMedia.bannerUrl ? (
-                                        <img
-                                            src={thankYouMedia.bannerUrl}
-                                            className="absolute inset-0 w-full h-full object-cover opacity-50"
-                                            alt="Banner Preview"
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover opacity-20" />
-                                    )}
-                                    <Gift className="w-6 h-6 text-pink-500 opacity-50" />
+                                <div className="flex gap-2">
+                                    <Link to="/admin/videos">
+                                        <Button size="sm" variant="outline" className="h-6 text-[9px] font-mono border-white/10 hover:bg-white/5">
+                                            EDITAR ASSSETS
+                                        </Button>
+                                    </Link>
+                                    <span className="px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono font-bold animate-pulse">
+                                        UPSELL
+                                    </span>
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <p className="text-white font-orbitron font-bold">Página de Obrigado</p>
-                                    <p className="text-gray-500 text-xs font-mono mt-1">SLUG: thankyou_upsell</p>
-                                </div>
-                                <Link to="/admin/videos">
-                                    <Button size="sm" variant="outline" className="h-7 text-[10px] font-mono border-white/10 hover:bg-white/5">
-                                        EDITAR MÍDIAS
-                                    </Button>
-                                </Link>
+                            {/* Mapa Visual */}
+                            <VSLVisualMap vslType="thankyou" />
+
+                            <div className="border-t border-white/5 pt-4">
+                                {/* Gestão de Links */}
+                                <CheckoutLinksManager vslType="thankyou" elements={tyElements} />
                             </div>
                         </CardContent>
                     </Card>

@@ -1,7 +1,7 @@
 # 🗺️ MAPA DO PROJETO - VSL DE VENDAS
 
 > **Data de Criação:** 04/02/2026  
-> **Versão:** 1.2 (Dashboard Atualizado)
+> **Versão:** 1.3 (Dashboard Completo + Mapa Visual)
 > **Status:** Em Produção (com tráfego ativo)
 
 ---
@@ -177,6 +177,12 @@ src/
 ##### Página de Integrações
 - Gerenciamento dos scripts Utmify
 - Visualização de configurações de tracking
+
+##### 🆕 Mapa Visual e Gestão de Checkouts
+- **Mapa da VSL:** Cards coloridos (Scarcity, Hero, Video, CTAs) gerados automaticamente.
+- **Gestão de Links:** Edição de URLs de checkout para casa botão identificado.
+- **Ticket Médio:** Cálculo automático do valor médio das ofertas.
+
 
 ---
 

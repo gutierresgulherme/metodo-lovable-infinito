@@ -64,14 +64,14 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
     setProgress(0);
 
     try {
-      // FORÇAR EXTENSÃO .png PARA PADRONIZAÇÃO DO FALLBACK
-      // Isso ante de uploads anteriores sem extensão que quebraram.
       const uploadPath = `banners/${pageKey}.png`;
       const NEW_BUCKET = 'site_uploads';
 
-      // 1. Upload new file to NEW bucket
-      setProgress(20);
-      let { error: uploadError } = await supabase.storage
+      console.log("🌍 [IMAGE] Iniciando Upload Público...");
+      setProgress(30);
+
+      // 1. Upload Público Direto
+      const { error: uploadError } = await supabasePublic.storage
         .from(NEW_BUCKET)
         .upload(uploadPath, file, {
           upsert: true,
@@ -79,88 +79,44 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
           cacheControl: '3600',
         });
 
-      // FALLBACK SE ERRO DE TOKEN
-      if (uploadError && (uploadError.message.includes('JWS') || uploadError.message.includes('JWT'))) {
-        console.warn("⚠️ [IMAGE] Token error, using public client...");
-        const result = await supabasePublic.storage
-          .from(NEW_BUCKET)
-          .upload(uploadPath, file, {
-            upsert: true,
-            contentType: file.type,
-            cacheControl: '3600',
-          });
-        uploadError = result.error;
-      }
-
       if (uploadError) {
-        console.error("Storage Upload Error Details:", uploadError);
-        throw new Error("STORAGE_UPLOAD_ERROR: " + uploadError.message);
+        console.error("❌ [STORAGE] Erro no upload de imagem:", uploadError);
+        throw new Error(`Erro Storage: ${uploadError.message}`);
       }
 
       // 2. Get Public URL
-      setProgress(50);
-      const { data: { publicUrl } } = supabase.storage
+      setProgress(60);
+      const { data: { publicUrl } } = supabasePublic.storage
         .from(NEW_BUCKET)
         .getPublicUrl(uploadPath);
 
-      // 3. Remove old image (Detect bucket dynamically)
-      if (currentImage) {
-        try {
-          // Url format: .../storage/v1/object/public/[BUCKET_NAME]/[PATH]
-          const urlParts = currentImage.image_url.split('/storage/v1/object/public/');
-          if (urlParts.length > 1) {
-            const fullPath = urlParts[1];
-            const bucketName = fullPath.split('/')[0];
-            const filePath = fullPath.substring(bucketName.length + 1).split('?')[0]; // Remove bucket name and query params
+      // Cache busting na URL
+      const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
-            if (bucketName && filePath) {
-              await supabase.storage.from(bucketName).remove([filePath]);
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to cleanup old storage file (non-critical):', e);
-        }
-      }
+      // 3. Update Database (Delete + Insert para garantir)
+      setProgress(80);
+      console.log("💾 [DB] Atualizando banner...");
 
-      // 4. Update Database
-      setProgress(70);
-      const { error: deleteError } = await supabase
+      await supabasePublic
         .from('banner_images')
         .delete()
         .eq('page_key', pageKey);
 
-      if (deleteError) {
-        console.error("DB Delete Error Details:", deleteError);
-        throw new Error("DB_DELETE_ERROR: " + deleteError.message);
-      }
-
-      setProgress(90);
-      let { error: insertError } = await supabase
+      const { error: insertError } = await supabasePublic
         .from('banner_images')
         .insert({
           page_key: pageKey,
-          image_url: publicUrl
+          image_url: finalUrl
         });
 
       if (insertError) {
-        console.warn("⚠️ [IMAGE] DB Insert failed, trying public client...");
-        const result = await supabasePublic
-          .from('banner_images')
-          .insert({
-            page_key: pageKey,
-            image_url: publicUrl
-          });
-        insertError = result.error;
-      }
-
-      if (insertError) {
-        console.error("DB Insert Error Details:", insertError);
-        throw new Error("DB_INSERT_ERROR: " + insertError.message);
+        console.error("❌ [DB] Erro ao salvar banner:", insertError);
+        throw new Error(`Erro Banco: ${insertError.message}`);
       }
 
       toast({
         title: 'Sucesso!',
-        description: 'Imagem atualizada com sucesso!',
+        description: 'Banner atualizado com sucesso!',
       });
 
       setFile(null);

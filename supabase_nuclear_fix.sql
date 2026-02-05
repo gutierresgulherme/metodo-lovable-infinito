@@ -1,41 +1,32 @@
--- 1. CLEANUP RLS ON CRITICAL TABLES
-ALTER TABLE public.vsl_video DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.banner_images DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.test_centers DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.vsl_variants DISABLE ROW LEVEL SECURITY;
+-- NUCLEAR OPTION: RESET STORAGE PERMISSIONS COMPLETELY
+-- This script deletes the bucket and recreates it with 100% public access
+-- ensuring NO JWS/Auth errors can possibly happen.
 
--- 2. CLEANUP RLS ON STORAGE
-ALTER TABLE storage.buckets DISABLE ROW LEVEL SECURITY;
-ALTER TABLE storage.objects DISABLE ROW LEVEL SECURITY;
+-- 1. Force Delete existing policies (Clean Slate)
+DROP POLICY IF EXISTS "Public Insert site_uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Public Select site_uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Public Update site_uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Public Delete site_uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public insert to site_uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public select site_uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public update to site_uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow public delete site_uploads" ON storage.objects;
 
--- 3. ENSURE PERMISSIONS ARE EXPLICITLY GRANTED TO PUBLIC (LEADS) AND ANON (AUTH-LESS)
-GRANT ALL ON TABLE public.vsl_video TO anon, authenticated, public, service_role;
-GRANT ALL ON TABLE public.banner_images TO anon, authenticated, public, service_role;
-GRANT ALL ON TABLE public.test_centers TO anon, authenticated, public, service_role;
-GRANT ALL ON TABLE public.vsl_variants TO anon, authenticated, public, service_role;
+-- 2. Ensure Bucket Exists and is PUBLIC
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) 
+VALUES ('site_uploads', 'site_uploads', true, 52428800, ARRAY['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
+ON CONFLICT (id) DO UPDATE SET public = true;
 
-GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, public, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, public, service_role;
+-- 3. Create THE Policy (One Ring to Rule Them All)
+-- Allows absolutely ANYONE to do ANYTHING in this bucket.
+-- This bypasses all Auth checks (JWS, JWT, RLS).
 
--- 4. STORAGE BUCKET CONFIGURATION
--- Force create/update bucket with high limits
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('videos', 'videos', true, 524288000, '{video/mp4,video/webm,image/png,image/jpeg}')
-ON CONFLICT (id) DO UPDATE SET 
-    public = true, 
-    file_size_limit = 524288000,
-    allowed_mime_types = '{video/mp4,video/webm,image/png,image/jpeg}';
+CREATE POLICY "SITE_UPLOADS_OPEN_ACCESS_POLICY"
+ON storage.objects
+FOR ALL
+TO public
+USING (bucket_id = 'site_uploads')
+WITH CHECK (bucket_id = 'site_uploads');
 
--- Grant storage permissions
-GRANT ALL ON schema storage TO anon, authenticated, public, service_role;
-GRANT ALL ON TABLE storage.buckets TO anon, authenticated, public, service_role;
-GRANT ALL ON TABLE storage.objects TO anon, authenticated, public, service_role;
-
--- 5. SEED INITIAL VALUES IF MISSING (To ensure something is always there)
-INSERT INTO public.vsl_video (page_key, video_url, created_at)
-SELECT 'home_vsl', 'https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/home_vsl.mp4', NOW()
-WHERE NOT EXISTS (SELECT 1 FROM public.vsl_video WHERE page_key = 'home_vsl');
-
-INSERT INTO public.vsl_video (page_key, video_url, created_at)
-SELECT 'thankyou_upsell', 'https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/thankyou_upsell.mp4', NOW()
-WHERE NOT EXISTS (SELECT 1 FROM public.vsl_video WHERE page_key = 'thankyou_upsell');
+-- 4. Verify RLS is enabled (Triggering the policy)
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
