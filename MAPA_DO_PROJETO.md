@@ -1,7 +1,7 @@
 # 🗺️ MAPA DO PROJETO - VSL DE VENDAS
 
 > **Data de Criação:** 04/02/2026  
-> **Versão:** 1.1 (Organizado)
+> **Versão:** 1.2 (Dashboard Atualizado)
 > **Status:** Em Produção (com tráfego ativo)
 
 ---
@@ -216,25 +216,13 @@ src/
 
 ---
 
-### 🟡 BUG #3: Mapa Visual Incompleto no Dashboard
+### � BUG #3: Mapa Visual Incompleto no Dashboard (RESOLVIDO)
+**Status:** ✅ Corrigido
+**Solução:** 
+- O Dashboard agora exibe dois cards principais sob a seção "MAPA ESTRATÉGICO": VSL Home e VSL Thank You.
+- O card da Thank You mostra preview duplo (Vídeo + Banner) para facilitar a conferência visual.
+- Layout responsivo garantido para ambas as VSLs.
 
-**Descrição:**
-O dashboard mostra um "mapa visual" com os botões de cada VSL, mas só aparece a VSL Home.
-
-**Comportamento Esperado:**
-- Dashboard mostra card da VSL Home com seus botões
-- Dashboard mostra card da VSL Thank You com seus botões
-
-**Comportamento Atual:**
-- ✅ Mostra VSL Home corretamente
-- ❌ Não mostra VSL Thank You
-
-**Impacto:** MÉDIO - Dificulta visualização/gestão
-
-**Possível Causa:**
-- Componente do dashboard só renderiza 1 VSL
-- Query do banco retorna só Home
-- Lógica de loop está faltando pra Thank You
 
 ---
 
