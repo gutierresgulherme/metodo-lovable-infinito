@@ -227,14 +227,14 @@ const Index = () => {
                     <div className="space-y-4 mb-10">
                         <h1 className="text-3xl md:text-6xl font-[900] uppercase tracking-tight leading-[0.95] perspective-1000">
                             <span className="block text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                                {HEADLINE.split('?')[0]}?
+                                VOCÊ AINDA PAGA
                             </span>
                             <span className="block bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent filter saturate-150 drop-shadow-[0_0_10px_rgba(52,211,153,0.2)]">
-                                DESTRAVE O SEU
+                                PRA USAR O LOVABLE?
                             </span>
                         </h1>
                         <p className="text-lg md:text-2xl font-light text-gray-400 max-w-2xl mx-auto leading-relaxed tracking-wider font-orbitron">
-                            VOCÊ ESTAVA ESPERANDO <span className="text-rose-500 font-black border-b-2 border-rose-500/50 italic">VIRAR O DIA</span> PARA CONTINUAR SEU PROJETO?
+                            até quando você vai continuar <span className="text-rose-500 font-black border-b-2 border-rose-500/50 italic">ESPERANDO VIRAR O DIA</span> PARA CONTINUAR SEU PROJETO…
                         </p>
                     </div>
 
@@ -244,9 +244,9 @@ const Index = () => {
                             <div className="flex flex-col items-center">
                                 <div className="flex items-center gap-2 mb-4">
                                     <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>
-                                    <span className="text-[9px] md:text-xs font-black uppercase tracking-[0.4em] text-rose-500">Liberação Instantânea</span>
+                                    <span className="text-[9px] md:text-xs font-black uppercase tracking-[0.4em] text-rose-500">Tenha acesso ao Método Lovable Ilimitado</span>
                                 </div>
-                                <p className="text-xs md:text-sm text-gray-500 line-through font-medium mb-1">Original: {OLD_PRICE}</p>
+                                <p className="text-xs md:text-sm text-gray-500 line-through font-medium mb-1">De: {OLD_PRICE}</p>
                                 <div className="flex flex-col items-center justify-center gap-1">
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest italic opacity-50">Por apenas</span>
@@ -267,7 +267,7 @@ const Index = () => {
                 <div className="max-w-4xl mx-auto space-y-6">
                     <div className="flex items-center justify-center gap-3">
                         <div className="h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent flex-1" />
-                        <h2 className="text-sm md:text-base font-bold text-center text-gray-400 uppercase tracking-[0.3em]">Assista à Apresentação</h2>
+                        <h2 className="text-sm md:text-base font-bold text-center text-gray-400 uppercase tracking-[0.3em]">ASSISTA AO VÍDEO DA OFERTA</h2>
                         <div className="h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent flex-1" />
                     </div>
                     <div className="relative w-full max-w-[100%] rounded-xl overflow-hidden shadow-2xl bg-black aspect-video flex items-center justify-center group/video">
@@ -314,7 +314,7 @@ const Index = () => {
                                 <span className="relative z-10 flex flex-col items-center leading-tight">
                                     <span className="block italic text-[9px] opacity-70 tracking-widest mb-0.5">Garanta Agora</span>
                                     QUERO O MÉTODO LOVABLE ILIMITADO
-                                    <span className="text-xs font-black text-white/90 drop-shadow-md">POR APENAS {PRICE_PRATA}</span>
+                                    <span className="text-xs font-black text-white/90 drop-shadow-md">POR {PRICE_PRATA}</span>
                                 </span>
                                 <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_white] animate-pulse"></div>
                             </button>
@@ -349,112 +349,127 @@ const Index = () => {
 
             {!vslData?.benefits_copy && (
                 <section className="py-8 md:py-12 px-6 md:px-4">
-                    <div className="max-w-5xl mx-auto space-y-4">
-                        <div className="space-y-12">
-                            {/* 2 TYPES SECTION */}
-                            <div className="space-y-6">
-                                <h2 className="text-2xl md:text-3xl font-black text-center text-white uppercase tracking-tight">
-                                    SÓ EXISTEM 2 TIPOS DE PESSOAS AQUI:
-                                </h2>
-                                <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                                    <div className="bg-black/40 border-2 border-emerald-500/50 rounded-xl p-6 relative overflow-hidden group">
-                                        <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors" />
-                                        <div className="relative z-10 flex gap-4">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                                                <Check className="w-5 h-5 text-white" />
-                                            </div>
-                                            <p className="text-gray-200 font-medium leading-relaxed">
-                                                As que pegam agora esse método e <span className="text-emerald-400 font-bold">desbloqueiam o Lovable de forma ilimitada</span>
-                                            </p>
+                    <div className="max-w-5xl mx-auto space-y-12">
+                        {/* CUSTOM COPY SECTION */}
+                        <div className="space-y-6 text-center md:text-left bg-black/40 p-6 md:p-8 rounded-2xl border border-white/5">
+                            <h2 className="text-2xl md:text-4xl font-bold text-white mb-6 uppercase">O QUE VOU RECEBER:</h2>
+                            <ul className="space-y-3 text-lg text-gray-300 font-medium inline-block text-left">
+                                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-emerald-500 flex-shrink-0" /> Acesso ILIMITADO ao Lovable</li>
+                                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-emerald-500 flex-shrink-0" /> Criar SITES E APLICATIVOS ilimitadas com IA</li>
+                                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-emerald-500 flex-shrink-0" /> Sem bloqueio, sem limite, sem trava</li>
+                                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-emerald-500 flex-shrink-0" /> Método testado e aprovado pelos GRINGOS</li>
+                                <li className="flex items-center gap-3"><Check className="w-5 h-5 text-emerald-500 flex-shrink-0" /> Suporte se tiver qualquer dúvida</li>
+                            </ul>
+
+                            <div className="mt-8 space-y-4 text-gray-300 leading-relaxed text-lg">
+                                <p className="font-bold text-white text-xl">Chegou o fim da palhaçada</p>
+                                <p>A gente descobriu uma brecha limpa no sistema do Lovable.</p>
+                                <p>E agora você pode ter acesso completo, vitalício, sem limite de páginas, sem pagar <span className="text-emerald-400 font-bold">NADA todo mês.</span></p>
+                                <div className="flex flex-col gap-2 mt-4 font-bold text-white/90">
+                                    <p>📌 Não precisa cartão internacional</p>
+                                    <p>📌 Não é pirataria</p>
+                                    <p>📌 Funciona AGORA</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2 TYPES SECTION */}
+                        <div className="space-y-6">
+                            <h2 className="text-2xl md:text-3xl font-black text-center text-white uppercase tracking-tight">
+                                SÓ EXISTEM 2 TIPOS DE PESSOAS AQUI:
+                            </h2>
+                            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                                <div className="bg-black/40 border-2 border-emerald-500/50 rounded-xl p-6 relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors" />
+                                    <div className="relative z-10 flex gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                                            <Check className="w-5 h-5 text-white" />
                                         </div>
+                                        <p className="text-gray-200 font-medium leading-relaxed">
+                                            As que pegam agora esse método e <span className="text-emerald-400 font-bold">desbloqueiam o Lovable de forma ilimitada</span>
+                                        </p>
                                     </div>
-                                    <div className="bg-black/40 border-2 border-red-900/30 rounded-xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-colors">
-                                        <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
-                                        <div className="relative z-10 flex gap-4">
-                                            <div className="w-8 h-8 rounded-full bg-red-900/50 flex items-center justify-center flex-shrink-0">
-                                                <X className="w-5 h-5 text-red-500" />
-                                            </div>
-                                            <p className="text-gray-400 font-medium leading-relaxed">
-                                                As que vão continuar presas no plano gratuito, empacadas nos projetos sem poder testar logo
-                                            </p>
+                                </div>
+                                <div className="bg-black/40 border-2 border-red-900/30 rounded-xl p-6 relative overflow-hidden group hover:border-red-500/30 transition-colors">
+                                    <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors" />
+                                    <div className="relative z-10 flex gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-red-900/50 flex items-center justify-center flex-shrink-0">
+                                            <X className="w-5 h-5 text-red-500" />
                                         </div>
+                                        <p className="text-gray-400 font-medium leading-relaxed">
+                                            As que vão continuar presas no plano gratuito, empacadas nos projetos sem poder testar logo
+                                        </p>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* PRICE ANCHOR SECTION */}
-                            <div className="max-w-3xl mx-auto relative">
-                                {/* Red Banner - Timer */}
-                                <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-[110%] md:w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600 py-2 px-4 shadow-[0_0_20px_rgba(220,38,38,0.5)] z-20 text-center transform -rotate-1 rounded-sm">
-                                    <p className="text-white font-black text-xs md:text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                                        <Clock className="w-4 h-4 animate-pulse" />
-                                        🔥 OFERTA LOVABLE INFINITO EXPIRA EM: <span className="font-mono text-yellow-300 text-base">{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}</span>
-                                    </p>
-                                </div>
+                        {/* PRICE ANCHOR SECTION */}
+                        <div className="max-w-3xl mx-auto relative">
+                            {/* Red Banner - Timer */}
+                            <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-[110%] md:w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600 py-2 px-4 shadow-[0_0_20px_rgba(220,38,38,0.5)] z-20 text-center transform -rotate-1 rounded-sm">
+                                <p className="text-white font-black text-xs md:text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+                                    <Clock className="w-4 h-4 animate-pulse" />
+                                    🔥 OFERTA LOVABLE INFINITO EXPIRA EM: <span className="font-mono text-yellow-300 text-base">{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}</span>
+                                </p>
+                            </div>
 
-                                <div className="bg-[#0A0A0F] border border-white/10 rounded-2xl p-8 pt-12 md:p-12 mt-8 relative overflow-hidden shadow-2xl">
-                                    <div className="space-y-8 relative z-10">
-                                        <h3 className="text-xl md:text-2xl font-bold text-center text-gray-200 uppercase">
-                                            SE FOSSE PAGAR O PREÇO REAL POR TUDO ISSO...
-                                        </h3>
+                            <div className="bg-[#0A0A0F] border border-white/10 rounded-2xl p-8 pt-12 md:p-12 mt-8 relative overflow-hidden shadow-2xl">
+                                <div className="space-y-8 relative z-10">
+                                    <h3 className="text-xl md:text-2xl font-bold text-center text-gray-200 uppercase">
+                                        SE FOSSE PAGAR O PREÇO REAL POR TUDO ISSO...
+                                    </h3>
 
-                                        <div className="space-y-4">
-                                            {[
-                                                { item: "só pra ter acesso ao Lovable", price: "US$20", period: "por mês" },
-                                                { item: "pra usar o Gamma PRO sem limitações", price: "US$15", period: "mensais" },
-                                                { item: "pra liberar o verdadeiro poder do ChatGPT PRO", price: "US$20", period: "mensais" },
-                                                { item: "pra liberar todos os recursos do Canva PRO ANUAL", price: "US$58", period: "mensais" },
-                                                // Removed Canva Pro monthly line as it's not in the new request list, kept the one from previous code or just stick to the new list?
-                                                // The user request says: "Canva PRO: US$ 15/mês". I will use 15.
-                                            ].map((row, i) => {
-                                                // Quick fix for the map to match specific values requested if different from array
-                                                // Actually I'll just rewrite the array below cleanly.
-                                                return null;
-                                            })}
-
-                                            <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
-                                                <span className="text-yellow-500">💰</span>
-                                                <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$20</span> por mês só pra ter acesso ao Lovable</p>
-                                            </div>
-                                            <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
-                                                <span className="text-yellow-500">💰</span>
-                                                <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$20</span> mensais pra liberar o verdadeiro poder do ChatGPT PRO</p>
-                                            </div>
-                                            <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
-                                                <span className="text-yellow-500">💰</span>
-                                                <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$15</span> mensais pra liberar todos os recursos do Canva PRO</p>
-                                            </div>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
+                                            <span className="text-yellow-500">💰</span>
+                                            <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$20</span> por mês só pra ter acesso ao Lovable</p>
                                         </div>
-
-                                        <div className="text-center space-y-2 pt-4 border-t border-white/10">
-                                            <p className="text-lg md:text-xl text-white">
-                                                Soma total? <span className="text-red-500 font-bold">US$55/mês</span>
-                                            </p>
-                                            <p className="text-emerald-500 font-bold text-sm">(aprox. R$ 300,00/mês)</p>
+                                        <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
+                                            <span className="text-yellow-500">💰</span>
+                                            <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$15</span> mensais pra usar o Gamma PRO sem limitações</p>
                                         </div>
+                                        <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
+                                            <span className="text-yellow-500">💰</span>
+                                            <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$20</span> mensais pra liberar o verdadeiro poder do ChatGPT PRO</p>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm md:text-base border-b border-white/5 pb-2">
+                                            <span className="text-yellow-500">💰</span>
+                                            <p className="text-gray-400 flex-1"><span className="text-red-400 font-bold">US$58</span> mensais pra liberar todos os recursos do Canva PRO ANUAL</p>
+                                        </div>
+                                    </div>
 
-                                        <div className="text-center space-y-4 pt-4">
-                                            <p className="text-gray-400 uppercase tracking-widest text-xs">E o que você vai pagar aqui?</p>
-                                            <div className="flex flex-col items-center">
-                                                <span className="text-4xl md:text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
-                                                    Apenas R$24,90
-                                                </span>
-                                                <span className="text-yellow-400 font-bold uppercase tracking-widest text-sm mt-2">UMA ÚNICA VEZ.</span>
-                                            </div>
+                                    <div className="text-center space-y-2 pt-4 border-t border-white/10">
+                                        <p className="text-lg md:text-xl text-white">
+                                            Soma total? <span className="text-red-500 font-bold">US$103/mês</span>
+                                        </p>
+                                        <p className="text-emerald-500 font-bold text-sm">(+ de R$570 por mês, fácil.)</p>
+                                    </div>
+
+                                    <div className="text-center space-y-4 pt-4">
+                                        <p className="text-gray-400 uppercase tracking-widest text-xs">E o que você vai pagar aqui?</p>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-4xl md:text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                                                Apenas {PRICE_PRATA}
+                                            </span>
+                                            <span className="text-yellow-400 font-bold uppercase tracking-widest text-sm mt-2">Uma Única Vez.</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
                 </section>
-            )}
+    )
+}
 
-            {/* BONUS SECTION */}
+{/* BONUS SECTION */ }
             <section className="py-8 md:py-12 px-6 md:px-4">
                 <div className="max-w-5xl mx-auto">
                     <h2 className="text-2xl md:text-4xl font-bold text-center text-white mb-8 uppercase tracking-wider">
-                        <span className="text-emerald-400">2 BÔNUS EXCLUSIVOS</span> PARA QUEM ENTRAR HOJE
+                        <span className="text-emerald-400">Por apenas {PRICE_GOLD}</span> receba o Método Lovable Infinito <br />
+                        e de BRINDE VÃO MAIS <span className="text-emerald-400">2 BÔNUS EXCLUSIVOS…</span>
                     </h2>
 
                     <div className="grid md:grid-cols-3 gap-6 relative z-10">
@@ -484,10 +499,10 @@ const Index = () => {
                         <div className="group relative bg-gradient-to-br from-rose-500/10 to-transparent p-1 rounded-2xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
                             <div className="absolute inset-0 bg-gradient-to-br from-rose-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="bg-[#0A0A0F]/90 h-full p-6 rounded-xl flex flex-col items-center text-center border border-rose-500/20 group-hover:border-rose-500/50 relative z-10">
-                                <img src={lovableIcon} alt="Comunidade Lovable" className="w-24 h-24 mb-4 object-contain rounded-full drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" />
-                                <span className="text-rose-500 font-bold text-xs uppercase tracking-widest mb-2">BÔNUS #03</span>
-                                <h3 className="text-xl font-bold text-white mb-2">Comunidade Lovable</h3>
-                                <p className="text-gray-400 text-sm">Networking exclusivo com outros criadores. Tire dúvidas, compartilhe projetos e cresça junto.</p>
+                                <img src={lovableIcon} alt="Aula Bônus" className="w-24 h-24 mb-4 object-contain rounded-full drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]" />
+                                <span className="text-rose-500 font-bold text-xs uppercase tracking-widest mb-2">🎁 BÔNUS EXCLUSIVO</span>
+                                <h3 className="text-xl font-bold text-white mb-2">Aula Bônus: Como remover a marca d'água do Lovable</h3>
+                                <p className="text-gray-400 text-sm">(Grátis)</p>
                             </div>
                         </div>
                     </div>
@@ -514,13 +529,13 @@ const Index = () => {
                         <div className="grid md:grid-cols-2 gap-6 md:gap-8">
                             <PricingCard
                                 title="🟡 PLANO GOLD" price={PRICE_GOLD}
-                                features={["Método Lovable Infinito", "Acesso Ilimitado", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "Suporte Premium"]}
+                                features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "🎁 Aula: Como remover a marca d'água do Lovable", "Suporte premium"]}
                                 variant="gold" buttonText="QUERO PLANO GOLD"
                                 onCheckout={() => handleCheckoutClick('btn-comprar-24-2', getCheckoutLink('gold'))}
                             />
                             <PricingCard
                                 title="⚙️ PLANO PRATA" price={PRICE_PRATA}
-                                features={["Método Lovable Infinito", "Acesso Ilimitado", "Suporte Básico"]}
+                                features={["Método Lovable Infinito", "Acesso ilimitado Lovable", "Suporte básico"]}
                                 variant="silver" buttonText="QUERO PLANO PRATA"
                                 onCheckout={() => handleCheckoutClick('btn-comprar-13-2', getCheckoutLink('prata'))}
                             />
@@ -529,31 +544,32 @@ const Index = () => {
                 </div>
             </section>
 
-            {/* GUARANTEE SECTION */}
-            <section className="py-12 px-6 bg-black/20">
-                <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center text-center md:text-left gap-8 bg-gradient-to-b from-white/5 to-transparent p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] group-hover:bg-emerald-500/20 transition-all"></div>
-                    <img src={garantia7dias} alt="Garantia 7 Dias" className="w-40 md:w-56 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] flex-shrink-0" />
-                    <div className="relative z-10">
-                        <h2 className="text-2xl font-bold text-white mb-3">RISCO ZERO POR 7 DIAS</h2>
-                        <p className="text-gray-400 leading-relaxed text-lg">
-                            Entre, assista às aulas, use os bônus. Se você achar que não é pra você, devolvemos <span className="text-white font-bold">100% do seu dinheiro</span>. Sem perguntas.
-                        </p>
-                    </div>
-                </div>
-            </section>
+{/* GUARANTEE SECTION */ }
+<section className="py-12 px-6 bg-black/20">
+    <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center text-center md:text-left gap-8 bg-gradient-to-b from-white/5 to-transparent p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/20 transition-colors">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] group-hover:bg-emerald-500/20 transition-all"></div>
+        <img src={garantia7dias} alt="Garantia 7 Dias" className="w-40 md:w-56 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] flex-shrink-0" />
+        <div className="relative z-10">
+            <h2 className="text-2xl font-bold text-white mb-3">Garantia de 7 dias ou seu dinheiro de volta</h2>
+            <p className="text-gray-400 leading-relaxed text-lg">
+                Se não funcionar pra você, devolvemos seu dinheiro. <br />
+                Sem desculpa, sem enrolação. <br />
+                <span className="text-white font-bold">Ou funciona, ou o dinheiro volta. Simples assim.</span>
+            </p>
+        </div>
+    </div>
+</section>
 
-            {/* FAQ SECTION */}
+{/* FAQ SECTION */ }
             <section className="py-12 md:py-20 px-6 md:px-4">
                 <div className="max-w-3xl mx-auto space-y-8">
                     <h2 className="text-2xl md:text-3xl font-bold text-center text-white">PERGUNTAS FREQUENTES</h2>
                     <div className="space-y-4">
                         <Suspense fallback={<div className="h-20 bg-white/5 animate-pulse rounded-lg" />}>
-                            <FAQItem question="Preciso saber programar?" answer="Não! O método ensina exatamente como usar a IA do Lovable para criar códigos complexos sem que você precise digitar uma linha sequer." />
-                            <FAQItem question="Funciona para iniciantes?" answer="Sim, o curso é desenhado para pegar do zero e levar até a publicação do seu primeiro app." />
-                            <FAQItem question="O acesso é vitalício?" answer="Sim! No Plano Prata e Gold você garante acesso vitalício às aulas e futuras atualizações do método." />
-                            <FAQItem question="E se eu não gostar?" answer="Você tem 7 dias de garantia incondicional. Se não curtir, devolvemos seu dinheiro." />
-                            <FAQItem question="Como recebo o acesso?" answer="Imediatamente após a aprovação do pagamento, você recebe um e-mail com seu login e senha exclusivos." />
+                            <FAQItem question="Isso é golpe?" answer="Não. O método é baseado em estratégias reais e legais para maximizar o uso do Lovable." />
+                            <FAQItem question="Precisa baixar algo?" answer="Não, tudo é feito diretamente no navegador." />
+                            <FAQItem question="Posso tomar ban?" answer="O método utiliza brechas limpas e seguras, minimizando riscos." />
+                            <FAQItem question="E se não funcionar?" answer="Você tem 7 dias de garantia incondicional. Se não funcionar, seu dinheiro é devolvido." />
                         </Suspense>
                     </div>
                 </div>
@@ -562,7 +578,7 @@ const Index = () => {
             <footer className="py-8 px-6 border-t border-white/10 bg-black/40 text-center">
                 <p className="text-gray-500 text-sm">© 2025 — Todos os direitos reservados</p>
             </footer>
-        </div>
+        </div >
     );
 };
 
