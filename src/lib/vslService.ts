@@ -188,8 +188,9 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
         if (!bannerUrl) {
             // Fallback Blind para Banner
             const storageBaseImg = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/site_uploads/";
-            // Padrão novo: banners/page_key.png (FORÇADO .png no upload)
-            // Tenta o regional primeiro
+
+            // Padrão novo: banners/page_key.png
+            // 1. Tentar Regional
             const fallbackKey = `banners/thankyou_banner${suffix}.png`;
             bannerUrl = `${storageBaseImg}${fallbackKey}?t=${timestamp}`;
             console.log(`[THANKYOU-SERVICE] Banner URL Construída (Fallback): ${bannerUrl}`);
