@@ -74,10 +74,11 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
         if (!videoData) {
             console.warn("[VSL] NADA ENCONTRADO NO BANCO. Tentando URL direta do Storage (Blind Fallback).");
             const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
+            const timestamp = Date.now();
 
             // Assume que se o admin subiu para "Home VSL Brasil", o arquivo é home_vsl_br.mp4
             const fallbackKey = regionalKey;
-            const fallbackUrl = `${storageBase}${fallbackKey}.mp4`;
+            const fallbackUrl = `${storageBase}${fallbackKey}.mp4?t=${timestamp}`;
 
             // Mockando um objeto VSLVariant com a URL direta
             const vsl: VSLVariant = {
@@ -116,9 +117,10 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
         const region = getRegionByDomain();
         const suffix = region === 'USA' ? '_usa' : '_br';
         const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
+        const timestamp = Date.now();
 
         // Em caso de erro total, tenta construir URL também, não força home_vsl padrão se for BR
-        const fallbackUrl = `${storageBase}home_vsl${suffix}.mp4`;
+        const fallbackUrl = `${storageBase}home_vsl${suffix}.mp4?t=${timestamp}`;
 
         return {
             vsl: {
@@ -145,6 +147,7 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
     try {
         const region = getRegionByDomain();
         const suffix = region === 'USA' ? '_usa' : '_br';
+        const timestamp = Date.now();
         console.log(`[THANKYOU-SERVICE] Buscando Mídias | Região: ${region} | Host: ${window.location.hostname}`);
 
         let videoUrl: string | null = null;
@@ -166,7 +169,7 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
             console.warn(`[THANKYOU-SERVICE] NENHUM vídeo encontrado no banco. Tentando URL direta do Storage (Blind Fallback).`);
             const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
             const fallbackKey = `thankyou_upsell${suffix}`;
-            videoUrl = `${storageBase}${fallbackKey}.mp4`;
+            videoUrl = `${storageBase}${fallbackKey}.mp4?t=${timestamp}`;
             console.log(`[THANKYOU-SERVICE] URL Construída (Fallback): ${videoUrl}`);
         }
 
@@ -188,7 +191,7 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
             // Padrão novo: banners/page_key.png (FORÇADO .png no upload)
             // Tenta o regional primeiro
             const fallbackKey = `banners/thankyou_banner${suffix}.png`;
-            bannerUrl = `${storageBaseImg}${fallbackKey}`;
+            bannerUrl = `${storageBaseImg}${fallbackKey}?t=${timestamp}`;
             console.log(`[THANKYOU-SERVICE] Banner URL Construída (Fallback): ${bannerUrl}`);
         }
 
@@ -200,12 +203,13 @@ export const getThankYouMedia = async (): Promise<{ videoUrl: string | null, ban
         // Fallback de emergência (Catastrófico)
         const region = getRegionByDomain();
         const suffix = region === 'USA' ? '_usa' : '_br';
+        const timestamp = Date.now();
         const storageBaseVideo = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
         const storageBaseImg = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/site_uploads/";
 
         return {
-            videoUrl: `${storageBaseVideo}thankyou_upsell${suffix}.mp4`,
-            bannerUrl: `${storageBaseImg}banners/thankyou_banner${suffix}.png`
+            videoUrl: `${storageBaseVideo}thankyou_upsell${suffix}.mp4?t=${timestamp}`,
+            bannerUrl: `${storageBaseImg}banners/thankyou_banner${suffix}.png?t=${timestamp}`
         };
     }
 }

@@ -206,31 +206,13 @@ src/
 
 ---
 
-### 🔴 BUG #2: Exibição Incorreta de Mídias nas VSLs
+### � BUG #2: Exibição Incorreta de Mídias nas VSLs (RESOLVIDO)
+**Status:** ✅ Corrigido
+**Solução:** 
+- A lógica de exibição em `vslService.ts` foi sincronizada com a nova estrutura de Buckets e Nomenclatura.
+- Adicionado **Timestamp Cache-Busting** (`?t=...`) tanto nas buscas do banco quanto nos fallbacks diretos do Storage.
+- Separação estrita de mídias por região (BR/USA) e tipo (Home/ThankYou) validada.
 
-**Descrição:**
-Mesmo quando há vídeos/imagens no banco, as VSLs não exibem o conteúdo correto de cada página.
-
-**Comportamento Esperado:**
-- VSL Home mostra vídeo específico da Home
-- VSL Thank You mostra vídeo + imagem específicos da Thank You
-
-**Comportamento Atual:**
-- Às vezes mostra vídeo da Home na página Thank You
-- Às vezes não mostra nada (vazio ou placeholder)
-- Inconsistência na busca dos arquivos corretos
-
-**Impacto:** ALTO - Leads veem conteúdo errado
-
-**Possível Causa (segundo walkthrough anterior):**
-- Lógica de "Any Video Fallback" foi removida
-- Sistema de separação de mídias por região (Home vs Thank You) pode estar com bug
-- URLs presigned do Supabase podem estar incorretas
-
-**Arquivos Envolvidos:**
-- `vslService.ts` - lógica de busca de vídeos
-- Componentes das VSLs (Home e Thank You)
-- Queries do Supabase
 
 ---
 
