@@ -209,7 +209,7 @@ export default function ThankYou() {
               {/* Apresentação da Oferta */}
               <div className="text-center mb-8">
                 <a
-                  href="https://pay.kirvano.com/1057f5fc-5244-4aef-b660-f1f5de214113"
+                  href="https://go.pepperpay.com.br/9dfj4"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 text-black font-bold text-lg hover:shadow-[0_0_40px_rgba(251,191,36,0.4)] hover:scale-105 transition-all duration-300 mb-4 animate-pulse-slow"
@@ -334,7 +334,7 @@ export default function ThankYou() {
 
                     {/* CTA Button */}
                     <a
-                      href="https://pay.kirvano.com/1057f5fc-5244-4aef-b660-f1f5de214113"
+                      href="https://go.pepperpay.com.br/9dfj4"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 text-black font-bold text-lg hover:shadow-[0_0_40px_rgba(251,191,36,0.4)] hover:scale-105 transition-all duration-300 animate-pulse-slow"
