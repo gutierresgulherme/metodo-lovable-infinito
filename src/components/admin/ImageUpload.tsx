@@ -70,8 +70,8 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
       console.log("🌍 [IMAGE] Iniciando Upload Público...");
       setProgress(30);
 
-      // 1. Upload Público Direto
-      const { error: uploadError } = await supabasePublic.storage
+      // 1. Upload Autenticado
+      const { error: uploadError } = await supabase.storage
         .from(NEW_BUCKET)
         .upload(uploadPath, file, {
           upsert: true,
@@ -86,7 +86,7 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
 
       // 2. Get Public URL
       setProgress(60);
-      const { data: { publicUrl } } = supabasePublic.storage
+      const { data: { publicUrl } } = supabase.storage
         .from(NEW_BUCKET)
         .getPublicUrl(uploadPath);
 
@@ -97,12 +97,12 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
       setProgress(80);
       console.log("💾 [DB] Atualizando banner...");
 
-      await supabasePublic
+      await supabase
         .from('banner_images')
         .delete()
         .eq('page_key', pageKey);
 
-      const { error: insertError } = await supabasePublic
+      const { error: insertError } = await supabase
         .from('banner_images')
         .insert({
           page_key: pageKey,

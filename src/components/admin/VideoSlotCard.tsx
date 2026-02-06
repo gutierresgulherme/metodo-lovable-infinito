@@ -75,19 +75,19 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
     console.log("🎬 [UPLOAD] Iniciando processo para:", slot.title);
 
     try {
-      const fileName = `${slot.page_key}.mp4`;
+      // Use timestamp to create unique filename, preventing overwrite of the original "demo" file
+      const fileName = `${slot.page_key}_${Date.now()}.mp4`;
       const uploadPath = `vsl/${fileName}`;
 
-      // --- UPLOAD PÚBLICO DIRETO ---
-      // Como os buckets são públicos, não precisamos de autenticação para upload
-      // desde que a Policy de "INSERT" esteja aberta para public/anon.
-      console.log("🌍 [UPLOAD] Usando Cliente Público (Direct Upload)...");
+      // --- UPLOAD AUTENTICADO ---
+      // Usamos o cliente autenticado (supabase) para garantir que temos permissão de escrita
+      console.log("🔒 [UPLOAD] Usando Cliente Autenticado...");
       setProgress(30);
 
-      const { data, error: uploadError } = await supabasePublic.storage
+      const { data, error: uploadError } = await supabase.storage
         .from('videos')
         .upload(uploadPath, file, {
-          upsert: true,
+          upsert: false, // Don't need upsert if filename is unique
           contentType: file.type || 'video/mp4',
           cacheControl: '3600'
         });
@@ -101,7 +101,7 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
       console.log("✅ [UPLOAD] Arquivo salvo no Storage. Atualizando Banco de Dados...");
 
       // Get public URL
-      const { data: { publicUrl } } = supabasePublic.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(uploadPath);
 
@@ -117,10 +117,10 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
       console.log("💾 [DB] Atualizando registro...");
 
       // 1. Delete antigo (prevenção de conflito)
-      await supabasePublic.from('vsl_video').delete().eq('page_key', slot.page_key);
+      await supabase.from('vsl_video').delete().eq('page_key', slot.page_key);
 
       // 2. Insert novo
-      const { error: dbError } = await supabasePublic.from('vsl_video').insert(dbPayload);
+      const { error: dbError } = await supabase.from('vsl_video').insert(dbPayload);
 
       if (dbError) {
         console.error("❌ [DB] Erro no banco:", dbError);
@@ -154,9 +154,26 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
     if (!confirm(`Deseja excluir o vídeo da ${slot.title}?`)) return;
 
     try {
-      await supabase.storage
-        .from('videos')
-        .remove([`vsl/${slot.page_key}.mp4`]);
+      // Extract path from URL to delete the correct file
+      try {
+        const url = new URL(video.video_url);
+        // Format: .../storage/v1/object/public/videos/vsl/filename.mp4
+        // We need: vsl/filename.mp4
+        // Logic: Split by '/videos/' (the bucket name in URL path)
+        const pathParts = url.pathname.split('/videos/');
+        if (pathParts.length > 1) {
+          const filePath = pathParts[1];
+          await supabase.storage
+            .from('videos')
+            .remove([filePath]);
+        }
+      } catch (e) {
+        console.warn("Could not parse URL for deletion, trying fallback");
+        // Fallback to old behavior if parsing fails
+        await supabase.storage
+          .from('videos')
+          .remove([`vsl/${slot.page_key}.mp4`]);
+      }
 
       await supabase
         .from('vsl_video')

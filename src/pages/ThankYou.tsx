@@ -170,6 +170,10 @@ export default function ThankYou() {
                       <video
                         ref={videoRef}
                         src={upsellVideoUrl}
+                        onError={() => {
+                          console.warn("[THANKYOU] Vídeo falhou ao carregar. Revertendo para placeholder.");
+                          setUpsellVideoUrl(null);
+                        }}
                         controls={false}
                         autoPlay
                         muted
