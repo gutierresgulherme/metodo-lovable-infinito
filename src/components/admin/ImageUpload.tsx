@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { supabase, supabasePublic } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Trash2, Upload, ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -19,6 +18,8 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [manualUrl, setManualUrl] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
   const { toast } = useToast();
 
   const validateFile = (file: File): boolean => {
@@ -134,13 +135,53 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
     }
   };
 
+  const handleSaveManualUrl = async () => {
+    if (!manualUrl) return;
+    setUploading(true);
+
+    try {
+      console.log("💾 [DB] Salvando URL manual...");
+
+      await supabase
+        .from('banner_images')
+        .delete()
+        .eq('page_key', pageKey);
+
+      const { error: insertError } = await supabase
+        .from('banner_images')
+        .insert({
+          page_key: pageKey,
+          image_url: manualUrl
+        });
+
+      if (insertError) throw insertError;
+
+      toast({
+        title: 'Sucesso!',
+        description: 'Link da imagem salvo com sucesso!',
+      });
+
+      setManualUrl('');
+      setShowUrlInput(false);
+      onImageUpdated();
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao salvar link',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!currentImage) return;
 
     if (!confirm('Deseja excluir a imagem atual?')) return;
 
     try {
-      // 1. Remove from Storage (Dynamic Bucket)
+      // 1. Remove from Storage
       try {
         const urlParts = currentImage.image_url.split('/storage/v1/object/public/');
         if (urlParts.length > 1) {
@@ -221,68 +262,103 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
 
       {/* Upload Section */}
       <div className="space-y-3">
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
-          onChange={handleFileSelect}
-          className="hidden"
-          id={inputId}
-          disabled={uploading}
-        />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowUrlInput(!showUrlInput)}
+            className="flex-1 border-white/10 bg-white/5 hover:bg-white/10 text-[10px] font-mono"
+          >
+            {showUrlInput ? 'USAR ARQUIVO LOCAL' : 'COLAR LINK MANUAL'}
+          </Button>
+        </div>
 
-        {!file ? (
-          <label htmlFor={inputId} className="w-full block">
-            <div className={cn(
-              "flex items-center justify-center gap-2 w-full h-10 rounded-md border border-white/10 bg-[#0f0f16] text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white cursor-pointer transition-colors font-orbitron",
-              uploading && "opacity-50 cursor-not-allowed"
-            )}>
-              <Upload className="h-4 w-4" />
-              SELECIONAR IMAGEM
-            </div>
-          </label>
+        {showUrlInput ? (
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Cole o link da imagem (ou do Canva compartilhado)..."
+              value={manualUrl}
+              onChange={(e) => setManualUrl(e.target.value)}
+              className="w-full h-10 px-3 bg-black/40 border border-white/10 rounded-md text-sm text-gray-200 focus:border-pink-500 outline-none transition-colors"
+            />
+            <Button
+              onClick={handleSaveManualUrl}
+              disabled={uploading || !manualUrl}
+              className="w-full bg-pink-600 hover:bg-pink-700 font-orbitron text-xs h-10"
+            >
+              {uploading ? 'SALVANDO...' : 'SALVAR LINK'}
+            </Button>
+            <p className="text-[10px] text-gray-500 font-mono italic">
+              * Nota: Certifique-se de que o link é público.
+            </p>
+          </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-8 h-8 rounded bg-pink-500/20 flex items-center justify-center text-pink-400">
-                  <ImageIcon className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-200 truncate font-mono">{file.name}</p>
-                  <p className="text-xs text-gray-500 font-mono">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setFile(null)} className="h-6 w-6 hover:bg-red-500/20 hover:text-red-400">
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </div>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+              onChange={handleFileSelect}
+              className="hidden"
+              id={inputId}
+              disabled={uploading}
+            />
 
-            {uploading && (
-              <div className="space-y-1">
-                <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-pink-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+            {!file ? (
+              <label htmlFor={inputId} className="w-full block">
+                <div className={cn(
+                  "flex items-center justify-center gap-2 w-full h-10 rounded-md border border-white/10 bg-[#0f0f16] text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white cursor-pointer transition-colors font-orbitron",
+                  uploading && "opacity-50 cursor-not-allowed"
+                )}>
+                  <Upload className="h-4 w-4" />
+                  SELECIONAR ARQUIVO
                 </div>
-                <p className="text-xs text-gray-500 text-center font-mono animate-pulse">ENVIANDO PARA NUVEM...</p>
+              </label>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="w-8 h-8 rounded bg-pink-500/20 flex items-center justify-center text-pink-400">
+                      <ImageIcon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-200 truncate font-mono">{file.name}</p>
+                      <p className="text-xs text-gray-500 font-mono">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setFile(null)} className="h-6 w-6 hover:bg-red-500/20 hover:text-red-400">
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+
+                {uploading && (
+                  <div className="space-y-1">
+                    <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-pink-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+                    </div>
+                    <p className="text-xs text-gray-500 text-center font-mono animate-pulse">ENVIANDO PARA NUVEM...</p>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setFile(null)}
+                    disabled={uploading}
+                    className="flex-1 font-mono text-xs hover:bg-white/5"
+                  >
+                    CANCELAR
+                  </Button>
+                  <Button
+                    onClick={handleUpload}
+                    disabled={uploading}
+                    className="flex-[2] bg-pink-600 hover:bg-pink-700 font-orbitron text-xs tracking-wider"
+                  >
+                    {uploading ? 'ENVIANDO...' : 'CONFIRMAR UPLOAD'}
+                  </Button>
+                </div>
               </div>
             )}
-
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => setFile(null)}
-                disabled={uploading}
-                className="flex-1 font-mono text-xs hover:bg-white/5"
-              >
-                CANCELAR
-              </Button>
-              <Button
-                onClick={handleUpload}
-                disabled={uploading}
-                className="flex-[2] bg-pink-600 hover:bg-pink-700 font-orbitron text-xs tracking-wider"
-              >
-                {uploading ? 'ENVIANDO...' : 'CONFIRMAR UPLOAD'}
-              </Button>
-            </div>
           </div>
         )}
       </div>
