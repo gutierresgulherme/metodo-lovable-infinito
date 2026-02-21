@@ -28,18 +28,25 @@ export default function ThankYou() {
   const isSubAdmin = role === 'moderator';
   const videoRef = useRef<HTMLVideoElement>(null);
   const [upsellVideoUrl, setUpsellVideoUrl] = useState<string | null>(null);
-  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null);
+  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>("https://www.canva.com/design/DAHB7YwVXio/2ongHvDU_T_cprox2HNHZw/view");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const initPage = async () => {
-      const { videoUrl, bannerUrl } = await getThankYouMedia();
-      if (videoUrl) setUpsellVideoUrl(videoUrl);
-      if (bannerUrl) {
-        // Automatically optimize Canva links if detected
-        setBannerImageUrl(getCanvaThumbnail(bannerUrl));
+      try {
+        const { videoUrl, bannerUrl } = await getThankYouMedia();
+        if (videoUrl) setUpsellVideoUrl(videoUrl);
+        if (bannerUrl) {
+          setBannerImageUrl(getCanvaThumbnail(bannerUrl));
+        } else {
+          // Fallback forced if database is restricted/empty
+          setBannerImageUrl(getCanvaThumbnail("https://www.canva.com/design/DAHB7YwVXio/2ongHvDU_T_cprox2HNHZw/view"));
+        }
+      } catch (error) {
+        console.error("[THANKYOU] Supabase quota error, using fallback...", error);
+        setBannerImageUrl(getCanvaThumbnail("https://www.canva.com/design/DAHB7YwVXio/2ongHvDU_T_cprox2HNHZw/view"));
       }
     };
 
