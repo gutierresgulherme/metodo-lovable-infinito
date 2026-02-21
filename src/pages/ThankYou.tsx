@@ -1,21 +1,34 @@
 import { useEffect, useRef, useState } from "react";
-import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
-import lovableIcon from "@/assets/lovable-icon.png";
 import lovableInfinitoLogoNew from "@/assets/lovable-infinito-thankyou.jpg";
-import { Check, Zap, Users, TrendingUp, Shield, ArrowRight, Play, ImageIcon, Mountain } from "lucide-react";
+import { Check, Zap, Users, TrendingUp, Shield, ArrowRight, Play, ImageIcon } from "lucide-react";
 import { getThankYouMedia } from "@/lib/vslService";
 import { useUserRole } from "@/hooks/useUserRole";
 import { YouTubePlayer } from "@/components/YouTubePlayer";
+
+// Helper to convert Canva design links to direct image thumbnails
+const getCanvaThumbnail = (url: string | null) => {
+  if (!url) return null;
+  if (!url.includes('canva.com/design/')) return url;
+
+  try {
+    // Extract design ID using regex
+    const match = url.match(/\/design\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      // Canva thumbnail URL format
+      return `https://www.canva.com/design/${match[1]}/thumbnail?width=1000`;
+    }
+  } catch (e) {
+    console.warn("[CANVA-OPTIMIZER] Erro ao converter link do Canva:", e);
+  }
+  return url;
+};
 
 export default function ThankYou() {
   const { role, isLoading: isRoleLoading } = useUserRole();
   const isSubAdmin = role === 'moderator';
   const videoRef = useRef<HTMLVideoElement>(null);
-  const unmuteListenersAdded = useRef(false);
   const [upsellVideoUrl, setUpsellVideoUrl] = useState<string | null>(null);
   const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null);
-
-  const [videoError, setVideoError] = useState<string | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   useEffect(() => {
@@ -24,17 +37,14 @@ export default function ThankYou() {
     const initPage = async () => {
       const { videoUrl, bannerUrl } = await getThankYouMedia();
       if (videoUrl) setUpsellVideoUrl(videoUrl);
-      if (bannerUrl) setBannerImageUrl(bannerUrl);
+      if (bannerUrl) {
+        // Automatically optimize Canva links if detected
+        setBannerImageUrl(getCanvaThumbnail(bannerUrl));
+      }
     };
 
     initPage();
   }, []);
-
-  // YouTube Player handles its own autoplay and sound logic
-  const handleInteraction = () => {
-    // This can be used for extra tracking if needed
-  };
-
 
   return (
     <div className="min-h-screen w-full bg-[#0A0A0F] text-white overflow-hidden">
@@ -214,7 +224,7 @@ export default function ThankYou() {
               {/* Banner Image */}
               <div className="relative mb-8">
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500/30 via-orange-500/30 to-pink-500/30 rounded-xl blur-lg opacity-40" />
-                <div className="relative rounded-xl overflow-hidden border border-white/10">
+                <div className="relative rounded-xl overflow-hidden border border-white/10 group">
                   {bannerImageUrl ? (
                     <img
                       src={bannerImageUrl}
@@ -223,19 +233,19 @@ export default function ThankYou() {
                         console.warn("[THANKYOU] Erro ao carregar banner. URL pode ser inválida:", bannerImageUrl);
                         setBannerImageUrl(null);
                       }}
-                      className="w-full h-auto max-h-[280px] sm:max-h-[400px] md:max-h-none object-cover object-top"
+                      className="w-full h-auto max-h-[280px] sm:max-h-[400px] md:max-h-none object-cover object-top transition-transform duration-700 group-hover:scale-105"
                     />
                   ) : (
                     <div className="aspect-[16/9] sm:aspect-square bg-gradient-to-br from-[#1a1a2e] to-[#0f0f1a] flex items-center justify-center">
                       <div className="text-center p-6">
-                        <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 flex items-center justify-center">
-                          <ImageIcon className="w-6 h-6 text-yellow-400" />
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-[0_0_20px_rgba(234,179,8,0.3)]">
+                          <ImageIcon className="w-8 h-8 text-black" />
                         </div>
-                        <p className="text-gray-400 text-sm">
-                          Banner da Comunidade Lovable Brasil
+                        <p className="text-white font-orbitron text-sm mb-1">
+                          Comunidade Lovable Brasil
                         </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          (Faça upload via /admin/videos)
+                        <p className="text-gray-500 text-xs font-mono">
+                          (Carregando imagem do Canva...)
                         </p>
                       </div>
                     </div>
