@@ -88,7 +88,7 @@ export const YouTubePlayer = ({
 
     const [isReady, setIsReady] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -129,7 +129,7 @@ export const YouTubePlayer = ({
                 height: '100%',
                 playerVars: {
                     autoplay: autoPlay ? 1 : 0,
-                    mute: 0,          // ✅ Iniciar com som liberado
+                    mute: 1,          // Necessário para autoplay funcionar no navegador
                     controls: 0,      // Hide native YouTube controls
                     modestbranding: 1,
                     rel: 0,           // No related videos at end
@@ -163,8 +163,16 @@ export const YouTubePlayer = ({
                             case window.YT.PlayerState.PLAYING:
                                 setIsPlaying(true);
                                 setIsBuffering(false);
-                                setIsLoading(false); // ✅ Só agora remove o overlay preto inicial
+                                setIsLoading(false);
                                 setIsEnded(false);
+                                // Tentar desmutar automaticamente assim que começar a tocar
+                                try {
+                                    event.target.unMute();
+                                    event.target.setVolume(100);
+                                    setIsMuted(false);
+                                } catch (e) {
+                                    // Se falhar, o listener de interação vai desmutar
+                                }
                                 onPlay?.();
                                 break;
 
@@ -246,28 +254,29 @@ export const YouTubePlayer = ({
         }
     }, [isPlaying]);
 
-    // Interaction handler to ensure audio is enabled if browser blocked it
+    // Desmutar na primeira interação do usuário (clique/toque)
     useEffect(() => {
-        const handleInteraction = () => {
+        const handleFirstInteraction = () => {
             if (playerRef.current) {
-                // If it was supposed to be unmuted, make sure it is
-                if (!isMuted && playerRef.current.isMuted?.()) {
+                try {
                     playerRef.current.unMute();
                     playerRef.current.setVolume(100);
-                }
+                    setIsMuted(false);
+                } catch (e) { /* ignore */ }
             }
-            // We can keep these listeners or remove them after first interaction
-            // For VSL, usually one interaction is enough to "unlock" audio for the session
+            // Remover listeners após primeira interação
+            window.removeEventListener('click', handleFirstInteraction);
+            window.removeEventListener('touchstart', handleFirstInteraction);
         };
 
-        window.addEventListener('click', handleInteraction);
-        window.addEventListener('touchstart', handleInteraction);
+        window.addEventListener('click', handleFirstInteraction);
+        window.addEventListener('touchstart', handleFirstInteraction);
 
         return () => {
-            window.removeEventListener('click', handleInteraction);
-            window.removeEventListener('touchstart', handleInteraction);
+            window.removeEventListener('click', handleFirstInteraction);
+            window.removeEventListener('touchstart', handleFirstInteraction);
         };
-    }, [isMuted]);
+    }, []);
 
     // Player controls
     const togglePlay = () => {
