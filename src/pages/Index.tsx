@@ -29,9 +29,9 @@ const Index = () => {
     const [showFallbackPlay, setShowFallbackPlay] = useState(false);
     const [checkoutLinks, setCheckoutLinks] = useState<Record<string, string>>({
         br_prata: 'https://go.pepperpay.com.br/lonsw',
-        br_gold: 'https://go.pepperpay.com.br/ukrg2',
+        br_gold: 'https://pay.wiapy.com/AzOjUWS6Gd',
         usa_prata: 'https://go.pepperpay.com.br/lonsw',
-        usa_gold: 'https://go.pepperpay.com.br/ukrg2',
+        usa_gold: 'https://pay.wiapy.com/AzOjUWS6Gd',
     });
     const [timeLeft, setTimeLeft] = useState({ minutes: 5, seconds: 0 });
 
