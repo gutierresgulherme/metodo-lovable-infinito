@@ -88,7 +88,7 @@ export const YouTubePlayer = ({
 
     const [isReady, setIsReady] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isMuted, setIsMuted] = useState(true);
+    const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -129,7 +129,7 @@ export const YouTubePlayer = ({
                 height: '100%',
                 playerVars: {
                     autoplay: autoPlay ? 1 : 0,
-                    mute: 1,          // Must start muted for autoplay
+                    mute: 0,          // ✅ Iniciar com som liberado
                     controls: 0,      // Hide native YouTube controls
                     modestbranding: 1,
                     rel: 0,           // No related videos at end
@@ -246,29 +246,28 @@ export const YouTubePlayer = ({
         }
     }, [isPlaying]);
 
-    // Unmute on first click anywhere
+    // Interaction handler to ensure audio is enabled if browser blocked it
     useEffect(() => {
-        const handleFirstInteraction = () => {
-            if (playerRef.current?.unMute) {
-                playerRef.current.unMute();
-                playerRef.current.setVolume(100);
-                setIsMuted(false);
+        const handleInteraction = () => {
+            if (playerRef.current) {
+                // If it was supposed to be unmuted, make sure it is
+                if (!isMuted && playerRef.current.isMuted?.()) {
+                    playerRef.current.unMute();
+                    playerRef.current.setVolume(100);
+                }
             }
-            document.removeEventListener('click', handleFirstInteraction);
-            document.removeEventListener('touchstart', handleFirstInteraction);
-            document.removeEventListener('scroll', handleFirstInteraction);
+            // We can keep these listeners or remove them after first interaction
+            // For VSL, usually one interaction is enough to "unlock" audio for the session
         };
 
-        document.addEventListener('click', handleFirstInteraction);
-        document.addEventListener('touchstart', handleFirstInteraction);
-        document.addEventListener('scroll', handleFirstInteraction);
+        window.addEventListener('click', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction);
 
         return () => {
-            document.removeEventListener('click', handleFirstInteraction);
-            document.removeEventListener('touchstart', handleFirstInteraction);
-            document.removeEventListener('scroll', handleFirstInteraction);
+            window.removeEventListener('click', handleInteraction);
+            window.removeEventListener('touchstart', handleInteraction);
         };
-    }, []);
+    }, [isMuted]);
 
     // Player controls
     const togglePlay = () => {
