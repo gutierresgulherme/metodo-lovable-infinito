@@ -206,8 +206,8 @@ const Index = () => {
     if (!isActive) return <div className="fixed inset-0 bg-black z-[9999]" />;
 
     const HEADLINE = vslData?.headline || "VOCÊ AINDA PAGA PRA USAR O LOVABLE?";
-    const PRICE_PRATA = currency === 'USD' ? '$13.90' : 'R$13,90';
-    const PRICE_GOLD = currency === 'USD' ? '$24.90' : 'R$24,90';
+    const PRICE_PRATA = currency === 'USD' ? '$17.90' : 'R$17,90';
+    const PRICE_GOLD = currency === 'USD' ? '$27.90' : 'R$27,90';
     const OLD_PRICE = currency === 'USD' ? '$49.90' : 'R$49,90';
 
     return (
@@ -527,7 +527,7 @@ const Index = () => {
                                             <p className="text-gray-400 uppercase tracking-widest text-xs">E o que você vai pagar aqui?</p>
                                             <div className="flex flex-col items-center">
                                                 <span className="text-4xl md:text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
-                                                    Apenas R$24,90
+                                                    Apenas R$27,90
                                                 </span>
                                                 <span className="text-yellow-400 font-bold uppercase tracking-widest text-sm mt-2">UMA ÚNICA VEZ.</span>
                                             </div>
