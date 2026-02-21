@@ -5,6 +5,7 @@ import lovableInfinitoLogoNew from "@/assets/lovable-infinito-thankyou.jpg";
 import { Check, Zap, Users, TrendingUp, Shield, ArrowRight, Play, ImageIcon, Mountain } from "lucide-react";
 import { getThankYouMedia } from "@/lib/vslService";
 import { useUserRole } from "@/hooks/useUserRole";
+import { YouTubePlayer } from "@/components/YouTubePlayer";
 
 export default function ThankYou() {
   const { role, isLoading: isRoleLoading } = useUserRole();
@@ -29,43 +30,10 @@ export default function ThankYou() {
     initPage();
   }, []);
 
-  // Initialize video player with autoplay
-  useEffect(() => {
-    if (!upsellVideoUrl || !videoRef.current || isSubAdmin) return;
-
-    const videoElement = videoRef.current;
-
-    const attemptPlay = async () => {
-      try {
-        videoElement.muted = true;
-        await videoElement.play();
-        setIsVideoPlaying(true);
-      } catch (e) {
-        console.warn("[THANKYOU] Autoplay blocked, waiting for interaction", e);
-        setIsVideoPlaying(false);
-      }
-    };
-
-    attemptPlay();
-
-    // Sound Unlocker
-    if (!unmuteListenersAdded.current) {
-      const unlockSound = () => {
-        if (videoRef.current) {
-          videoRef.current.muted = false;
-          videoRef.current.play().catch(console.warn);
-          setIsVideoPlaying(true);
-          console.log("[THANKYOU] Sound unlocked");
-        }
-        window.removeEventListener('click', unlockSound);
-        window.removeEventListener('touchstart', unlockSound);
-      };
-
-      window.addEventListener('click', unlockSound);
-      window.addEventListener('touchstart', unlockSound);
-      unmuteListenersAdded.current = true;
-    }
-  }, [upsellVideoUrl, isSubAdmin]);
+  // YouTube Player handles its own autoplay and sound logic
+  const handleInteraction = () => {
+    // This can be used for extra tracking if needed
+  };
 
 
   return (
@@ -149,64 +117,15 @@ export default function ThankYou() {
                 </p>
               </div>
 
-              {/* Video Section */}
-              <div className="relative mb-10">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500 rounded-2xl blur-lg opacity-30" />
-                <div className="relative bg-black/80 rounded-2xl overflow-hidden border border-white/10 group cursor-pointer"
-                  onClick={() => {
-                    if (videoRef.current) {
-                      if (videoRef.current.paused) {
-                        videoRef.current.play();
-                        setIsVideoPlaying(true);
-                      } else {
-                        videoRef.current.pause();
-                        setIsVideoPlaying(false);
-                      }
-                    }
-                  }}
-                >
-                  {upsellVideoUrl ? (
-                    <>
-                      <video
-                        ref={videoRef}
-                        src={upsellVideoUrl}
-                        onError={() => {
-                          console.warn("[THANKYOU] Vídeo falhou ao carregar. Revertendo para placeholder.");
-                          setUpsellVideoUrl(null);
-                        }}
-                        controls={false}
-                        autoPlay
-                        muted
-                        playsInline
-                        preload="auto"
-                        crossOrigin="anonymous"
-                        className="w-full aspect-video"
-                      />
-
-                      {/* Play Button Overlay */}
-                      {!isVideoPlaying && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/20 transition-all">
-                          <div className="w-20 h-20 rounded-full bg-purple-600/80 flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.5)] animate-pulse">
-                            <Play className="w-8 h-8 text-white ml-1 fill-white" />
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="aspect-video bg-gradient-to-br from-purple-900/50 to-black flex items-center justify-center">
-                      <div className="text-center p-8">
-                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white ml-1 fill-white" />
-                        </div>
-                        <p className="text-gray-400 text-sm">
-                          VSL da Comunidade Lovable Brasil
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          (Faça upload via /admin/videos)
-                        </p>
-                      </div>
-                    </div>
-                  )}
+              {/* Video Section - YouTube Shorts 9:16 */}
+              <div className="relative mb-10 overflow-hidden">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500 rounded-3xl blur-lg opacity-30" />
+                <div className="relative">
+                  <YouTubePlayer
+                    videoId="E5PWZ8FVifA"
+                    aspectRatio="9:16"
+                    autoPlay={true}
+                  />
                 </div>
               </div>
 

@@ -8,6 +8,7 @@ interface YouTubePlayerProps {
     onPause?: () => void;
     onEnded?: () => void;
     autoPlay?: boolean;
+    aspectRatio?: '16:9' | '9:16';
 }
 
 // Helper to extract YouTube video ID from various URL formats
@@ -79,7 +80,8 @@ export const YouTubePlayer = ({
     onPlay,
     onPause,
     onEnded,
-    autoPlay = true
+    autoPlay = true,
+    aspectRatio = '16:9'
 }: YouTubePlayerProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const playerRef = useRef<any>(null);
@@ -323,7 +325,7 @@ export const YouTubePlayer = ({
     return (
         <div
             ref={outerRef}
-            className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden cursor-pointer group"
+            className={`relative w-full ${aspectRatio === '9:16' ? 'aspect-[9/16] max-w-[360px] mx-auto' : 'aspect-video'} bg-black rounded-2xl overflow-hidden cursor-pointer group`}
             onClick={togglePlay}
             style={{
                 boxShadow: '0 0 0 4px rgba(0,0,0,1), 0 0 0 6px rgba(168,85,247,0.2), 0 20px 60px rgba(0,0,0,0.9)',
