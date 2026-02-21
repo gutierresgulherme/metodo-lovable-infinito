@@ -381,24 +381,25 @@ export const YouTubePlayer = ({
                 }}
             />
 
-            {/* ESCONDER WATERMARK (canto inferior direito) */}
-            <div
-                className="absolute bottom-0 right-0 z-10 pointer-events-none"
-                style={{
-                    width: '90px',
-                    height: '40px',
-                    background: 'linear-gradient(315deg, #000000 0%, rgba(0,0,0,0.85) 50%, transparent 100%)',
-                }}
-            />
-
-            {/* BARRA INFERIOR (Onde ficam as legendas) 
-                Usamos um gradiente mais sutil no centro para não bloquear a leitura.
-            */}
+            {/* ESCONDER WATERMARK E BARRA NATIVA (canto inferior direito e base) */}
             <div
                 className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none"
                 style={{
                     height: '50px',
-                    background: 'linear-gradient(to top, #000000 0%, rgba(0,0,0,0.7) 40%, transparent 100%)',
+                    background: 'linear-gradient(to top, #000000 0%, rgba(0,0,0,0.85) 50%, transparent 100%)',
+                }}
+            />
+
+            {/* 
+                BLOQUEADOR DE TOQUE MOBILE — impede que o YouTube mostre a barra nativa ao tocar na base 
+                Especialmente importante para iOS e Android.
+            */}
+            <div
+                className="absolute bottom-0 left-0 right-0 h-16 z-20"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    togglePlay();
                 }}
             />
 
