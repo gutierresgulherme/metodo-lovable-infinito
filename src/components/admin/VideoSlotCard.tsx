@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { supabase, supabasePublic } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Trash2, Upload, Play, Monitor } from 'lucide-react';
+import { Trash2, Upload, Play, Monitor, Youtube, Link2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { isYouTubeUrl, extractYouTubeId } from '@/components/YouTubePlayer';
 
 interface VideoSlot {
   page_key: string;
@@ -29,6 +31,8 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [savingYoutube, setSavingYoutube] = useState(false);
   const { toast } = useToast();
 
   const validateFile = (file: File): boolean => {
@@ -196,6 +200,64 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
     }
   };
 
+  // Save YouTube URL directly to database
+  const handleSaveYouTube = async () => {
+    if (!youtubeUrl.trim()) {
+      toast({
+        title: 'URL inválida',
+        description: 'Cole um link válido do YouTube.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const videoId = extractYouTubeId(youtubeUrl);
+    if (!videoId) {
+      toast({
+        title: 'Link do YouTube inválido',
+        description: 'Não consegui extrair o ID do vídeo. Verifique o link.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSavingYoutube(true);
+
+    try {
+      const normalizedUrl = `https://youtu.be/${videoId}`;
+      console.log("🎬 [YOUTUBE] Salvando URL:", normalizedUrl, "para", slot.page_key);
+
+      // 1. Delete old record
+      await supabase.from('vsl_video').delete().eq('page_key', slot.page_key);
+
+      // 2. Insert new with YouTube URL
+      const { error: dbError } = await supabase.from('vsl_video').insert({
+        video_url: normalizedUrl,
+        page_key: slot.page_key,
+        created_at: new Date().toISOString()
+      });
+
+      if (dbError) throw new Error(dbError.message);
+
+      toast({
+        title: '✅ Vídeo do YouTube salvo!',
+        description: `O vídeo foi vinculado à ${slot.title} com sucesso.`,
+      });
+
+      setYoutubeUrl('');
+      onVideoUpdated();
+    } catch (error: any) {
+      console.error('❌ [YOUTUBE] Erro:', error);
+      toast({
+        title: 'Erro ao salvar',
+        description: error.message || 'Falha ao vincular o vídeo do YouTube.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingYoutube(false);
+    }
+  };
+
   const inputId = `video-upload-${slot.page_key}`;
 
   return (
@@ -221,14 +283,32 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
         {video ? (
           <div className="space-y-3">
             <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
-              <video
-                src={video.video_url}
-                controls
-                className="w-full h-full object-contain"
-              />
+              {isYouTubeUrl(video.video_url) ? (
+                /* Preview do YouTube no Admin */
+                <iframe
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(video.video_url)}?modestbranding=1&rel=0`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="YouTube Preview"
+                />
+              ) : (
+                <video
+                  src={video.video_url}
+                  controls
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Enviado: {new Date(video.created_at).toLocaleDateString('pt-BR')}</span>
+              <div className="flex items-center gap-2">
+                {isYouTubeUrl(video.video_url) && (
+                  <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+                    <Youtube className="w-3 h-3" /> YouTube
+                  </span>
+                )}
+                <span>Enviado: {new Date(video.created_at).toLocaleDateString('pt-BR')}</span>
+              </div>
               <Button
                 variant="destructive"
                 size="sm"
@@ -248,8 +328,50 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
         )}
       </div>
 
-      {/* Upload Section */}
+      {/* YouTube Link Section */}
       <div className="p-4 pt-0 space-y-3">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent rounded-lg" />
+          <div className="relative border border-red-500/20 rounded-lg p-3 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-red-400 uppercase tracking-wider">
+              <Youtube className="w-4 h-4" />
+              Vincular Vídeo do YouTube
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Cole o link do YouTube aqui..."
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                className="text-xs h-9 bg-background/50"
+                disabled={savingYoutube}
+              />
+              <Button
+                onClick={handleSaveYouTube}
+                disabled={savingYoutube || !youtubeUrl.trim()}
+                size="sm"
+                className="h-9 bg-red-600 hover:bg-red-700 text-white px-4"
+              >
+                {savingYoutube ? '...' : <><Check className="w-3 h-3 mr-1" /> Salvar</>}
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Aceita: youtu.be/xxx, youtube.com/watch?v=xxx
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* File Upload Section (Separador) */}
+      <div className="px-4">
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-widest">
+          <div className="flex-1 h-px bg-border" />
+          <span>ou envie um arquivo</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+      </div>
+
+      {/* Upload Section */}
+      <div className="p-4 pt-2 space-y-3">
         <input
           type="file"
           accept="video/mp4,video/quicktime,video/x-matroska,video/x-msvideo,video/mpeg,.mp4,.mov,.mkv,.avi,.mpeg,.mpg"

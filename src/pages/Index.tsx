@@ -2,6 +2,7 @@ import { useEffect, useRef, lazy, Suspense, useCallback, useState } from "react"
 import { Check, Play, X, Clock } from "lucide-react";
 import { supabasePublic } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, VSLVariant } from "@/lib/vslService";
+import { YouTubePlayer, isYouTubeUrl, extractYouTubeId } from "@/components/YouTubePlayer";
 import lovableIcon from "@/assets/lovable-icon-heart.jpg";
 import lovableInfinitoTitle from "@/assets/lovable-infinito-title.png";
 import feedback1 from "@/assets/feedback-1.png";
@@ -270,41 +271,69 @@ const Index = () => {
                         <h2 className="text-sm md:text-base font-bold text-center text-gray-400 uppercase tracking-[0.3em]">Assista à Apresentação</h2>
                         <div className="h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent flex-1" />
                     </div>
-                    <div className="relative w-full max-w-[100%] rounded-xl overflow-hidden shadow-2xl bg-black aspect-video flex items-center justify-center group/video">
-                        {loading && !videoError && (
-                            <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
-                                <div className="flex flex-col items-center gap-4">
-                                    <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
-                                    <p className="text-emerald-500 font-orbitron text-xs animate-pulse">PREPARANDO VÍDEO...</p>
+
+                    {/* YouTube Player (quando URL é do YouTube) */}
+                    {vslData?.video_url && isYouTubeUrl(vslData.video_url) ? (
+                        <div className="relative w-full max-w-[100%] rounded-2xl overflow-hidden bg-black">
+                            {/* Borda decorativa externa estilo PandaVideo */}
+                            <div className="absolute -inset-[2px] bg-gradient-to-b from-purple-500/20 via-transparent to-emerald-500/20 rounded-2xl z-[-1]" />
+                            <YouTubePlayer
+                                videoId={extractYouTubeId(vslData.video_url) || ''}
+                                autoPlay={true}
+                                onTimeUpdate={(currentTime, duration) => {
+                                    const percent = Math.floor((currentTime / duration) * 100);
+                                    const last = videoTrackingRef.current.lastTrackedPercent;
+                                    if ([25, 50, 75, 95].some(p => percent >= p && last < p)) {
+                                        trackVideoEvent('progress', currentTime, duration);
+                                        videoTrackingRef.current.lastTrackedPercent = percent;
+                                    }
+                                }}
+                                onPlay={() => {
+                                    trackVideoEvent('play', 0, 0);
+                                    setShowFallbackPlay(false);
+                                }}
+                                onPause={() => trackVideoEvent('pause', 0, 0)}
+                                onEnded={() => trackVideoEvent('ended', 0, 0)}
+                            />
+                        </div>
+                    ) : (
+                        /* Player nativo para vídeos MP4/HLS */
+                        <div className="relative w-full max-w-[100%] rounded-xl overflow-hidden shadow-2xl bg-black aspect-video flex items-center justify-center group/video">
+                            {loading && !videoError && (
+                                <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                                        <p className="text-emerald-500 font-orbitron text-xs animate-pulse">PREPARANDO VÍDEO...</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {showFallbackPlay && !loading && !videoError && (
-                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer group" onClick={() => videoRef.current?.play().then(() => setShowFallbackPlay(false))}>
-                                <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)] group-hover:scale-110 transition-transform">
-                                    <Play className="w-10 h-10 text-white fill-white ml-1" />
+                            )}
+                            {showFallbackPlay && !loading && !videoError && (
+                                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 cursor-pointer group" onClick={() => videoRef.current?.play().then(() => setShowFallbackPlay(false))}>
+                                    <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)] group-hover:scale-110 transition-transform">
+                                        <Play className="w-10 h-10 text-white fill-white ml-1" />
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {videoError && (
-                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
-                                <p className="text-red-500 font-bold mb-2">⚠️ Eita! O vídeo não carregou.</p>
-                                <p className="text-sm font-mono text-gray-300 mb-4">{videoError}</p>
-                                <button onClick={() => window.location.reload()} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-xs font-bold">RECARREGAR PÁGINA</button>
-                            </div>
-                        )}
-                        <video
-                            key={vslData?.video_url}
-                            ref={videoRef}
-                            id="vsl-player"
-                            src={vslData?.video_url || undefined}
-                            autoPlay muted playsInline controls
-                            crossOrigin="anonymous"
-                            onTimeUpdate={handleVideoTimeUpdate}
-                            onPlay={() => setShowFallbackPlay(false)}
-                            className="w-full h-auto max-h-[500px] rounded-xl"
-                        />
-                    </div>
+                            )}
+                            {videoError && (
+                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 text-white p-4 text-center">
+                                    <p className="text-red-500 font-bold mb-2">⚠️ Eita! O vídeo não carregou.</p>
+                                    <p className="text-sm font-mono text-gray-300 mb-4">{videoError}</p>
+                                    <button onClick={() => window.location.reload()} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-xs font-bold">RECARREGAR PÁGINA</button>
+                                </div>
+                            )}
+                            <video
+                                key={vslData?.video_url}
+                                ref={videoRef}
+                                id="vsl-player"
+                                src={vslData?.video_url || undefined}
+                                autoPlay muted playsInline controls
+                                crossOrigin="anonymous"
+                                onTimeUpdate={handleVideoTimeUpdate}
+                                onPlay={() => setShowFallbackPlay(false)}
+                                className="w-full h-auto max-h-[500px] rounded-xl"
+                            />
+                        </div>
+                    )}
 
                     <div className="flex justify-center mt-8 relative z-10">
                         <div className="relative group">

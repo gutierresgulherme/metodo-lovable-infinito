@@ -69,23 +69,15 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
             }
         }
 
-        // 3. FALLBACK DE STORAGE (BLIND FALLBACK)
-        // Se não achou nada no banco, NÃO PEGA QUALQUER VÍDEO. Constrói a URL esperada.
+        // 3. FALLBACK DE YOUTUBE (quando banco não tem dados)
         if (!videoData) {
-            console.warn("[VSL] NADA ENCONTRADO NO BANCO. Tentando URL direta do Storage (Blind Fallback).");
-            const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
-            const timestamp = Date.now();
+            console.warn("[VSL] NADA ENCONTRADO NO BANCO. Usando fallback YouTube.");
 
-            // Assume que se o admin subiu para "Home VSL Brasil", o arquivo é home_vsl_br.mp4
-            const fallbackKey = regionalKey;
-            const fallbackUrl = `${storageBase}${fallbackKey}.mp4?t=${timestamp}`;
-
-            // Mockando um objeto VSLVariant com a URL direta
             const vsl: VSLVariant = {
-                id: "fallback-storage",
-                name: "Vídeo Recuperado (Storage)",
+                id: "fallback-youtube",
+                name: "Vídeo YouTube",
                 slug: "home-vsl",
-                video_url: fallbackUrl,
+                video_url: "https://youtu.be/7RSRuhKcuK0",
                 headline: "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
                 benefits_copy: null,
                 method_explanation_copy: null,
@@ -113,26 +105,20 @@ export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
 
         return { vsl, slug: "home-vsl", isActive: true, currency };
     } catch (e: any) {
-        console.error("[VSL] Erro catastrófico no service:", e);
+        console.error("[VSL] Erro crítico no service:", e);
         const region = getRegionByDomain();
-        const suffix = region === 'USA' ? '_usa' : '_br';
-        const storageBase = "https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl/";
-        const timestamp = Date.now();
-
-        // Em caso de erro total, tenta construir URL também, não força home_vsl padrão se for BR
-        const fallbackUrl = `${storageBase}home_vsl${suffix}.mp4?t=${timestamp}`;
 
         return {
             vsl: {
-                id: 'catastrophic',
-                video_url: fallbackUrl,
+                id: 'catastrophic-youtube',
+                video_url: 'https://youtu.be/7RSRuhKcuK0',
                 slug: 'home-vsl',
                 headline: "VOCÊ AINDA PAGA PRA USAR O LOVABLE?",
                 benefits_copy: null,
                 method_explanation_copy: null,
                 pricing_copy: null,
                 guarantee_copy: null,
-                name: 'Fallback',
+                name: 'Fallback YouTube',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             },
