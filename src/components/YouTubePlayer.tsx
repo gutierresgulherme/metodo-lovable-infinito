@@ -457,25 +457,7 @@ export const YouTubePlayer = ({
                 className={`absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-300 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Progress bar (Minimizada automaticamente no fundo) */}
-                <div
-                    className={`w-full cursor-pointer group/progress transition-all duration-500 overflow-hidden ${showControls || !isPlaying ? 'h-1.5' : 'h-[2px] opacity-40 hover:opacity-100 hover:h-1.5'}`}
-                    onClick={handleSeek}
-                    style={{
-                        position: 'absolute',
-                        bottom: showControls || !isPlaying ? '44px' : '0px', // Sobe quando os controles aparecem
-                        zIndex: 40
-                    }}
-                >
-                    <div className="w-full h-full bg-white/10">
-                        <div
-                            className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-r-full relative transition-all duration-300"
-                            style={{ width: `${progress}%` }}
-                        >
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity" />
-                        </div>
-                    </div>
-                </div>
+
 
                 {/* Controls row */}
                 <div className={`flex items-center justify-between px-4 py-2.5 bg-gradient-to-t from-black via-black/90 to-black/60 transition-transform duration-500 ${showControls || !isPlaying ? 'translate-y-0' : 'translate-y-full'}`}>
@@ -489,9 +471,7 @@ export const YouTubePlayer = ({
                         <button onClick={toggleMute} className="text-white hover:text-emerald-400 transition-colors">
                             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                         </button>
-                        <span className="text-white/60 text-[10px] font-mono tracking-wider">
-                            {formatTime(currentTime)} / {formatTime(duration)}
-                        </span>
+
                     </div>
                     <div className="flex items-center gap-3">
                         <button onClick={handleFullscreen} className="text-white hover:text-emerald-400 transition-colors">
