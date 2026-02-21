@@ -129,7 +129,7 @@ export const YouTubePlayer = ({
                 height: '100%',
                 playerVars: {
                     autoplay: autoPlay ? 1 : 0,
-                    mute: 1,          // Necessário para autoplay funcionar no navegador
+                    mute: 1,          // ✅ Forçar mudo para garantir autoplay em todos os browsers
                     controls: 0,      // Hide native YouTube controls
                     modestbranding: 1,
                     rel: 0,           // No related videos at end
@@ -140,20 +140,24 @@ export const YouTubePlayer = ({
                     playsinline: 1,
                     origin: window.location.origin,
                     enablejsapi: 1,
-                    // cc_load_policy: 0 = REMOVIDO — para não suprimir legendas do vídeo
                     autohide: 1,
-                    loop: 0,          // We handle loop manually to avoid flicker
+                    loop: 0,
                 },
                 events: {
                     onReady: (event: any) => {
                         if (destroyed) return;
                         setIsReady(true);
-                        // Não tiramos o isLoading aqui — só quando PLAYING disparar
-                        // Isso evita flash da UI do YouTube antes do vídeo começar
                         setDuration(event.target.getDuration());
 
                         if (autoPlay) {
+                            // Dupla garantia de mudo e play
+                            event.target.mute();
                             event.target.playVideo();
+
+                            // Timeout de segurança: se em 5s não entrar em PLAYING, forçar saída do loading
+                            setTimeout(() => {
+                                if (!destroyed) setIsLoading(false);
+                            }, 5000);
                         }
                     },
                     onStateChange: (event: any) => {
@@ -335,57 +339,73 @@ export const YouTubePlayer = ({
                 boxShadow: '0 0 0 4px rgba(0,0,0,1), 0 0 0 6px rgba(168,85,247,0.2), 0 20px 60px rgba(0,0,0,0.9)',
             }}
         >
-            {/* YouTube iframe — tamanho normal (sem zoom) para não cortar legendas */}
+            {/* 
+                YouTube iframe container - ESCALA 108% 
+                Corta levemente as bordas (logo, botões) sem sacrificar as legendas que ficam mais centralizadas.
+            */}
             <div
                 ref={containerRef}
-                className="absolute inset-0 z-0"
-                style={{ pointerEvents: 'none' }}
+                className="absolute z-0"
+                style={{
+                    pointerEvents: 'none',
+                    top: '-4%',
+                    left: '-4%',
+                    width: '108%',
+                    height: '108%',
+                }}
             />
 
             {/* ===== OVERLAYS DE CAMUFLAGEM ===== */}
 
-            {/*
-                BARRA TOPO — cobre: logo do canal, nome do canal, botões "Assistir depois" e "Compartilhar"
-                Altura generosa de 80px garante cobertura total em qualquer tamanho de tela.
-                Opacidade 100% no topo → fade para transparente embaixo (preserva o conteúdo do vídeo).
-            */}
+            {/* BARRA TOPO — cobertura total de títulos e botões */}
             <div
                 className="absolute top-0 left-0 right-0 z-10 pointer-events-none"
                 style={{
-                    height: '80px',
-                    background: 'linear-gradient(to bottom, #000000 0%, rgba(0,0,0,0.97) 50%, rgba(0,0,0,0.5) 80%, transparent 100%)',
+                    height: '75px',
+                    background: 'linear-gradient(to bottom, #000000 0%, rgba(0,0,0,0.95) 40%, rgba(0,0,0,0.5) 75%, transparent 100%)',
                 }}
             />
 
-            {/* CANTOS SUPERIORES — reforço extra para os dois cantos onde a UI do YouTube aparece */}
+            {/* REFORÇOS NOS CANTOS SUPERIORES */}
             <div
                 className="absolute top-0 left-0 z-10 pointer-events-none"
                 style={{
-                    width: '260px',
+                    width: '40%',
                     height: '80px',
-                    background: 'linear-gradient(145deg, #000000 0%, rgba(0,0,0,0.98) 60%, transparent 100%)',
+                    background: 'linear-gradient(135deg, #000000 0%, rgba(0,0,0,0.8) 60%, transparent 100%)',
                 }}
             />
             <div
                 className="absolute top-0 right-0 z-10 pointer-events-none"
                 style={{
-                    width: '320px',
+                    width: '40%',
                     height: '80px',
-                    background: 'linear-gradient(215deg, #000000 0%, rgba(0,0,0,0.98) 60%, transparent 100%)',
+                    background: 'linear-gradient(225deg, #000000 0%, rgba(0,0,0,0.8) 60%, transparent 100%)',
                 }}
             />
 
-            {/* CANTO INFERIOR DIREITO — watermark/logo do YouTube */}
+            {/* CANTO INFERIOR DIREITO — Esconder logo do YouTube Watermark */}
             <div
                 className="absolute bottom-0 right-0 z-10 pointer-events-none"
                 style={{
-                    width: '140px',
-                    height: '56px',
-                    background: 'linear-gradient(315deg, #000000 0%, rgba(0,0,0,0.95) 50%, transparent 100%)',
+                    width: '180px',
+                    height: '70px',
+                    background: 'linear-gradient(315deg, #000000 0%, rgba(0,0,0,0.9) 40%, transparent 100%)',
                 }}
             />
 
-            {/* FAIXAS LATERAIS — disfarçam quaisquer elementos nas bordas */}
+            {/* BARRA INFERIOR (Onde ficam as legendas) 
+                Usamos um gradiente mais sutil no centro para não bloquear a leitura.
+            */}
+            <div
+                className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none"
+                style={{
+                    height: '50px',
+                    background: 'linear-gradient(to top, #000000 0%, rgba(0,0,0,0.7) 40%, transparent 100%)',
+                }}
+            />
+
+            {/* FAIXAS LATERAIS */}
             <div className="absolute top-0 left-0 bottom-0 w-[4px] bg-black z-10 pointer-events-none" />
             <div className="absolute top-0 right-0 bottom-0 w-[4px] bg-black z-10 pointer-events-none" />
 
