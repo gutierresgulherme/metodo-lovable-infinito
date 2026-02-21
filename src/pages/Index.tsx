@@ -28,9 +28,9 @@ const Index = () => {
     const [videoError, setVideoError] = useState<string | null>(null);
     const [showFallbackPlay, setShowFallbackPlay] = useState(false);
     const [checkoutLinks, setCheckoutLinks] = useState<Record<string, string>>({
-        br_prata: 'https://go.pepperpay.com.br/lonsw',
+        br_prata: 'https://pay.wiapy.com/aHY95kmze-',
         br_gold: 'https://pay.wiapy.com/AzOjUWS6Gd',
-        usa_prata: 'https://go.pepperpay.com.br/lonsw',
+        usa_prata: 'https://pay.wiapy.com/aHY95kmze-',
         usa_gold: 'https://pay.wiapy.com/AzOjUWS6Gd',
     });
     const [timeLeft, setTimeLeft] = useState({ minutes: 5, seconds: 0 });
