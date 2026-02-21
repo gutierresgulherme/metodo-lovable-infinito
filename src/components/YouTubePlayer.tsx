@@ -94,6 +94,9 @@ export const YouTubePlayer = ({
     const [duration, setDuration] = useState(0);
     const [showControls, setShowControls] = useState(true);
     const [isBuffering, setIsBuffering] = useState(true);
+    // isLoading: true desde o início até o vídeo começar a tocar de verdade
+    // Mantém overlay 100% preto para bloquear qualquer UI do YouTube no carregamento
+    const [isLoading, setIsLoading] = useState(true);
     // When ended=true, show black overlay to block YouTube's recommendation screen
     const [isEnded, setIsEnded] = useState(false);
 
@@ -145,7 +148,8 @@ export const YouTubePlayer = ({
                     onReady: (event: any) => {
                         if (destroyed) return;
                         setIsReady(true);
-                        setIsBuffering(false);
+                        // Não tiramos o isLoading aqui — só quando PLAYING disparar
+                        // Isso evita flash da UI do YouTube antes do vídeo começar
                         setDuration(event.target.getDuration());
 
                         if (autoPlay) {
@@ -159,12 +163,14 @@ export const YouTubePlayer = ({
                             case window.YT.PlayerState.PLAYING:
                                 setIsPlaying(true);
                                 setIsBuffering(false);
-                                setIsEnded(false); // Clear ended state when resuming
+                                setIsLoading(false); // ✅ Só agora remove o overlay preto inicial
+                                setIsEnded(false);
                                 onPlay?.();
                                 break;
 
                             case window.YT.PlayerState.PAUSED:
                                 setIsPlaying(false);
+                                setIsLoading(false); // também remove no pause (player carregou)
                                 onPause?.();
                                 break;
 
@@ -392,13 +398,23 @@ export const YouTubePlayer = ({
                 </div>
             )}
 
-            {/* Loading overlay */}
-            {isBuffering && !isEnded && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80">
-                    <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-                        <span className="text-emerald-500 text-xs tracking-widest animate-pulse">CARREGANDO...</span>
-                    </div>
+            {/*
+              OVERLAY DE LOADING — completamente preto e sólido.
+              Cobre 100% do iframe desde o primeiro frame até o vídeo começar a tocar.
+              z-index 40 = acima de todos os outros overlays e controles do YouTube.
+            */}
+            {(isLoading || isBuffering) && !isEnded && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-black">
+                    {isReady ? (
+                        // Player pronto mas ainda carregando frames — mostrar spinner
+                        <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+                            <span className="text-emerald-500 text-xs tracking-widest animate-pulse">CARREGANDO...</span>
+                        </div>
+                    ) : (
+                        // Ainda inicializando a API — overlay preto puro sem spinner
+                        <div className="w-10 h-10" />
+                    )}
                 </div>
             )}
 
