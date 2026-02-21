@@ -655,7 +655,7 @@ const Index = () => {
             </section>
 
             <footer className="py-8 px-6 border-t border-white/10 bg-black/40 text-center">
-                <p className="text-gray-500 text-sm">© 2025 — Todos os direitos reservados</p>
+                <p className="text-gray-500 text-sm">© 2026 — Todos os direitos reservados</p>
             </footer>
         </div>
     );

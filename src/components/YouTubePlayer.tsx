@@ -341,57 +341,53 @@ export const YouTubePlayer = ({
             }}
         >
             {/* 
-                YouTube iframe container - ESCALA 108% 
-                Corta levemente as bordas (logo, botões) sem sacrificar as legendas que ficam mais centralizadas.
+                YouTube iframe container - TAMANHO COMPLETO (sem zoom)
+                Removido o zoom de 108% para exibir o vídeo completo conforme solicitado.
             */}
             <div
                 ref={containerRef}
-                className="absolute z-0"
+                className="absolute inset-0 z-0"
                 style={{
-                    pointerEvents: 'none',
-                    top: '-4%',
-                    left: '-4%',
-                    width: '108%',
-                    height: '108%',
+                    pointerEvents: 'none'
                 }}
             />
 
             {/* ===== OVERLAYS DE CAMUFLAGEM ===== */}
 
-            {/* BARRA TOPO — cobertura total de títulos e botões */}
+            {/* BARRA TOPO — cobertura mínima necessária */}
             <div
                 className="absolute top-0 left-0 right-0 z-10 pointer-events-none"
                 style={{
-                    height: '75px',
-                    background: 'linear-gradient(to bottom, #000000 0%, rgba(0,0,0,0.95) 40%, rgba(0,0,0,0.5) 75%, transparent 100%)',
+                    height: '45px',
+                    background: 'linear-gradient(to bottom, #000000 0%, rgba(0,0,0,0.8) 50%, transparent 100%)',
                 }}
             />
 
-            {/* REFORÇOS NOS CANTOS SUPERIORES */}
+            {/* REFORÇOS LEVES NOS CANTOS SUPERIORES */}
             <div
                 className="absolute top-0 left-0 z-10 pointer-events-none"
                 style={{
-                    width: '40%',
-                    height: '80px',
-                    background: 'linear-gradient(135deg, #000000 0%, rgba(0,0,0,0.8) 60%, transparent 100%)',
+                    width: '180px',
+                    height: '50px',
+                    background: 'linear-gradient(135deg, #000000 0%, rgba(0,0,0,0.7) 60%, transparent 100%)',
                 }}
             />
             <div
                 className="absolute top-0 right-0 z-10 pointer-events-none"
                 style={{
-                    width: '40%',
-                    height: '80px',
-                    background: 'linear-gradient(225deg, #000000 0%, rgba(0,0,0,0.8) 60%, transparent 100%)',
+                    width: '180px',
+                    height: '50px',
+                    background: 'linear-gradient(225deg, #000000 0%, rgba(0,0,0,0.7) 60%, transparent 100%)',
                 }}
             />
 
-            {/* CANTO INFERIOR DIREITO — Esconder logo do YouTube Watermark */}
+            {/* ESCONDER WATERMARK (canto inferior direito) */}
             <div
                 className="absolute bottom-0 right-0 z-10 pointer-events-none"
                 style={{
-                    width: '180px',
-                    height: '70px',
-                    background: 'linear-gradient(315deg, #000000 0%, rgba(0,0,0,0.9) 40%, transparent 100%)',
+                    width: '90px',
+                    height: '40px',
+                    background: 'linear-gradient(315deg, #000000 0%, rgba(0,0,0,0.85) 50%, transparent 100%)',
                 }}
             />
 
