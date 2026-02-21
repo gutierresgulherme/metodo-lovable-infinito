@@ -338,7 +338,7 @@ const Index = () => {
                     <div className="flex justify-center mt-8 relative z-10">
                         <div className="relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-red-600/50 to-rose-600/50 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500 opacity-60"></div>
-                            <button onClick={() => handleCheckoutClick('btn-comprar-13-1', getCheckoutLink('prata'))} className="relative flex items-center justify-center gap-3 w-full max-w-[300px] px-6 py-3.5 rounded-full bg-gradient-to-b from-red-500 to-red-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tighter shadow-[0_10px_30px_rgba(185,28,28,0.4)] active:scale-95 transition-all duration-300 overflow-hidden">
+                            <button onClick={() => handleCheckoutClick('btn-comprar-17-1', getCheckoutLink('prata'))} className="relative flex items-center justify-center gap-3 w-full max-w-[300px] px-6 py-3.5 rounded-full bg-gradient-to-b from-red-500 to-red-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tighter shadow-[0_10px_30px_rgba(185,28,28,0.4)] active:scale-95 transition-all duration-300 overflow-hidden">
                                 <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
                                 <span className="relative z-10 flex flex-col items-center leading-tight">
                                     <span className="block italic text-[9px] opacity-70 tracking-widest mb-0.5">Garanta Agora</span>
@@ -611,13 +611,13 @@ const Index = () => {
                                 title="🟡 PLANO GOLD" price={PRICE_GOLD}
                                 features={["Método Lovable Infinito", "Acesso Ilimitado", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "Suporte Premium"]}
                                 variant="gold" buttonText="QUERO PLANO GOLD"
-                                onCheckout={() => handleCheckoutClick('btn-comprar-24-2', getCheckoutLink('gold'))}
+                                onCheckout={() => handleCheckoutClick('btn-comprar-27-2', getCheckoutLink('gold'))}
                             />
                             <PricingCard
                                 title="⚙️ PLANO PRATA" price={PRICE_PRATA}
                                 features={["Método Lovable Infinito", "Acesso Ilimitado", "Suporte Básico"]}
                                 variant="silver" buttonText="QUERO PLANO PRATA"
-                                onCheckout={() => handleCheckoutClick('btn-comprar-13-2', getCheckoutLink('prata'))}
+                                onCheckout={() => handleCheckoutClick('btn-comprar-17-2', getCheckoutLink('prata'))}
                             />
                         </div>
                     </Suspense>
