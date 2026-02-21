@@ -84,6 +84,7 @@ export const YouTubePlayer = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const outerRef = useRef<HTMLDivElement>(null);
 
     const [isReady, setIsReady] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -93,6 +94,8 @@ export const YouTubePlayer = ({
     const [duration, setDuration] = useState(0);
     const [showControls, setShowControls] = useState(true);
     const [isBuffering, setIsBuffering] = useState(true);
+    // When ended=true, show black overlay to block YouTube's recommendation screen
+    const [isEnded, setIsEnded] = useState(false);
 
     const hideControlsTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -123,10 +126,10 @@ export const YouTubePlayer = ({
                 height: '100%',
                 playerVars: {
                     autoplay: autoPlay ? 1 : 0,
-                    mute: 1, // Must start muted for autoplay
-                    controls: 0,
+                    mute: 1,          // Must start muted for autoplay
+                    controls: 0,      // Hide native YouTube controls
                     modestbranding: 1,
-                    rel: 0,
+                    rel: 0,           // No related videos at end
                     showinfo: 0,
                     iv_load_policy: 3, // No annotations
                     fs: 0,
@@ -134,8 +137,9 @@ export const YouTubePlayer = ({
                     playsinline: 1,
                     origin: window.location.origin,
                     enablejsapi: 1,
-                    cc_load_policy: 0, // No captions
+                    // cc_load_policy: 0 = REMOVIDO — para não suprimir legendas do vídeo
                     autohide: 1,
+                    loop: 0,          // We handle loop manually to avoid flicker
                 },
                 events: {
                     onReady: (event: any) => {
@@ -155,16 +159,33 @@ export const YouTubePlayer = ({
                             case window.YT.PlayerState.PLAYING:
                                 setIsPlaying(true);
                                 setIsBuffering(false);
+                                setIsEnded(false); // Clear ended state when resuming
                                 onPlay?.();
                                 break;
+
                             case window.YT.PlayerState.PAUSED:
                                 setIsPlaying(false);
                                 onPause?.();
                                 break;
+
                             case window.YT.PlayerState.ENDED:
+                                // ✅ FIX: Show black overlay immediately, then restart after 300ms
+                                setIsEnded(true);
                                 setIsPlaying(false);
                                 onEnded?.();
+
+                                // Restart video automatically after brief pause
+                                setTimeout(() => {
+                                    if (!destroyed && playerRef.current?.seekTo) {
+                                        playerRef.current.seekTo(0, true);
+                                        playerRef.current.playVideo();
+                                        setProgress(0);
+                                        setCurrentTime(0);
+                                        setIsEnded(false);
+                                    }
+                                }, 800);
                                 break;
+
                             case window.YT.PlayerState.BUFFERING:
                                 setIsBuffering(true);
                                 break;
@@ -246,6 +267,13 @@ export const YouTubePlayer = ({
     // Player controls
     const togglePlay = () => {
         if (!playerRef.current) return;
+        if (isEnded) {
+            // If ended, restart
+            playerRef.current.seekTo(0, true);
+            playerRef.current.playVideo();
+            setIsEnded(false);
+            return;
+        }
         if (isPlaying) {
             playerRef.current.pauseVideo();
         } else {
@@ -276,7 +304,7 @@ export const YouTubePlayer = ({
 
     const handleFullscreen = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const container = containerRef.current?.parentElement;
+        const container = outerRef.current;
         if (container?.requestFullscreen) {
             container.requestFullscreen();
         }
@@ -284,99 +312,98 @@ export const YouTubePlayer = ({
 
     return (
         <div
+            ref={outerRef}
             className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden cursor-pointer group"
             onMouseMove={resetControlsTimer}
             onMouseLeave={() => isPlaying && setShowControls(false)}
             onClick={togglePlay}
             style={{
-                boxShadow: '0 0 0 4px rgba(0,0,0,1), 0 0 0 5px rgba(168,85,247,0.2), 0 20px 60px rgba(0,0,0,0.9)',
+                boxShadow: '0 0 0 4px rgba(0,0,0,1), 0 0 0 6px rgba(168,85,247,0.2), 0 20px 60px rgba(0,0,0,0.9)',
             }}
         >
-            {/* 
-                YouTube iframe container - ESCALA 120% para "cortar" as bordas do YouTube
-                O overflow:hidden do div pai corta tudo que escapa para fora.
-                Assim, o título, logo, botões do YouTube ficam fora da área visível.
-            */}
+            {/* YouTube iframe — tamanho normal (sem zoom) para não cortar legendas */}
             <div
                 ref={containerRef}
-                className="absolute z-0"
-                style={{
-                    pointerEvents: 'none',
-                    top: '-10%',
-                    left: '-10%',
-                    width: '120%',
-                    height: '120%',
-                }}
+                className="absolute inset-0 z-0"
+                style={{ pointerEvents: 'none' }}
             />
 
             {/* ===== OVERLAYS DE CAMUFLAGEM ===== */}
 
-            {/* TOPO INTEIRO - Barra grossa preta cobrindo título do canal e botões do YouTube */}
+            {/*
+                BARRA TOPO — cobre: logo do canal, nome do canal, botões "Assistir depois" e "Compartilhar"
+                Altura generosa de 80px garante cobertura total em qualquer tamanho de tela.
+                Opacidade 100% no topo → fade para transparente embaixo (preserva o conteúdo do vídeo).
+            */}
             <div
                 className="absolute top-0 left-0 right-0 z-10 pointer-events-none"
                 style={{
-                    height: '72px',
-                    background: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 40%, rgba(0,0,0,0.7) 70%, transparent 100%)',
+                    height: '80px',
+                    background: 'linear-gradient(to bottom, #000000 0%, rgba(0,0,0,0.97) 50%, rgba(0,0,0,0.5) 80%, transparent 100%)',
                 }}
             />
 
-            {/* CANTO SUPERIOR ESQUERDO - Extra reforço para logo + nome do canal */}
+            {/* CANTOS SUPERIORES — reforço extra para os dois cantos onde a UI do YouTube aparece */}
             <div
                 className="absolute top-0 left-0 z-10 pointer-events-none"
                 style={{
-                    width: '45%',
+                    width: '260px',
                     height: '80px',
-                    background: 'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 50%, transparent 100%)',
+                    background: 'linear-gradient(145deg, #000000 0%, rgba(0,0,0,0.98) 60%, transparent 100%)',
                 }}
             />
-
-            {/* CANTO SUPERIOR DIREITO - Extra reforço para "Assistir depois" e "Compartilhar" */}
             <div
                 className="absolute top-0 right-0 z-10 pointer-events-none"
                 style={{
-                    width: '40%',
+                    width: '320px',
                     height: '80px',
-                    background: 'linear-gradient(225deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 50%, transparent 100%)',
+                    background: 'linear-gradient(215deg, #000000 0%, rgba(0,0,0,0.98) 60%, transparent 100%)',
                 }}
             />
 
-            {/* FUNDO (bottom) - Barra para esconder controles nativos do YouTube se vazar */}
-            <div
-                className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none"
-                style={{
-                    height: '60px',
-                    background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%)',
-                }}
-            />
-
-            {/* LATERAIS - Faixas pretas nas bordas para disfarçar o zoom */}
-            <div className="absolute top-0 left-0 bottom-0 w-[6px] bg-black z-10 pointer-events-none" />
-            <div className="absolute top-0 right-0 bottom-0 w-[6px] bg-black z-10 pointer-events-none" />
-
-            {/* CANTO INFERIOR DIREITO - Logo do YouTube watermark */}
+            {/* CANTO INFERIOR DIREITO — watermark/logo do YouTube */}
             <div
                 className="absolute bottom-0 right-0 z-10 pointer-events-none"
                 style={{
-                    width: '120px',
-                    height: '50px',
-                    background: 'linear-gradient(315deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, transparent 100%)',
+                    width: '140px',
+                    height: '56px',
+                    background: 'linear-gradient(315deg, #000000 0%, rgba(0,0,0,0.95) 50%, transparent 100%)',
                 }}
             />
 
+            {/* FAIXAS LATERAIS — disfarçam quaisquer elementos nas bordas */}
+            <div className="absolute top-0 left-0 bottom-0 w-[4px] bg-black z-10 pointer-events-none" />
+            <div className="absolute top-0 right-0 bottom-0 w-[4px] bg-black z-10 pointer-events-none" />
+
             {/* ===== FIM DOS OVERLAYS ===== */}
 
+            {/* ✅ OVERLAY DE FIM DE VÍDEO — bloqueia a tela de recomendações do YouTube */}
+            {isEnded && (
+                <div className="absolute inset-0 z-25 flex items-center justify-center bg-black">
+                    <div className="flex flex-col items-center gap-4">
+                        <div
+                            className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.6)] cursor-pointer hover:scale-110 transition-transform"
+                            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+                        >
+                            <Play className="w-10 h-10 text-white fill-white ml-1" />
+                        </div>
+                        <span className="text-white/70 text-sm tracking-wider">Reiniciando...</span>
+                    </div>
+                </div>
+            )}
+
             {/* Loading overlay */}
-            {isBuffering && (
+            {isBuffering && !isEnded && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80">
                     <div className="flex flex-col items-center gap-3">
                         <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-                        <span className="text-emerald-500 text-xs font-orbitron tracking-widest animate-pulse">CARREGANDO...</span>
+                        <span className="text-emerald-500 text-xs tracking-widest animate-pulse">CARREGANDO...</span>
                     </div>
                 </div>
             )}
 
             {/* Big play button when paused */}
-            {!isPlaying && isReady && !isBuffering && (
+            {!isPlaying && isReady && !isBuffering && !isEnded && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
                     <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.5)] hover:scale-110 transition-transform duration-300">
                         <Play className="w-10 h-10 text-white fill-white ml-1" />
@@ -426,10 +453,11 @@ export const YouTubePlayer = ({
                 </div>
             </div>
 
-            {/* Borda decorativa - "Frame" estilo player profissional */}
-            <div className="absolute inset-0 z-[5] pointer-events-none rounded-2xl"
+            {/* Frame decorativo interno — dá aparência de player premium */}
+            <div
+                className="absolute inset-0 z-[5] pointer-events-none rounded-2xl"
                 style={{
-                    boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.03), inset 0 0 30px rgba(0,0,0,0.5)',
+                    boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.04), inset 0 0 40px rgba(0,0,0,0.4)',
                 }}
             />
         </div>
@@ -437,4 +465,3 @@ export const YouTubePlayer = ({
 };
 
 export default YouTubePlayer;
-
