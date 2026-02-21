@@ -289,20 +289,85 @@ export const YouTubePlayer = ({
             onMouseLeave={() => isPlaying && setShowControls(false)}
             onClick={togglePlay}
             style={{
-                // Extra border styling to disguise YouTube
-                boxShadow: '0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(168,85,247,0.15), 0 20px 60px rgba(0,0,0,0.8)',
+                boxShadow: '0 0 0 4px rgba(0,0,0,1), 0 0 0 5px rgba(168,85,247,0.2), 0 20px 60px rgba(0,0,0,0.9)',
             }}
         >
-            {/* YouTube iframe container, no pointer events so our overlay captures clicks */}
+            {/* 
+                YouTube iframe container - ESCALA 120% para "cortar" as bordas do YouTube
+                O overflow:hidden do div pai corta tudo que escapa para fora.
+                Assim, o título, logo, botões do YouTube ficam fora da área visível.
+            */}
             <div
                 ref={containerRef}
-                className="absolute inset-0 z-0"
-                style={{ pointerEvents: 'none' }}
+                className="absolute z-0"
+                style={{
+                    pointerEvents: 'none',
+                    top: '-10%',
+                    left: '-10%',
+                    width: '120%',
+                    height: '120%',
+                }}
             />
+
+            {/* ===== OVERLAYS DE CAMUFLAGEM ===== */}
+
+            {/* TOPO INTEIRO - Barra grossa preta cobrindo título do canal e botões do YouTube */}
+            <div
+                className="absolute top-0 left-0 right-0 z-10 pointer-events-none"
+                style={{
+                    height: '72px',
+                    background: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 40%, rgba(0,0,0,0.7) 70%, transparent 100%)',
+                }}
+            />
+
+            {/* CANTO SUPERIOR ESQUERDO - Extra reforço para logo + nome do canal */}
+            <div
+                className="absolute top-0 left-0 z-10 pointer-events-none"
+                style={{
+                    width: '45%',
+                    height: '80px',
+                    background: 'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 50%, transparent 100%)',
+                }}
+            />
+
+            {/* CANTO SUPERIOR DIREITO - Extra reforço para "Assistir depois" e "Compartilhar" */}
+            <div
+                className="absolute top-0 right-0 z-10 pointer-events-none"
+                style={{
+                    width: '40%',
+                    height: '80px',
+                    background: 'linear-gradient(225deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 50%, transparent 100%)',
+                }}
+            />
+
+            {/* FUNDO (bottom) - Barra para esconder controles nativos do YouTube se vazar */}
+            <div
+                className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none"
+                style={{
+                    height: '60px',
+                    background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%)',
+                }}
+            />
+
+            {/* LATERAIS - Faixas pretas nas bordas para disfarçar o zoom */}
+            <div className="absolute top-0 left-0 bottom-0 w-[6px] bg-black z-10 pointer-events-none" />
+            <div className="absolute top-0 right-0 bottom-0 w-[6px] bg-black z-10 pointer-events-none" />
+
+            {/* CANTO INFERIOR DIREITO - Logo do YouTube watermark */}
+            <div
+                className="absolute bottom-0 right-0 z-10 pointer-events-none"
+                style={{
+                    width: '120px',
+                    height: '50px',
+                    background: 'linear-gradient(315deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 40%, transparent 100%)',
+                }}
+            />
+
+            {/* ===== FIM DOS OVERLAYS ===== */}
 
             {/* Loading overlay */}
             {isBuffering && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/80">
                     <div className="flex flex-col items-center gap-3">
                         <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
                         <span className="text-emerald-500 text-xs font-orbitron tracking-widest animate-pulse">CARREGANDO...</span>
@@ -312,7 +377,7 @@ export const YouTubePlayer = ({
 
             {/* Big play button when paused */}
             {!isPlaying && isReady && !isBuffering && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30">
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
                     <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.5)] hover:scale-110 transition-transform duration-300">
                         <Play className="w-10 h-10 text-white fill-white ml-1" />
                     </div>
@@ -338,7 +403,7 @@ export const YouTubePlayer = ({
                 </div>
 
                 {/* Controls row */}
-                <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-t from-black via-black/90 to-black/60">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={(e) => { e.stopPropagation(); togglePlay(); }}
@@ -361,11 +426,15 @@ export const YouTubePlayer = ({
                 </div>
             </div>
 
-            {/* Top-left corner gradient to hide YouTube watermark */}
-            <div className="absolute top-0 right-0 w-24 h-16 bg-gradient-to-bl from-black via-black/80 to-transparent z-10 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent z-10 pointer-events-none" />
+            {/* Borda decorativa - "Frame" estilo player profissional */}
+            <div className="absolute inset-0 z-[5] pointer-events-none rounded-2xl"
+                style={{
+                    boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.03), inset 0 0 30px rgba(0,0,0,0.5)',
+                }}
+            />
         </div>
     );
 };
 
 export default YouTubePlayer;
+
