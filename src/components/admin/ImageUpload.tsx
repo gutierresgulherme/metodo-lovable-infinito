@@ -282,6 +282,9 @@ export const ImageUpload = ({ pageKey, currentImage, onImageUpdated }: ImageUplo
               onChange={(e) => setManualUrl(e.target.value)}
               className="w-full h-10 px-3 bg-black/40 border border-white/10 rounded-md text-sm text-gray-200 focus:border-pink-500 outline-none transition-colors"
             />
+            <p className="text-[10px] text-gray-400 font-mono leading-tight bg-red-500/10 p-2 rounded border border-red-500/20">
+              ⚠️ <strong>IMPORTANTE:</strong> O link deve ser de uma IMAGEM DIRETA (terminando em .png, .jpg ou .webp). Links de edição do Canva <strong>não funcionam</strong> como imagem.
+            </p>
             <Button
               onClick={handleSaveManualUrl}
               disabled={uploading || !manualUrl}

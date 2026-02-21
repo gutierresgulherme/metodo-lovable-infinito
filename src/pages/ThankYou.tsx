@@ -219,6 +219,10 @@ export default function ThankYou() {
                     <img
                       src={bannerImageUrl}
                       alt="Comunidade Lovable Brasil"
+                      onError={() => {
+                        console.warn("[THANKYOU] Erro ao carregar banner. URL pode ser inválida:", bannerImageUrl);
+                        setBannerImageUrl(null);
+                      }}
                       className="w-full h-auto max-h-[280px] sm:max-h-[400px] md:max-h-none object-cover object-top"
                     />
                   ) : (
