@@ -92,7 +92,6 @@ export const YouTubePlayer = ({
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
-    const [showControls, setShowControls] = useState(true);
     const [isBuffering, setIsBuffering] = useState(true);
     // isLoading: true desde o início até o vídeo começar a tocar de verdade
     // Mantém overlay 100% preto para bloquear qualquer UI do YouTube no carregamento
@@ -249,15 +248,7 @@ export const YouTubePlayer = ({
         };
     }, [isReady, onTimeUpdate]);
 
-    // Auto-hide controls
-    const resetControlsTimer = useCallback(() => {
-        setShowControls(true);
-        if (hideControlsTimer.current) clearTimeout(hideControlsTimer.current);
-        if (isPlaying) {
-            // Esconder controles mais rápido (1.5s em vez de 3s)
-            hideControlsTimer.current = setTimeout(() => setShowControls(false), 1500);
-        }
-    }, [isPlaying]);
+
 
     // Desmutar na primeira interação do usuário (clique/toque)
     useEffect(() => {
@@ -333,8 +324,6 @@ export const YouTubePlayer = ({
         <div
             ref={outerRef}
             className="relative w-full aspect-video bg-black rounded-2xl overflow-hidden cursor-pointer group"
-            onMouseMove={resetControlsTimer}
-            onMouseLeave={() => isPlaying && setShowControls(false)}
             onClick={togglePlay}
             style={{
                 boxShadow: '0 0 0 4px rgba(0,0,0,1), 0 0 0 6px rgba(168,85,247,0.2), 0 20px 60px rgba(0,0,0,0.9)',
@@ -453,34 +442,7 @@ export const YouTubePlayer = ({
                 </div>
             )}
 
-            {/* Bottom controls bar (PandaVideo style) */}
-            <div
-                className={`absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-300 ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0'}`}
-                onClick={(e) => e.stopPropagation()}
-            >
 
-
-                {/* Controls row */}
-                <div className={`flex items-center justify-between px-4 py-2.5 bg-gradient-to-t from-black via-black/90 to-black/60 transition-transform duration-500 ${showControls || !isPlaying ? 'translate-y-0' : 'translate-y-full'}`}>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-                            className="text-white hover:text-emerald-400 transition-colors"
-                        >
-                            {isPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white" />}
-                        </button>
-                        <button onClick={toggleMute} className="text-white hover:text-emerald-400 transition-colors">
-                            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                        </button>
-
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button onClick={handleFullscreen} className="text-white hover:text-emerald-400 transition-colors">
-                            <Maximize className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             {/* Frame decorativo interno — dá aparência de player premium */}
             <div
