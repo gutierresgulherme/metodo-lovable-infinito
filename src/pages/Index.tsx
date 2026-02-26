@@ -28,10 +28,10 @@ const Index = () => {
     const [videoError, setVideoError] = useState<string | null>(null);
     const [showFallbackPlay, setShowFallbackPlay] = useState(false);
     const [checkoutLinks, setCheckoutLinks] = useState<Record<string, string>>({
-        br_prata: 'https://pay.wiapy.com/aHY95kmze-',
-        br_gold: 'https://pay.wiapy.com/AzOjUWS6Gd',
-        usa_prata: 'https://pay.wiapy.com/aHY95kmze-',
-        usa_gold: 'https://pay.wiapy.com/AzOjUWS6Gd',
+        br_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
+        br_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-p36m',
+        usa_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
+        usa_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-p36m',
     });
     const [timeLeft, setTimeLeft] = useState({ minutes: 5, seconds: 0 });
 
@@ -64,15 +64,8 @@ const Index = () => {
                 }
 
                 // 2. Load Checkout Links from DB
-                const { data: dbLinks } = await db.from('checkout_configs').select('*');
-                if (dbLinks && dbLinks.length > 0) {
-                    const mappedLinks: Record<string, string> = { ...checkoutLinks };
-                    dbLinks.forEach((item: any) => {
-                        mappedLinks[item.key] = item.url;
-                    });
-                    setCheckoutLinks(mappedLinks);
-                    console.log("[INDEX] Links de checkout carregados do banco");
-                }
+                // Links de checkout são definidos manualmente (sharckpay.vip) — não sobrescrever com dados do banco
+                console.log("[INDEX] Links de checkout fixos (sharckpay.vip) — ignorando banco de dados");
             } catch (err) {
                 console.error("Error initializing page:", err);
             } finally {
@@ -338,7 +331,11 @@ const Index = () => {
                     <div className="flex justify-center mt-8 relative z-10">
                         <div className="relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-red-600/50 to-rose-600/50 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500 opacity-60"></div>
-                            <button onClick={() => handleCheckoutClick('btn-comprar-17-1', getCheckoutLink('prata'))} className="relative flex items-center justify-center gap-3 w-full max-w-[300px] px-6 py-3.5 rounded-full bg-gradient-to-b from-red-500 to-red-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tighter shadow-[0_10px_30px_rgba(185,28,28,0.4)] active:scale-95 transition-all duration-300 overflow-hidden">
+                            <button
+                                onClick={() => handleCheckoutClick('btn-comprar-17-1', getCheckoutLink('prata'))}
+                                data-utmify-ignore
+                                className="relative flex items-center justify-center gap-3 w-full max-w-[300px] px-6 py-3.5 rounded-full bg-gradient-to-b from-red-500 to-red-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tighter shadow-[0_10px_30px_rgba(185,28,28,0.4)] active:scale-95 transition-all duration-300 overflow-hidden"
+                            >
                                 <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
                                 <span className="relative z-10 flex flex-col items-center leading-tight">
                                     <span className="block italic text-[9px] opacity-70 tracking-widest mb-0.5">Garanta Agora</span>
@@ -544,7 +541,11 @@ const Index = () => {
             <div className="flex flex-col items-center py-8 relative z-10 px-6">
                 <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600/50 to-green-600/50 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500 opacity-60"></div>
-                    <button onClick={() => handleCheckoutClick('btn-comprar-bonus', getCheckoutLink('gold'))} className="relative flex items-center justify-center gap-3 w-full max-w-[340px] px-6 py-3.5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tight shadow-[0_10px_30px_rgba(5,150,105,0.4)] active:scale-95 transition-all duration-300 overflow-hidden">
+                    <button
+                        onClick={() => handleCheckoutClick('btn-comprar-bonus', getCheckoutLink('gold'))}
+                        data-utmify-ignore
+                        className="relative flex items-center justify-center gap-3 w-full max-w-[340px] px-6 py-3.5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tight shadow-[0_10px_30px_rgba(5,150,105,0.4)] active:scale-95 transition-all duration-300 overflow-hidden"
+                    >
                         <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
                         <span className="relative z-10 text-center leading-tight">QUERO O MÉTODO + 2 BÔNUS <br /><span className="text-xs font-black text-white/90">E AULA EXCLUSIVA POR {PRICE_GOLD}</span></span>
                     </button>
