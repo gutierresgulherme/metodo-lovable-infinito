@@ -188,8 +188,37 @@ const Index = () => {
                     url.searchParams.set(key, value);
                 }
             });
+
+            // 🔴 UTMIFY: Disparar evento initiateCheckout ANTES de redirecionar
+            const utmifyPixel = (window as any).Utmify || (window as any).__utmify;
+            if (utmifyPixel?.track) {
+                try {
+                    utmifyPixel.track('initiateCheckout', {
+                        value: 0,
+                        currency: 'BRL',
+                    });
+                    console.log("[UTMIFY] initiateCheckout disparado - botão:", buttonId);
+                } catch (pixelErr) {
+                    console.warn("[UTMIFY] Erro ao disparar initiateCheckout:", pixelErr);
+                }
+            } else {
+                // Fallback: tentar via pixel global
+                try {
+                    const w = window as any;
+                    if (w.PixelManager?.track) {
+                        w.PixelManager.track('initiateCheckout');
+                    } else if (w.pixelId) {
+                        console.log("[UTMIFY] pixelId detectado mas SDK não carregado ainda:", w.pixelId);
+                    }
+                } catch(e) { /* silent */ }
+            }
+
             console.log("[CHECKOUT] Redirecionando para:", url.toString());
-            window.location.href = url.toString();
+
+            // Pequeno delay para garantir que o evento foi enviado antes do redirect
+            setTimeout(() => {
+                window.location.href = url.toString();
+            }, 150);
         } catch (err) {
             console.error("[CHECKOUT] Erro ao processar URL:", err);
             window.location.href = baseUrl;
@@ -337,7 +366,6 @@ const Index = () => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => { e.preventDefault(); handleCheckoutClick('btn-comprar-17-1', getCheckoutLink('prata')); }}
-                                data-utmify-ignore
                                 className="relative flex items-center justify-center gap-3 w-full max-w-[300px] px-6 py-3.5 rounded-full bg-gradient-to-b from-red-500 to-red-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tighter shadow-[0_10px_30px_rgba(185,28,28,0.4)] active:scale-95 transition-all duration-300 overflow-hidden"
                             >
                                 <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
@@ -551,7 +579,6 @@ const Index = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => { e.preventDefault(); handleCheckoutClick('btn-comprar-bonus', getCheckoutLink('gold')); }}
-                        data-utmify-ignore
                         className="relative flex items-center justify-center gap-3 w-full max-w-[340px] px-6 py-3.5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tight shadow-[0_10px_30px_rgba(5,150,105,0.4)] active:scale-95 transition-all duration-300 overflow-hidden"
                     >
                         <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
