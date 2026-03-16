@@ -21,7 +21,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCurrentVSLInfo, getThankYouMedia, VSLVariant } from "@/lib/vslService";
 import { analyzeVSL, VSLElement } from "@/lib/vslAnalyzer";
 import VSLVisualMap from "@/components/admin/VSLVisualMap";
-import CheckoutLinksManager from "@/components/admin/CheckoutLinksManager";
 import { cn } from "@/lib/utils";
 import { APP_VERSION, BUILD_DATE } from "@/version";
 
@@ -37,8 +36,6 @@ interface QuickStats {
 const quickLinks = [
     { icon: BarChart3, label: "Analytics", path: "/admin/analytics", color: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
     { icon: Video, label: "Gestão Mídias", path: "/admin/videos", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-
-    { icon: Zap, label: "UTM Debug", path: "/utmify-debug", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/20" },
     { icon: Gift, label: "Página Obrigado", path: "/thankyou", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/20", external: true },
 ];
 
@@ -195,11 +192,6 @@ export default function AdminDashboard() {
 
                             {/* Mapa Visual */}
                             <VSLVisualMap vslType="home" />
-
-                            <div className="border-t border-white/5 pt-4">
-                                {/* Gestão de Links */}
-                                <CheckoutLinksManager vslType="home" elements={homeElements} />
-                            </div>
                         </CardContent>
                     </Card>
 
@@ -224,11 +216,6 @@ export default function AdminDashboard() {
 
                             {/* Mapa Visual */}
                             <VSLVisualMap vslType="thankyou" />
-
-                            <div className="border-t border-white/5 pt-4">
-                                {/* Gestão de Links */}
-                                <CheckoutLinksManager vslType="thankyou" elements={tyElements} />
-                            </div>
                         </CardContent>
                     </Card>
                 </div>

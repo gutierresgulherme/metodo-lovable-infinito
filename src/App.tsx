@@ -9,8 +9,6 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 
 import Index from "./pages/Index";
 import ThankYou from "./pages/ThankYou";
-import Pending from "./pages/Pending";
-import TestUtmify from "./pages/TestUtmify";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminVideos from "./pages/AdminVideos";
@@ -34,8 +32,6 @@ const App = () => {
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/thankyou" element={<ThankYou />} />
-              <Route path="/pending" element={<Pending />} />
-              <Route path="/utmify-debug" element={<TestUtmify />} />
               <Route path="/login" element={<Login />} />
 
               {/* Admin Routes with Layout */}
