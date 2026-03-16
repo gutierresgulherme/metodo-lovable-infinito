@@ -373,7 +373,6 @@ const Index = () => {
                                 href={getCheckoutLink('prata')}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={(e) => { e.preventDefault(); handleCheckoutClick('btn-comprar-17-1', getCheckoutLink('prata')); }}
                                 className="relative flex items-center justify-center gap-3 w-full max-w-[300px] px-6 py-3.5 rounded-full bg-gradient-to-b from-red-500 to-red-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tighter shadow-[0_10px_30px_rgba(185,28,28,0.4)] active:scale-95 transition-all duration-300 overflow-hidden"
                             >
                                 <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
@@ -586,7 +585,6 @@ const Index = () => {
                         href={getCheckoutLink('gold')}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={(e) => { e.preventDefault(); handleCheckoutClick('btn-comprar-bonus', getCheckoutLink('gold')); }}
                         className="relative flex items-center justify-center gap-3 w-full max-w-[340px] px-6 py-3.5 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 border border-white/20 text-white font-black text-base md:text-lg uppercase tracking-tight shadow-[0_10px_30px_rgba(5,150,105,0.4)] active:scale-95 transition-all duration-300 overflow-hidden"
                     >
                         <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-1000 group-hover:left-[100%]"></div>
@@ -655,13 +653,15 @@ const Index = () => {
                                 title="🟡 PLANO GOLD" price={PRICE_GOLD}
                                 features={["Método Lovable Infinito", "Acesso Ilimitado", "Bônus ChatGPT 5 Plus", "Bônus Canva PRO", "Suporte Premium"]}
                                 variant="gold" buttonText="QUERO PLANO GOLD"
-                                onCheckout={() => handleCheckoutClick('btn-comprar-27-2', getCheckoutLink('gold'))}
+                                checkoutLink={getCheckoutLink('gold')}
+                                buttonId="btn-comprar-27-2"
                             />
                             <PricingCard
                                 title="⚙️ PLANO PRATA" price={PRICE_PRATA}
                                 features={["Método Lovable Infinito", "Acesso Ilimitado", "Suporte Básico"]}
                                 variant="silver" buttonText="QUERO PLANO PRATA"
-                                onCheckout={() => handleCheckoutClick('btn-comprar-17-2', getCheckoutLink('prata'))}
+                                checkoutLink={getCheckoutLink('prata')}
+                                buttonId="btn-comprar-17-2"
                             />
                         </div>
                     </Suspense>

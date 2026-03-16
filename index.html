@@ -41,7 +41,7 @@
   <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
   <!-- UTMIFY: Script de captura de UTMs -->
-  <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" async defer></script>
+  <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" data-utmify-prevent-xcod-sck data-utmify-prevent-subids async defer></script>
 
   <!-- UTMIFY PIXEL DINÂMICO -->
   <script>
@@ -142,6 +142,21 @@
       childList: true,
       subtree: true
     });
+
+    // 🔴 DISPARO MANUAL DE INITIATECHECKOUT (Sem bloquear o clique)
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('a');
+      if (target && (target.href.includes('sharckpay.vip') || target.href.includes('sharkpay.vip'))) {
+        const utmify = window.Utmify || window.__utmify || window.utmify;
+        if (utmify && utmify.track) {
+          utmify.track('initiateCheckout', {
+            value: 0,
+            currency: 'BRL'
+          });
+          console.log("[UTMIFY] InitiateCheckout disparado via click listener");
+        }
+      }
+    }, true);
 
   })();
   </script>
