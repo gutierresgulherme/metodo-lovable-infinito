@@ -1,10 +1,9 @@
-import { defineConfig } from "vite";
+﻿import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
@@ -14,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
         name: 'Lovable Infinito',
@@ -37,20 +36,6 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
             urlPattern: /^https:\/\/eidcxqxjmraargwhrdai\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
@@ -58,18 +43,6 @@ export default defineConfig(({ mode }) => ({
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              },
-              networkTimeoutSeconds: 10
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
           }
@@ -83,24 +56,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: 'es2015',
+    target: 'esnext',
     minify: 'terser',
     cssMinify: true,
-    terserOptions: {
-      compress: {
-        drop_console: false,
-        drop_debugger: false,
-        passes: 2
-      }
-    },
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'player': ['shaka-player']
-        }
-      }
-    },
-    // Improve chunking for mobile
-    chunkSizeWarningLimit: 500
+    chunkSizeWarningLimit: 1000
   }
 }));
