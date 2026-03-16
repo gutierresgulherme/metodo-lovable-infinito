@@ -1,50 +1,62 @@
-﻿import { supabase } from \"@/integrations/supabase/client\";
+﻿import { supabase } from "@/integrations/supabase/client";
 
 // Mock de labels para manter compatibilidade
 const BUTTON_LABELS: Record<string, string> = {
-    \"btn-comprar-13-1\": \"Plano Prata\",
-    \"btn-comprar-24-1\": \"Plano Gold\",
+    "btn-comprar-13-1": "Plano Prata",
+    "btn-comprar-24-1": "Plano Gold",
 };
 
 const getUtmify = () => (window as any).Utmify || (window as any).__utmify || (window as any).utmify;
 
-export const getSessionId = (): string => \"session_utmify\";
+export const getSessionId = (): string => "session_utmify";
 
 export const getUtmParams = (): Record<string, string> => ({});
 
 // Redirecionado para UTMify, mantendo assinatura original
 export const trackButtonClick = async (buttonId: string): Promise<void> => {
-    const utmify = getUtmify();
-    if (utmify && utmify.track) {
-        utmify.track('click', { button_id: buttonId });
+    try {
+        const utmify = getUtmify();
+        if (utmify && utmify.track) {
+            utmify.track('click', { button_id: buttonId });
+        }
+        console.log("[UTMIFY] Click tracked:", buttonId);
+    } catch (error) {
+        console.error("[Analytics] UTMify track error:", error);
     }
-    console.log(\"[UTMIFY] Click tracked:\", buttonId);
 };
 
 // Redirecionado para UTMify, mantendo assinatura original
 export const trackVideoEvent = async (
-    eventType: \"play\" | \"pause\" | \"progress\" | \"ended\",
+    eventType: "play" | "pause" | "progress" | "ended",
     currentTimeSeconds: number,
     durationSeconds: number
 ): Promise<void> => {
-    const utmify = getUtmify();
-    if (utmify && utmify.track) {
-        const percent = durationSeconds > 0 ? Math.round((currentTimeSeconds / durationSeconds) * 100) : 0;
-        utmify.track('video_' + eventType, { percent });
+    try {
+        const utmify = getUtmify();
+        if (utmify && utmify.track) {
+            const percent = durationSeconds > 0 ? Math.round((currentTimeSeconds / durationSeconds) * 100) : 0;
+            utmify.track('video_' + eventType, { 
+                current_time: Math.round(currentTimeSeconds),
+                percent: percent 
+            });
+            console.log("[UTMIFY] Video event:", eventType, percent + "%");
+        }
+    } catch (error) {
+        console.error("[Analytics] Video track error:", error);
     }
 };
 
 export const initPageSession = async (): Promise<void> => {
-    console.log(\"[Analytics] Session handled by UTMify\");
+    console.log("[Analytics] Session handled by UTMify");
 };
 
 export const setupButtonTracking = (): void => {
     if ((window as any)._trackingInitialized) return;
-    document.addEventListener(\"click\", (event) => {
+    document.addEventListener("click", (event) => {
         const target = event.target as HTMLElement;
-        const button = target.closest(\"[id^='btn-comprar-']\");
+        const button = target.closest("[id^='btn-comprar-']");
         if (button) {
-            const buttonId = button.getAttribute(\"id\");
+            const buttonId = button.getAttribute("id");
             if (buttonId) trackButtonClick(buttonId);
         }
     }, true);
