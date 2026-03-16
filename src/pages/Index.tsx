@@ -50,7 +50,7 @@ const Index = () => {
                 const { vsl, isActive: domainActive, currency: domainCurrency } = await getCurrentVSLInfo();
 
                 setIsActive(domainActive);
-                setCurrency(domainCurrency);
+                setCurrency('BRL');
 
                 if (vsl) {
                     setVslData(vsl);
@@ -172,7 +172,7 @@ const Index = () => {
 
     const getCheckoutLink = useCallback((plan: 'prata' | 'gold') => {
         const hostname = window.location.hostname;
-        const isUSA = hostname.includes('lovable-app.vip');
+        const isUSA = false;
         const key = isUSA
             ? (plan === 'prata' ? 'usa_prata' : 'usa_gold')
             : (plan === 'prata' ? 'br_prata' : 'br_gold');
@@ -706,3 +706,4 @@ const Index = () => {
 };
 
 export default Index;
+
