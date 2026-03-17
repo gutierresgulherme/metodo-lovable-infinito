@@ -3,7 +3,7 @@
 
 <head>
   <script>
-    // Forçar limpeza de Service Workers antigos que travam o front antigo
+    // Forï¿½ar limpeza de Service Workers antigos que travam o front antigo
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for(let registration of registrations) {
@@ -62,11 +62,19 @@
 
   <!-- UTMIFY PIXEL DINÃ‚MICO -->
   <script>
-    window.pixelId = "694193c8edf1b9da77b48e2b";
+    var _hostname = window.location.hostname;
+    if (_hostname.includes('lovable-app.vip')) {
+      window.pixelId = "697269d827f998dc679f772f";
+    } else {
+      window.pixelId = "694193c8edf1b9da77b48e2b";
+    }
     var a = document.createElement("script");
     a.setAttribute("async", "");
     a.setAttribute("defer", "");
     a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+    a.onload = function() {
+      if (window.Utmify) window.Utmify.track('pageView');
+    };
     document.head.appendChild(a);
   </script>
 </head>
