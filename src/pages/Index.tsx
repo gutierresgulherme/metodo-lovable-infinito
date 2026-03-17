@@ -30,8 +30,8 @@ const Index = () => {
     const [checkoutLinks, setCheckoutLinks] = useState<Record<string, string>>({
         br_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
         br_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-y3s5',
-        usa_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
-        usa_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-y3s5',
+        usa_prata: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-17-90-sr88',
+        usa_gold: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-27-90-5s18',
     });
     const [timeLeft, setTimeLeft] = useState({ minutes: 5, seconds: 0 });
 
@@ -135,7 +135,7 @@ const Index = () => {
         }, 3000);
         return () => clearInterval(checkPlaying);
     }, [vslData?.video_url, videoError]);
-
+    
     // Countdown Timer logic
     useEffect(() => {
         const timer = setInterval(() => {
@@ -151,6 +151,7 @@ const Index = () => {
         }, 1000);
         return () => clearInterval(timer);
     }, []);
+
 
     // --- Video Tracking Handler ---
     const handleVideoTimeUpdate = () => {

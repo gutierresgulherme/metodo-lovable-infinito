@@ -10,9 +10,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#000000" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Lovable Infinito - Acesso Ilimitado por R$13,90</title>
+  <title>Lovable Infinito - Destrave seu Lovable</title>
   <meta name="description"
-    content="Tenha acesso ilimitado ao Lovable com o Método Lovable Infinito. Crie sites e aplicativos sem limites por apenas R$13,90." />
+    content="Tenha acesso ilimitado ao Lovable com o Método Lovable Infinito. Crie sites e aplicativos sem limites." />
   <meta name="author" content="Lovable Infinito" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +41,8 @@
   <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
   <!-- UTMIFY: Script de captura de UTMs -->
-  <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" data-utmify-prevent-xcod-sck data-utmify-prevent-subids async defer></script>
+  <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" data-utmify-prevent-xcod-sck data-utmify-prevent-subids
+    async defer></script>
 
   <!-- UTMIFY PIXEL DINÂMICO -->
   <script>
@@ -60,107 +61,107 @@
 
   <!-- UTM PROPAGATION: Passa UTMs automaticamente para todos os links SharkPay -->
   <script>
-  (function() {
-    // 1. Remove fbclid da URL sem recarregar a página (limpeza pró-ativa)
-    if (window.location.search.includes('fbclid')) {
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.delete('fbclid');
-        window.history.replaceState({}, '', url.toString());
-      } catch (e) {}
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const utms = ['utm_source', 'utm_medium', 'utm_campaign',
-                  'utm_content', 'utm_term', 'src', 'sck'];
-
-    const isUSA = window.location.hostname.includes('lovable-app.vip');
-    const defaultCurrency = isUSA ? 'USD' : 'BRL';
-
-    // Função para limpar valores de UTM (evita concatenação com fbclid/IDs do FB)
-    const cleanUtmValue = (val) => {
-      if (!val) return '';
-      const fbclidPattern = /j[A-Z][a-z][0-9a-f]{16,}/;
-      return val.replace(fbclidPattern, '').split('?')[0].split('#')[0].trim();
-    };
-
-    // Salva UTMs no sessionStorage como backup (e recupera se URL não tiver)
-    utms.forEach(utm => {
-      let value = cleanUtmValue(params.get(utm));
-      if (value) {
-        sessionStorage.setItem(utm, value);
-        params.set(utm, value); 
-      } else {
-        const saved = sessionStorage.getItem(utm);
-        if (saved) params.set(utm, saved);
+    (function () {
+      // 1. Remove fbclid da URL sem recarregar a página (limpeza pró-ativa)
+      if (window.location.search.includes('fbclid')) {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('fbclid');
+          window.history.replaceState({}, '', url.toString());
+        } catch (e) { }
       }
-    });
 
-    // Função que adiciona UTMs em um link
-    function addUtmsToLink(link) {
-      try {
-        if (!link.href || (!link.href.includes('sharckpay.vip') && !link.href.includes('sharkpay.vip') && !link.href.includes('pepperpay.com.br'))) return;
-        const url = new URL(link.href);
-        utms.forEach(utm => {
-          const value = params.get(utm);
-          if (value) url.searchParams.set(utm, value);
-        });
-        link.href = url.toString();
-      } catch(e) {}
-    }
+      const params = new URLSearchParams(window.location.search);
+      const utms = ['utm_source', 'utm_medium', 'utm_campaign',
+        'utm_content', 'utm_term', 'src', 'sck'];
 
-    // Aplica em todos os links do SharkPay e PepperPay já existentes na página
-    function applyToAllLinks() {
-      document.querySelectorAll(
-        'a[href*="sharckpay.vip"], a[href*="sharkpay.vip"], a[href*="pepperpay.com.br"]'
-      ).forEach(addUtmsToLink);
-    }
+      const isUSA = window.location.hostname.includes('lovable-app.vip');
+      const defaultCurrency = isUSA ? 'USD' : 'BRL';
 
-    applyToAllLinks();
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', applyToAllLinks);
-    }
-    // Repete após 1s para garantir links renderizados por React tardiamente
-    setTimeout(applyToAllLinks, 1000);
+      // Função para limpar valores de UTM (evita concatenação com fbclid/IDs do FB)
+      const cleanUtmValue = (val) => {
+        if (!val) return '';
+        const fbclidPattern = /j[A-Z][a-z][0-9a-f]{16,}/;
+        return val.replace(fbclidPattern, '').split('?')[0].split('#')[0].trim();
+      };
 
-    // Observa novos links adicionados dinamicamente
-    const observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(mutation) {
-        mutation.addedNodes.forEach(function(node) {
-          if (node.nodeType !== 1) return;
-          if (node.tagName === 'A') {
-            addUtmsToLink(node);
-          }
-          if (node.querySelectorAll) {
-            node.querySelectorAll(
-              'a[href*="sharckpay.vip"], a[href*="sharkpay.vip"]'
-            ).forEach(addUtmsToLink);
-          }
+      // Salva UTMs no sessionStorage como backup (e recupera se URL não tiver)
+      utms.forEach(utm => {
+        let value = cleanUtmValue(params.get(utm));
+        if (value) {
+          sessionStorage.setItem(utm, value);
+          params.set(utm, value);
+        } else {
+          const saved = sessionStorage.getItem(utm);
+          if (saved) params.set(utm, saved);
+        }
+      });
+
+      // Função que adiciona UTMs em um link
+      function addUtmsToLink(link) {
+        try {
+          if (!link.href || (!link.href.includes('sharckpay.vip') && !link.href.includes('sharkpay.vip'))) return;
+          const url = new URL(link.href);
+          utms.forEach(utm => {
+            const value = params.get(utm);
+            if (value) url.searchParams.set(utm, value);
+          });
+          link.href = url.toString();
+        } catch (e) { }
+      }
+
+      // Aplica em todos os links do SharkPay já existentes na página
+      function applyToAllLinks() {
+        document.querySelectorAll(
+          'a[href*="sharckpay.vip"], a[href*="sharkpay.vip"]'
+        ).forEach(addUtmsToLink);
+      }
+
+      applyToAllLinks();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyToAllLinks);
+      }
+      // Repete após 1s para garantir links renderizados por React tardiamente
+      setTimeout(applyToAllLinks, 1000);
+
+      // Observa novos links adicionados dinamicamente
+      const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          mutation.addedNodes.forEach(function (node) {
+            if (node.nodeType !== 1) return;
+            if (node.tagName === 'A') {
+              addUtmsToLink(node);
+            }
+            if (node.querySelectorAll) {
+              node.querySelectorAll(
+                'a[href*="sharckpay.vip"], a[href*="sharkpay.vip"]'
+              ).forEach(addUtmsToLink);
+            }
+          });
         });
       });
-    });
 
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
 
-    // 🔴 DISPARO MANUAL DE INITIATECHECKOUT (Sem bloquear o clique)
-    document.addEventListener('click', function(e) {
-      const target = e.target.closest('a');
-      if (target && (target.href.includes('sharckpay.vip') || target.href.includes('sharkpay.vip'))) {
-        const utmify = window.Utmify || window.__utmify || window.utmify;
-        if (utmify && utmify.track) {
-          utmify.track('initiateCheckout', {
-            value: 0,
-            currency: defaultCurrency
-          });
-          console.log(`[UTMIFY] InitiateCheckout (${defaultCurrency}) disparado via click listener`);
+      // 🔴 DISPARO MANUAL DE INITIATECHECKOUT (Sem bloquear o clique)
+      document.addEventListener('click', function (e) {
+        const target = e.target.closest('a');
+        if (target && (target.href.includes('sharckpay.vip') || target.href.includes('sharkpay.vip'))) {
+          const utmify = window.Utmify || window.__utmify || window.utmify;
+          if (utmify && utmify.track) {
+            utmify.track('initiateCheckout', {
+              value: 0,
+              currency: defaultCurrency
+            });
+            console.log(`[UTMIFY] InitiateCheckout (${defaultCurrency}) disparado via click listener`);
+          }
         }
-      }
-    }, true);
+      }, true);
 
-  })();
+    })();
   </script>
 </body>
 

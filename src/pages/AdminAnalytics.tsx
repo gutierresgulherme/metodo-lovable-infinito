@@ -55,10 +55,10 @@ export default function AdminAnalytics() {
     };
 
     const [links, setLinks] = useState({
-        br_prata: "https://go.pepperpay.com.br/lonsw",
-        br_gold: "https://go.pepperpay.com.br/ukrg2",
-        usa_prata: "https://go.pepperpay.com.br/lonsw",
-        usa_gold: "https://go.pepperpay.com.br/ukrg2",
+        br_prata: "https://pay.sharckpay.vip/checkout/26f0ac98-8ec8-4509-9f7a-82ee1780004f",
+        br_gold: "https://pay.sharckpay.vip/checkout/f2010834-f3a3-488b-a801-1e96f30e9559",
+        usa_prata: "https://www.sharckpay.vip/checkout/destrave-seu-lovable-17-90-sr88",
+        usa_gold: "https://www.sharckpay.vip/checkout/destrave-seu-lovable-27-90-5s18",
     });
     const [savingLinks, setSavingLinks] = useState(false);
 
