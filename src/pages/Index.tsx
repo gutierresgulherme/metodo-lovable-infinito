@@ -28,10 +28,13 @@ const Index = () => {
     const [videoError, setVideoError] = useState<string | null>(null);
     const [showFallbackPlay, setShowFallbackPlay] = useState(false);
     const [checkoutLinks, setCheckoutLinks] = useState<Record<string, string>>({
-        br_prata: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-17-90-sr88',
-        br_gold: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-27-90-5s18',
+        br_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
+        br_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-y3s5',
         usa_prata: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-17-90-sr88',
         usa_gold: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-27-90-5s18',
+        // Links exclusivos para metodo-lovable-infinito.vip
+        infinito_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
+        infinito_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-y3s5',
     });
     const [timeLeft, setTimeLeft] = useState({ minutes: 5, seconds: 0 });
 
@@ -69,7 +72,7 @@ const Index = () => {
             } catch (err) {
                 console.error("Error initializing page:", err);
             } finally {
-                setLoading(false);
+                setLoading(false); if (!vslData && !loading) setVslData({ video_url: 'https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl-v2.mp4' } as any);
             }
         };
 
@@ -173,11 +176,16 @@ const Index = () => {
 
     const getCheckoutLink = useCallback((plan: 'prata' | 'gold') => {
         const hostname = window.location.hostname;
-        const isUSA = hostname.includes('lovable-app.vip') || hostname.includes('metodo-lovable-infinito.vip');
-        const key = isUSA
-            ? (plan === 'prata' ? 'usa_prata' : 'usa_gold')
-            : (plan === 'prata' ? 'br_prata' : 'br_gold');
-        return checkoutLinks[key] || checkoutLinks[isUSA ? `usa_${plan}` : `br_${plan}`];
+        // Domínio metodo-lovable-infinito.vip → links exclusivos
+        if (hostname.includes('metodo-lovable-infinito.vip')) {
+            return checkoutLinks[plan === 'prata' ? 'infinito_prata' : 'infinito_gold'];
+        }
+        // Domínio lovable-app.vip → links USA
+        if (hostname.includes('lovable-app.vip')) {
+            return checkoutLinks[plan === 'prata' ? 'usa_prata' : 'usa_gold'];
+        }
+        // Padrão (BR / localhost / outros)
+        return checkoutLinks[plan === 'prata' ? 'br_prata' : 'br_gold'];
     }, [checkoutLinks]);
 
     const handleCheckoutClick = async (buttonId: string, baseUrl: string) => {
@@ -710,6 +718,7 @@ const Index = () => {
 };
 
 export default Index;
+
 
 
 
