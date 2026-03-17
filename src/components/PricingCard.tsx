@@ -78,3 +78,4 @@ export const PricingCard = ({ title, price, features, variant, buttonText, check
     </div>
   );
 };
+

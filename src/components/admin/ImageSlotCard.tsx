@@ -57,3 +57,4 @@ export const ImageSlotCard = ({ slot, image, onImageUpdated }: ImageSlotCardProp
     </Card>
   );
 };
+

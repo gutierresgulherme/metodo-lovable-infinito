@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: 'Lovable Infinito',
         short_name: 'Lovable',
-        description: 'Acesso ilimitado ao Lovable por R$13,90',
+        description: 'Acesso ilimitado ao Lovable por R$17,90',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
@@ -104,3 +104,4 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 500
   }
 }));
+
