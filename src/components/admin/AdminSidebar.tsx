@@ -144,3 +144,4 @@ export function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
         </aside>
     );
 }
+

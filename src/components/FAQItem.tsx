@@ -28,3 +28,4 @@ export const FAQItem = ({ question, answer }: FAQItemProps) => {
     </div>
   );
 };
+

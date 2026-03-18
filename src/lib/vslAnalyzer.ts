@@ -179,3 +179,4 @@ export function calculateTicket(offers: number[]): number {
     const sum = offers.reduce((acc, val) => acc + val, 0);
     return parseFloat((sum / offers.length).toFixed(2));
 }
+

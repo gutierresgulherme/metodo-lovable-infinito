@@ -300,3 +300,4 @@ function KPICard({ title, value, icon: Icon, trend, color, isCurrency }: any) {
         </Card>
     )
 }
+

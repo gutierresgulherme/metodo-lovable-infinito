@@ -416,3 +416,4 @@ export const VideoSlotCard = ({ slot, video, onVideoUpdated }: VideoSlotCardProp
     </div>
   );
 };
+

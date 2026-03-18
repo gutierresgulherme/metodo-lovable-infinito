@@ -76,3 +76,4 @@ export const AdminRoute = ({ children, requireAdmin = true }: AdminRouteProps) =
 
   return <>{children}</>;
 };
+

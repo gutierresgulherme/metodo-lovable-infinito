@@ -264,3 +264,4 @@ export const VideoUpload = ({ currentVideo, onVideoUpdated }: VideoUploadProps) 
     </div>
   );
 };
+

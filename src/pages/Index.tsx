@@ -27,7 +27,16 @@ const Index = () => {
     const [loading, setLoading] = useState(true);
     const [videoError, setVideoError] = useState<string | null>(null);
     const [showFallbackPlay, setShowFallbackPlay] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(() => { const saved = localStorage.getItem("vsl_timer_remaining"); return saved ? JSON.parse(saved) : { minutes: 5, seconds: 0 }; });
+    const [checkoutLinks, setCheckoutLinks] = useState<Record<string, string>>({
+        br_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
+        br_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-y3s5',
+        usa_prata: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-17-90-sr88',
+        usa_gold: 'https://www.sharckpay.vip/checkout/destrave-seu-lovable-27-90-5s18',
+        // Links exclusivos para metodo-lovable-infinito.vip
+        infinito_prata: 'https://www.sharckpay.vip/checkout/lovable-infinito-17-90-p36m',
+        infinito_gold: 'https://www.sharckpay.vip/checkout/lovable-infinito-27-90-y3s5',
+    });
+    const [timeLeft, setTimeLeft] = useState({ minutes: 5, seconds: 0 });
 
     // --- Refs ---
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -73,10 +82,13 @@ const Index = () => {
                     setVideoError("Nenhuma VSL encontrada.");
                 }
 
+                // 2. Load Checkout Links from DB
+                // Links de checkout são definidos manualmente (sharckpay.vip) — não sobrescrever com dados do banco
+                console.log("[INDEX] Links de checkout fixos (sharckpay.vip) — ignorando banco de dados");
             } catch (err) {
                 console.error("Error initializing page:", err);
             } finally {
-                setLoading(false);
+                setLoading(false); if (!vslData && !loading) setVslData({ video_url: 'https://eidcxqxjmraargwhrdai.supabase.co/storage/v1/object/public/videos/vsl-v2.mp4' } as any);
             }
         };
 
@@ -139,10 +151,10 @@ const Index = () => {
             } else if (videoRef.current && !videoRef.current.paused) {
                 setShowFallbackPlay(false);
             }
-        }, 1500);
+        }, 3000);
         return () => clearInterval(checkPlaying);
     }, [vslData?.video_url, videoError]);
-
+    
     // Countdown Timer logic
     useEffect(() => {
         const timer = setInterval(() => {
@@ -153,11 +165,12 @@ const Index = () => {
                 if (prev.seconds === 0) {
                     return { minutes: prev.minutes - 1, seconds: 59 };
                 }
-                const next = { ...prev, seconds: prev.seconds - 1 }; localStorage.setItem("vsl_timer_remaining", JSON.stringify(next)); return next;
+                return { ...prev, seconds: prev.seconds - 1 };
             });
         }, 1000);
         return () => clearInterval(timer);
     }, []);
+
 
     // --- Video Tracking Handler ---
     const handleVideoTimeUpdate = () => {
@@ -179,56 +192,64 @@ const Index = () => {
 
     const getCheckoutLink = useCallback((plan: 'prata' | 'gold') => {
         const hostname = window.location.hostname;
-        const isUSA = hostname.includes('lovable-app.vip');
-        const key = isUSA
-            ? (plan === 'prata' ? 'usa_prata' : 'usa_gold')
-            : (plan === 'prata' ? 'br_prata' : 'br_gold');
-        return checkoutLinks[key] || checkoutLinks[isUSA ? `usa_${plan}` : `br_${plan}`];
+        // Domínio metodo-lovable-infinito.vip → links exclusivos
+        if (hostname.includes('metodo-lovable-infinito.vip')) {
+            return checkoutLinks[plan === 'prata' ? 'infinito_prata' : 'infinito_gold'];
+        }
+        // Domínio lovable-app.vip → links USA
+        if (hostname.includes('lovable-app.vip')) {
+            return checkoutLinks[plan === 'prata' ? 'usa_prata' : 'usa_gold'];
+        }
+        // Padrão (BR / localhost / outros)
+        return checkoutLinks[plan === 'prata' ? 'br_prata' : 'br_gold'];
     }, [checkoutLinks]);
 
     const handleCheckoutClick = async (buttonId: string, baseUrl: string) => {
         try {
             const url = new URL(baseUrl);
             const currentParams = new URLSearchParams(window.location.search);
+            const isUSA = window.location.hostname.includes('lovable-app.vip');
+            const currency = isUSA ? 'USD' : 'BRL';
+
             const cleanUtm = (val: string | null) => {
                 if (!val) return '';
-                // fbclid tem formato: jLj[hash] ou similar
-                // Remove apenas o padrão de ID do Facebook concatenado
                 const fbclidPattern = /j[A-Z][a-z][0-9a-f]{16,}/;
                 return val.replace(fbclidPattern, '').split('?')[0].split('#')[0].trim();
             };
 
-            currentParams.forEach((value, key) => {
-                if (key.startsWith('utm_') || key === 'src' || key === 'sck') {
+            // Lista de UTMs e parâmetros de rastreio
+            const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'src', 'sck'];
+
+            utmKeys.forEach(key => {
+                const value = currentParams.get(key) || sessionStorage.getItem(key);
+                if (value) {
                     url.searchParams.set(key, cleanUtm(value));
                 }
             });
 
             // 🔴 UTMIFY: Disparar evento initiateCheckout ANTES de redirecionar
-            const utmifyPixel = (window as any).Utmify || (window as any).__utmify;
+            const utmifyPixel = (window as any).Utmify || (window as any).__utmify || (window as any).utmify;
             if (utmifyPixel?.track) {
                 try {
                     utmifyPixel.track('initiateCheckout', {
                         value: 0,
-                        currency: 'BRL',
+                        currency: currency,
                     });
-                    console.log("[UTMIFY] initiateCheckout disparado - botão:", buttonId);
+                    console.log(`[UTMIFY] initiateCheckout disparado (${currency}) - botão:`, buttonId);
                 } catch (pixelErr) {
                     console.warn("[UTMIFY] Erro ao disparar initiateCheckout:", pixelErr);
                 }
             } else {
-                // Fallback: tentar via pixel global
+                // Fallback: tentar via pixel global ou pixelId
                 try {
                     const w = window as any;
                     if (w.PixelManager?.track) {
-                        w.PixelManager.track('initiateCheckout');
-                    } else if (w.pixelId) {
-                        console.log("[UTMIFY] pixelId detectado mas SDK não carregado ainda:", w.pixelId);
+                        w.PixelManager.track('initiateCheckout', { currency: currency });
                     }
                 } catch(e) { /* silent */ }
             }
 
-            console.log("[CHECKOUT] Redirecionando para:", url.toString());
+            console.log(`[CHECKOUT] [${currency}] Redirecionando para:`, url.toString());
 
             // Pequeno delay para garantir que o evento foi enviado antes do redirect
             setTimeout(() => {
@@ -571,7 +592,7 @@ const Index = () => {
                                             <p className="text-gray-400 uppercase tracking-widest text-xs">E o que você vai pagar aqui?</p>
                                             <div className="flex flex-col items-center">
                                                 <span className="text-4xl md:text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
-                                                    Apenas R$27,90
+                                                    Apenas {PRICE_GOLD}
                                                 </span>
                                                 <span className="text-yellow-400 font-bold uppercase tracking-widest text-sm mt-2">UMA ÚNICA VEZ.</span>
                                             </div>
@@ -717,4 +738,8 @@ const Index = () => {
 };
 
 export default Index;
+
+
+
+
 

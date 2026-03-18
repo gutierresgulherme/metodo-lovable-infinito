@@ -55,10 +55,10 @@ export default function AdminAnalytics() {
     };
 
     const [links, setLinks] = useState({
-        br_prata: "https://go.pepperpay.com.br/lonsw",
-        br_gold: "https://go.pepperpay.com.br/ukrg2",
-        usa_prata: "https://go.pepperpay.com.br/lonsw",
-        usa_gold: "https://go.pepperpay.com.br/ukrg2",
+        br_prata: "https://pay.sharckpay.vip/checkout/26f0ac98-8ec8-4509-9f7a-82ee1780004f",
+        br_gold: "https://pay.sharckpay.vip/checkout/f2010834-f3a3-488b-a801-1e96f30e9559",
+        usa_prata: "https://www.sharckpay.vip/checkout/destrave-seu-lovable-17-90-sr88",
+        usa_gold: "https://www.sharckpay.vip/checkout/destrave-seu-lovable-27-90-5s18",
     });
     const [savingLinks, setSavingLinks] = useState(false);
 
@@ -118,17 +118,17 @@ export default function AdminAnalytics() {
     }
 
     const funnelBasePrices = [
-        { id: "btn-comprar-13-1", default: 13.90 },
-        { id: "btn-comprar-24-1", default: 24.90 },
-        { id: "btn-comprar-24-2", default: 24.90 },
-        { id: "btn-comprar-13-2", default: 13.90 },
+        { id: "btn-comprar-13-1", default: 17.90 },
+        { id: "btn-comprar-24-1", default: 27.90 },
+        { id: "btn-comprar-24-2", default: 27.90 },
+        { id: "btn-comprar-13-2", default: 17.90 },
     ];
 
     const averageFunnelPrice = funnelBasePrices.reduce((acc, curr) => acc + curr.default, 0) / funnelBasePrices.length;
 
     const buttonChartData = data?.buttonClicks.map((item) => {
         const priceMatch = item.button_label.match(/R\$\s?(\d+[,.]\d+)/);
-        const price = priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : (item.button_id.includes("13") ? 13.90 : 24.90);
+        const price = priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : (item.button_id.includes("13") ? 17.90 : 27.90);
 
         return {
             name: item.button_label.replace("Plano ", "").replace(" - ", "\n"),
@@ -302,7 +302,7 @@ export default function AdminAnalytics() {
                                     [ VIDEO PLAYER ]
                                 </div>
                                 <div className="border border-emerald-500/30 bg-emerald-500/10 rounded h-12 flex items-center justify-center text-[10px] text-emerald-500 font-mono font-bold tracking-widest cursor-pointer hover:bg-emerald-500/20 transition-colors relative z-10">
-                                    CTA PRI (R$ 13,90) - {buttonChartData.find(b => b.id === "btn-comprar-13-1")?.cliques || 0} clicks
+                                    CTA PRI (R$ 17,90) - {buttonChartData.find(b => b.id === "btn-comprar-13-1")?.cliques || 0} clicks
                                 </div>
                             </div>
                         </CardContent>
@@ -321,25 +321,25 @@ export default function AdminAnalytics() {
                         <CardContent className="p-6 space-y-6">
                             <div className="space-y-4">
                                 <CheckoutInput
-                                    label="BOTÃO 1: MÉTODO (R$ 13,90)"
+                                    label="BOTÃO 1: MÉTODO (R$ 17,90)"
                                     color="red"
                                     value={links.br_prata}
                                     onChange={(v) => setLinks({ ...links, br_prata: v })}
                                 />
                                 <CheckoutInput
-                                    label="BOTÃO 2: MÉTODO + BÔNUS (R$ 24,90)"
+                                    label="BOTÃO 2: MÉTODO + BÔNUS (R$ 27,90)"
                                     color="emerald"
                                     value={links.br_gold}
                                     onChange={(v) => setLinks({ ...links, br_gold: v })}
                                 />
                                 <CheckoutInput
-                                    label="BOTÃO 3: PLANO GOLD (R$ 24,90)"
+                                    label="BOTÃO 3: PLANO GOLD (R$ 27,90)"
                                     color="yellow"
                                     value={links.usa_gold}
                                     onChange={(v) => setLinks({ ...links, usa_gold: v })}
                                 />
                                 <CheckoutInput
-                                    label="BOTÃO 4: PLANO PRATA (R$ 13,90)"
+                                    label="BOTÃO 4: PLANO PRATA (R$ 17,90)"
                                     color="blue"
                                     value={links.usa_prata}
                                     onChange={(v) => setLinks({ ...links, usa_prata: v })}
@@ -472,3 +472,4 @@ function CheckoutInput({ label, color, value, onChange }: any) {
         </div>
     );
 }
+
