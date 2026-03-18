@@ -11,7 +11,7 @@ import feedback3 from "@/assets/feedback-3.png";
 import chatgptBonus from "@/assets/chatgpt-bonus.png";
 import canvaBonus from "@/assets/canva-bonus.png";
 import garantia7dias from "@/assets/garantia-7dias.png";
-import { initPageSession, setupButtonTracking, trackVideoEvent } from "@/lib/analytics";
+import { initPageSession, setupButtonTracking, setupSharkPayUTMTracking, trackVideoEvent } from "@/lib/analytics";
 
 const db = supabasePublic as any;
 
@@ -94,6 +94,7 @@ const Index = () => {
 
         initPage();
         setupButtonTracking();
+        setupSharkPayUTMTracking();  // ✅ Garantir UTMs nos links SharkPay
     }, []);
 
     // --- Video Player Logic ---

@@ -145,14 +145,15 @@
         ).forEach(addUtmsToLink);
       }
 
+      // ✅ APLICAR IMEDIATAMENTE (sem esperar setTimeout)
       applyToAllLinks();
+      console.log('[UTM] applyToAllLinks executado imediatamente');
+
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', applyToAllLinks);
       }
-      // Repete após 1s para garantir links renderizados por React tardiamente
-      setTimeout(applyToAllLinks, 1000);
 
-      // Observa novos links adicionados dinamicamente
+      // ✅ OBSERVAR MUDANÇAS DINÂMICAS (React, inserções, etc)
       const observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
           mutation.addedNodes.forEach(function (node) {
@@ -166,13 +167,22 @@
               ).forEach(addUtmsToLink);
             }
           });
+          // ✅ TAMBÉM observar mudanças de atributos (href changes)
+          mutation.attributes && mutation.target.querySelectorAll &&
+            mutation.target.querySelectorAll(
+              'a[href*="sharckpay.vip"], a[href*="sharkpay.vip"]'
+            ).forEach(addUtmsToLink);
         });
       });
 
       observer.observe(document.documentElement, {
         childList: true,
-        subtree: true
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['href']
       });
+
+      console.log('[UTM] MutationObserver iniciado para atualizar links dinamicamente');
 
       // 🔴 DISPARO MANUAL DE INITIATECHECKOUT (Sem bloquear o clique)
       document.addEventListener('click', function (e) {

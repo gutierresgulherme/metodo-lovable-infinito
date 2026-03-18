@@ -19,18 +19,26 @@ export const getSessionId = (): string => {
     return sessionId;
 };
 
-// Capturar parâmetros UTM da URL com fallback para sessionStorage
+// Capturar parâmetros UTM da URL com fallback para localStorage + sessionStorage
 export const getUtmParams = (): Record<string, string> => {
     const params = new URLSearchParams(window.location.search);
     const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "src", "sck"];
     const results: Record<string, string> = {};
 
     utmKeys.forEach(key => {
-        const value = params.get(key) || sessionStorage.getItem(key) || "";
+        // ✅ Tentar URL PRIMEIRO, depois localStorage, depois sessionStorage
+        const value = params.get(key) ||
+                     localStorage.getItem(key) ||
+                     sessionStorage.getItem(key) ||
+                     "";
         results[key] = value;
-        // Se encontramos na URL, salvamos no sessionStorage para persistência
+
+        // ✅ Salvar em AMBOS localStorage e sessionStorage para máxima compatibilidade
         if (params.get(key)) {
-            sessionStorage.setItem(key, params.get(key)!);
+            const urlValue = params.get(key)!;
+            localStorage.setItem(key, urlValue);
+            sessionStorage.setItem(key, urlValue);
+            console.log(`[ANALYTICS-UTM] ${key} salvo em localStorage e sessionStorage:`, urlValue);
         }
     });
 
@@ -275,4 +283,60 @@ export const fetchAnalyticsData = async (
         };
     }
 };
+
+/**
+ * ✅ CRÍTICO: Garantir que UTMs são adicionados aos links SharkPay
+ * mesmo que sejam clicados DEPOIS de tudo carregar
+ *
+ * Isso usa Event Delegation para capturar cliques em QUALQUER link SharkPay
+ * e adiciona UTMs no último momento (antes de sair da página)
+ */
+export function setupSharkPayUTMTracking() {
+    if ((window as any)._sharkPayUTMInitialized) {
+        console.log('[SHARKAPAY-UTM] Já foi inicializado, pulando...');
+        return;
+    }
+
+    // ✅ Event Delegation: escuta cliques em QUALQUER link SharkPay
+    document.addEventListener('click', (event) => {
+        const target = event.target as HTMLElement;
+        const link = target.closest('a[href*="sharkpay"], a[href*="sharckpay"]') as HTMLAnchorElement;
+
+        if (link && link.href) {
+            try {
+                // ✅ Se link NÃO tem UTM, adicionar AGORA
+                if (!link.href.includes('utm_')) {
+                    const utm = localStorage.getItem('utm_params') ||
+                               sessionStorage.getItem('utm_params') ||
+                               '';
+
+                    if (utm && utm.length > 0) {
+                        const separator = link.href.includes('?') ? '&' : '?';
+                        const newHref = link.href + separator + utm;
+                        link.setAttribute('href', newHref);
+
+                        console.log('[SHARKAPAY-UTM] UTM adicionado ao link no último momento', {
+                            utm: utm.substring(0, 50) + '...',
+                            newHref: newHref.substring(0, 80) + '...'
+                        });
+                    }
+                }
+
+                // ✅ Disparar evento no Utmify
+                if (typeof window.Utmify !== 'undefined' && (window.Utmify as any).track) {
+                    (window.Utmify as any).track('initiateCheckout', {
+                        value: 99.99,
+                        currency: 'BRL',
+                    });
+                    console.log('[UTMIFY] Evento initiateCheckout disparado via SharkPayUTMTracking');
+                }
+            } catch (err) {
+                console.error('[SHARKAPAY-UTM] Erro ao processar link:', err);
+            }
+        }
+    }, true); // true = capture phase (pega cliques antes de propagação)
+
+    (window as any)._sharkPayUTMInitialized = true;
+    console.log('[SHARKAPAY-UTM] Tracking de UTM para SharkPay inicializado');
+}
 
