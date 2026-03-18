@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { supabasePublic } from "@/integrations/supabase/client";
+import { getRegionByDomain as getDomainRegion } from '../config/domains';
 
 export interface VSLVariant {
     id: string;
@@ -24,11 +25,7 @@ export interface ActiveVSLInfo {
     currency: string;
 }
 
-export const getRegionByDomain = () => {
-    const hostname = window.location.hostname;
-    if (hostname.includes('lovable-app.vip')) return 'USA';
-    return 'BR';
-};
+export const getRegionByDomain = () => getDomainRegion();
 
 export const getCurrentVSLInfo = async (): Promise<ActiveVSLInfo> => {
     try {

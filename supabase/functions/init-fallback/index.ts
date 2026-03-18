@@ -20,7 +20,7 @@ serve(async (req: Request) => {
   try {
     // Validate shared secret
     const secret = req.headers.get("X-Fallback-Secret");
-    const expectedSecret = Deno.env.get("INTERNAL_TOKEN");
+    const expectedSecret = Deno.env.get("VITE_FALLBACK_SECRET");
     
     if (!secret || secret !== expectedSecret) {
       console.error("[UTMIFY] Unauthorized request - invalid secret");

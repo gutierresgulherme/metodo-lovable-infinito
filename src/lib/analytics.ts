@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getRegionByDomain, getPixelId } from '../config/domains';
 
 // Mapeamento de IDs de botões para labels legíveis
 const BUTTON_LABELS: Record<string, string> = {
@@ -42,7 +43,7 @@ export const trackButtonClick = async (buttonId: string): Promise<void> => {
         const sessionId = getSessionId();
         const utms = getUtmParams();
         const buttonLabel = BUTTON_LABELS[buttonId] || buttonId;
-        const region = window.location.hostname.includes('lovable-app.vip') ? 'USA' : 'BR';
+        const region = getRegionByDomain();
 
         await (supabase.from("button_clicks" as any) as any).insert({
             button_id: buttonId,
@@ -92,7 +93,7 @@ export const initPageSession = async (): Promise<void> => {
     try {
         const sessionId = getSessionId();
         const utms = getUtmParams();
-        const region = window.location.hostname.includes('lovable-app.vip') ? 'USA' : 'BR';
+        const region = getRegionByDomain();
 
         console.log("[Analytics] Initializing session:", sessionId, "Region:", region);
 
